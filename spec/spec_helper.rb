@@ -1,5 +1,6 @@
 require "bundler/setup"
 require "tapyrus/contract"
+require "tapyrus"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
