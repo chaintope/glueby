@@ -1,5 +1,12 @@
 module Tapyrus
   module Contract
+    # Timestamp feature allows users to send transaction with op_return output which has sha256 hash of arbitary data.
+    # Timestamp transaction has
+    # * 1 or more inputs enough to afford transaction fee.
+    # * 1 output which has op_return, application specific prefix, and sha256 hash of data.
+    # * 1 output to send the change TPC back to the input address.
+    #
+    # Storing timestamp transaction to the blockchain enables everyone to verify that the data existed at that time and a user signed it.
     class Timestamp
       include Tapyrus::Contract::TxBuilder
 
