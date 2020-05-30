@@ -22,7 +22,80 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+
+# Define class that includes WalletFeature
+class Sender
+  include Tapyrus::Contract::WalletFeature
+end
+
+sender = Sender.new
+# or you can import key from wif
+# sender = Sender.from_wif('L2hmApEYQBQo81RLJc5MMwo6ZZywnfVzuQj6uCfxFLaV2Yo2pVyq')
+
+config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
+client = Tapyrus::RPC::TapyrusCoreClient.new(config)
+timestamp = Tapyrus::Contract::Timestamp.new(content: "\x01\x02\x03", rpc: client, sender:sender)
+timestamp.save!
+# "a01eace94ce6cdc30f389609de8a7584a4e208ee82fec33a2f5875b7cee47097"
+
+```
+
+We can see the timestamp transaction using getrawblockchain command
+
+```bash
+> tapyrus-cli -rpcport=12381 -rpcuser=user -rpcpassword=pass getrawtransaction a01eace94ce6cdc30f389609de8a7584a4e208ee82fec33a2f5875b7cee47097 1
+
+{
+  "txid": "a01eace94ce6cdc30f389609de8a7584a4e208ee82fec33a2f5875b7cee47097",
+  "hash": "a559a84d94cff58619bb735862eb93ff7a3b8fe122a8f2f4c10b7814fb15459a",
+  "features": 1,
+  "size": 234,
+  "vsize": 234,
+  "weight": 936,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "12658e0289da70d43ae3777a174ac8c40f89cbe6564ed6606f197764b3556200",
+      "vout": 0,
+      "scriptSig": {
+        "asm": "3044022067285c57a57fc0d7f64576abbec65639b0f4a8c31b5605eefe881edccb97c62402201ddec93c0c9bf3bb5707757e97e7fa6566c0183b41537e4f9ec46dcfe401864d[ALL] 03b8ad9e3271a20d5eb2b622e455fcffa5c9c90e38b192772b2e1b58f6b442e78d",
+        "hex": "473044022067285c57a57fc0d7f64576abbec65639b0f4a8c31b5605eefe881edccb97c62402201ddec93c0c9bf3bb5707757e97e7fa6566c0183b41537e4f9ec46dcfe401864d012103b8ad9e3271a20d5eb2b622e455fcffa5c9c90e38b192772b2e1b58f6b442e78d"
+      },
+      "sequence": 4294967295
+    }
+  ],
+  "vout": [
+    {
+      "value": 0.00000000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_RETURN 039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81",
+        "hex": "6a20039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81",
+        "type": "nulldata"
+      }
+    },
+    {
+      "value": 49.99990000,
+      "n": 1,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 3c0422f624f2503193c7413eff32839b9e151b54 OP_EQUALVERIFY OP_CHECKSIG",
+        "hex": "76a9143c0422f624f2503193c7413eff32839b9e151b5488ac",
+        "reqSigs": 1,
+        "type": "pubkeyhash",
+        "addresses": [
+          "16ULVva73ZhQiZu9o3njXc3TZ3aSog7FQQ"
+        ]
+      }
+    }
+  ],
+  "hex": "0100000001006255b36477196f60d64e56e6cb890fc4c84a177a77e33ad470da89028e6512000000006a473044022067285c57a57fc0d7f64576abbec65639b0f4a8c31b5605eefe881edccb97c62402201ddec93c0c9bf3bb5707757e97e7fa6566c0183b41537e4f9ec46dcfe401864d012103b8ad9e3271a20d5eb2b622e455fcffa5c9c90e38b192772b2e1b58f6b442e78dffffffff020000000000000000226a20039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81f0ca052a010000001976a9143c0422f624f2503193c7413eff32839b9e151b5488ac00000000",
+  "blockhash": "d33efc626114f89445d12c27f453c209382a3cb49de132bf978449093f2d2dbb",
+  "confirmations": 3,
+  "time": 1590822803,
+  "blocktime": 1590822803
+}
+```
 
 ## Development
 
