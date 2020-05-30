@@ -19,4 +19,10 @@ RSpec.describe 'Tapyrus::Contract::WalletFeature' do
 
     it { is_expected.to eq '191arn68nSLRiNJXD8srnmw4bRykBkVv6o' }
   end
+
+  describe '.from_wif' do
+    subject(:wallet) { Wallet.from_wif('L2hmApEYQBQo81RLJc5MMwo6ZZywnfVzuQj6uCfxFLaV2Yo2pVyq') }
+
+    it { expect(wallet.key.pubkey).to eq '03b8ad9e3271a20d5eb2b622e455fcffa5c9c90e38b192772b2e1b58f6b442e78d' }
+  end
 end
