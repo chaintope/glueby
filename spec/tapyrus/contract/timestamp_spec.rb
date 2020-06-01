@@ -9,7 +9,6 @@ RSpec.describe 'Tapyrus::Contract::Timestamp' do
     let(:contract) do
       Tapyrus::Contract::Timestamp.new(
         content: "\01",
-        rpc: rpc,
         sender: Sender.new,
         prefix: ''
       )
@@ -34,6 +33,7 @@ RSpec.describe 'Tapyrus::Contract::Timestamp' do
     end
 
     before do
+      allow(Tapyrus::Contract::RPC).to receive(:client).and_return(rpc)
       allow(rpc).to receive(:importaddress)
       allow(rpc).to receive(:listunspent).and_return(response_listunspent)
       allow(rpc).to receive(:signrawtransactionwithkey).and_return(response_signrawtransactionwithkey)

@@ -34,8 +34,9 @@ sender = Sender.new
 # sender = Sender.from_wif('L2hmApEYQBQo81RLJc5MMwo6ZZywnfVzuQj6uCfxFLaV2Yo2pVyq')
 
 config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-client = Tapyrus::RPC::TapyrusCoreClient.new(config)
-timestamp = Tapyrus::Contract::Timestamp.new(content: "\x01\x02\x03", rpc: client, sender:sender)
+Tapyrus::Contract::RPC.configure(config)
+
+timestamp = Tapyrus::Contract::Timestamp.new(content: "\x01\x02\x03", sender:sender)
 timestamp.save!
 # "a01eace94ce6cdc30f389609de8a7584a4e208ee82fec33a2f5875b7cee47097"
 
