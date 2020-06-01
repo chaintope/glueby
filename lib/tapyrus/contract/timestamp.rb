@@ -13,19 +13,16 @@ module Tapyrus
       attr_reader :tx, :txid
 
       # @param [String] content Data to be hashed and stored in blockchain.
-      # @param [Tapyrus::Rpc::Client] rpc
       # @param [WalletFeature] sender
       # @param [String] prefix prefix of op_return data
       # @param [Tapyrus::Contract::FeeProvider] fee_provider
       def initialize(
         content:,
-        rpc:,
         sender:,
         prefix: '',
         fee_provider: Tapyrus::Contract::FixedFeeProvider.new
       )
         @content = content
-        @rpc = rpc
         @sender = sender
         @prefix = prefix
         @fee_provider = fee_provider
@@ -74,18 +71,18 @@ module Tapyrus
 
       def sign_tx(tx, keys)
         # TODO: Implement SignatureProvider
-        response = @rpc.signrawtransactionwithkey(tx.to_payload.bth, keys)
+        response = Tapyrus::Contract::RPC.client.signrawtransactionwithkey(tx.to_payload.bth, keys)
         Tapyrus::Tx.parse_from_payload(response['hex'].htb)
       end
 
       def list_unspent(sender)
         # TODO: Implement UtxoProvider
-        @rpc.importaddress(sender.to_p2pkh.bth, "", false)
-        @rpc.listunspent(0, 999_999, [sender.address])
+        Tapyrus::Contract::RPC.client.importaddress(sender.to_p2pkh.bth, "", false)
+        Tapyrus::Contract::RPC.client.listunspent(0, 999_999, [sender.address])
       end
 
       def broadcast_tx(tx)
-        @rpc.sendrawtransaction(tx.to_payload.bth)
+        Tapyrus::Contract::RPC.client.sendrawtransaction(tx.to_payload.bth)
       end
     end
   end
