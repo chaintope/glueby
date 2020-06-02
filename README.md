@@ -24,19 +24,10 @@ Or install it yourself as:
 
 ```ruby
 
-# Define class that includes WalletFeature
-class Sender
-  include Tapyrus::Contract::WalletFeature
-end
-
-sender = Sender.new
-# or you can import key from wif
-# sender = Sender.from_wif('L2hmApEYQBQo81RLJc5MMwo6ZZywnfVzuQj6uCfxFLaV2Yo2pVyq')
-
 config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
 Tapyrus::Contract::RPC.configure(config)
 
-timestamp = Tapyrus::Contract::Timestamp.new(content: "\x01\x02\x03", sender:sender)
+timestamp = Tapyrus::Contract::Timestamp.new(content: "\x01\x02\x03")
 timestamp.save!
 # "a01eace94ce6cdc30f389609de8a7584a4e208ee82fec33a2f5875b7cee47097"
 

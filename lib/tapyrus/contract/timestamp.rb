@@ -4,7 +4,7 @@ module Tapyrus
     # Timestamp transaction has
     # * 1 or more inputs enough to afford transaction fee.
     # * 1 output which has op_return, application specific prefix, and sha256 hash of data.
-    # * 1 output to send the change TPC back to the input address.
+    # * 1 output to send the change TPC back to the wallet.
     #
     # Storing timestamp transaction to the blockchain enables everyone to verify that the data existed at that time and a user signed it.
     class Timestamp
@@ -13,17 +13,14 @@ module Tapyrus
       attr_reader :tx, :txid
 
       # @param [String] content Data to be hashed and stored in blockchain.
-      # @param [WalletFeature] sender
       # @param [String] prefix prefix of op_return data
       # @param [Tapyrus::Contract::FeeProvider] fee_provider
       def initialize(
         content:,
-        sender:,
         prefix: '',
         fee_provider: Tapyrus::Contract::FixedFeeProvider.new
       )
         @content = content
-        @sender = sender
         @prefix = prefix
         @fee_provider = fee_provider
       end
@@ -34,24 +31,23 @@ module Tapyrus
       def save!
         raise Tapyrus::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        @tx = create_tx(@prefix, Tapyrus.sha256(@content), @sender, @fee_provider)
-        keys = [@sender.key.to_wif]
-        @tx = sign_tx(@tx, keys)
+        @tx = create_tx(@prefix, Tapyrus.sha256(@content), @fee_provider)
+        @tx = sign_tx(@tx)
         @txid = broadcast_tx(@tx)
       end
 
       private
 
-      def create_tx(prefix, data_hash, sender, fee_provider)
+      def create_tx(prefix, data_hash, fee_provider)
         tx = Tapyrus::Tx.new
         tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: create_script(prefix, data_hash))
 
-        results = list_unspent(sender)
+        results = list_unspent
         fee = fee_provider.fee(tx)
         sum, outputs = collect_outputs(results, fee)
         fill_input(tx, outputs)
 
-        change_script = Tapyrus::Script.parse_from_payload(sender.to_p2pkh)
+        change_script = create_change_script
         fill_change_output(tx, fee, change_script, sum)
         tx
       end
@@ -60,6 +56,7 @@ module Tapyrus
         payload = +''
         payload << prefix
         payload << data_hash
+        payload
       end
 
       def create_script(prefix, data_hash)
@@ -69,16 +66,21 @@ module Tapyrus
         script
       end
 
-      def sign_tx(tx, keys)
+      def create_change_script
+        address = Tapyrus::Contract::RPC.client.getnewaddress
+        decoded = Tapyrus.decode_base58_address(address)
+        Tapyrus::Script.to_p2pkh(decoded[0])
+      end
+
+      def sign_tx(tx)
         # TODO: Implement SignatureProvider
-        response = Tapyrus::Contract::RPC.client.signrawtransactionwithkey(tx.to_payload.bth, keys)
+        response = Tapyrus::Contract::RPC.client.signrawtransactionwithwallet(tx.to_payload.bth)
         Tapyrus::Tx.parse_from_payload(response['hex'].htb)
       end
 
-      def list_unspent(sender)
+      def list_unspent
         # TODO: Implement UtxoProvider
-        Tapyrus::Contract::RPC.client.importaddress(sender.to_p2pkh.bth, "", false)
-        Tapyrus::Contract::RPC.client.listunspent(0, 999_999, [sender.address])
+        Tapyrus::Contract::RPC.client.listunspent(0, 999_999)
       end
 
       def broadcast_tx(tx)
