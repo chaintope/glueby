@@ -42,6 +42,7 @@ RSpec.describe 'Tapyrus::Contract::Timestamp' do
       expect(contract.tx.outputs.size).to eq 2
       expect(contract.tx.outputs[0].value).to eq 0
       expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
+      expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
       expect(contract.tx.outputs[1].value).to eq 99_990_000
     end
 
