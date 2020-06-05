@@ -26,8 +26,9 @@ module Tapyrus
       end
 
       # broadcast to Tapyrus Core
-      # raise TxAlreadyBroadcasted if tx has been broadcasted.
       # @return [String] txid
+      # @raise [TxAlreadyBroadcasted] if tx has been broadcasted.
+      # @raise [InsufficientFunds] if result of listunspent is not enough to pay the specified amount
       def save!
         raise Tapyrus::Contract::Errors::TxAlreadyBroadcasted if @txid
 
