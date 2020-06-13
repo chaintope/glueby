@@ -10,6 +10,64 @@ module Tapyrus
     class Timestamp
       include Tapyrus::Contract::TxBuilder
 
+      module Util
+        module_function
+
+        def create_tx(prefix, data_hash, fee_provider)
+          tx = Tapyrus::Tx.new
+          tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: create_script(prefix, data_hash))
+  
+          results = list_unspent
+          fee = fee_provider.fee(tx)
+          sum, outputs = collect_outputs(results, fee)
+          fill_input(tx, outputs)
+  
+          change_script = create_change_script
+          fill_change_output(tx, fee, change_script, sum)
+          tx
+        end
+  
+        def create_payload(prefix, data_hash)
+          payload = +''
+          payload << prefix
+          payload << data_hash
+          payload
+        end
+
+        def create_script(prefix, data_hash)
+          script = Tapyrus::Script.new
+          script << Tapyrus::Script::OP_RETURN
+          script << create_payload(prefix, data_hash)
+          script
+        end
+
+        def create_change_script
+          address = Tapyrus::Contract::RPC.client.getnewaddress
+          decoded = Tapyrus.decode_base58_address(address)
+          Tapyrus::Script.to_p2pkh(decoded[0])
+        end
+
+        def sign_tx(tx)
+          # TODO: Implement SignatureProvider
+          response = Tapyrus::Contract::RPC.client.signrawtransactionwithwallet(tx.to_payload.bth)
+          Tapyrus::Tx.parse_from_payload(response['hex'].htb)
+        end
+
+        def list_unspent
+          # TODO: Implement UtxoProvider
+          Tapyrus::Contract::RPC.client.listunspent(0, 999_999)
+        end
+
+        def broadcast_tx(tx)
+          Tapyrus::Contract::RPC.client.sendrawtransaction(tx.to_payload.bth)
+        end
+
+        def get_transaction(tx)
+          Tapyrus::Contract::RPC.client.getrawtransaction(tx.txid, 1)
+        end
+      end
+      include Tapyrus::Contract::Timestamp::Util
+
       attr_reader :tx, :txid
 
       # @param [String] content Data to be hashed and stored in blockchain.
@@ -35,57 +93,6 @@ module Tapyrus
         @tx = create_tx(@prefix, Tapyrus.sha256(@content), @fee_provider)
         @tx = sign_tx(@tx)
         @txid = broadcast_tx(@tx)
-      end
-
-      private
-
-      def create_tx(prefix, data_hash, fee_provider)
-        tx = Tapyrus::Tx.new
-        tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: create_script(prefix, data_hash))
-
-        results = list_unspent
-        fee = fee_provider.fee(tx)
-        sum, outputs = collect_outputs(results, fee)
-        fill_input(tx, outputs)
-
-        change_script = create_change_script
-        fill_change_output(tx, fee, change_script, sum)
-        tx
-      end
-
-      def create_payload(prefix, data_hash)
-        payload = +''
-        payload << prefix
-        payload << data_hash
-        payload
-      end
-
-      def create_script(prefix, data_hash)
-        script = Tapyrus::Script.new
-        script << Tapyrus::Script::OP_RETURN
-        script << create_payload(prefix, data_hash)
-        script
-      end
-
-      def create_change_script
-        address = Tapyrus::Contract::RPC.client.getnewaddress
-        decoded = Tapyrus.decode_base58_address(address)
-        Tapyrus::Script.to_p2pkh(decoded[0])
-      end
-
-      def sign_tx(tx)
-        # TODO: Implement SignatureProvider
-        response = Tapyrus::Contract::RPC.client.signrawtransactionwithwallet(tx.to_payload.bth)
-        Tapyrus::Tx.parse_from_payload(response['hex'].htb)
-      end
-
-      def list_unspent
-        # TODO: Implement UtxoProvider
-        Tapyrus::Contract::RPC.client.listunspent(0, 999_999)
-      end
-
-      def broadcast_tx(tx)
-        Tapyrus::Contract::RPC.client.sendrawtransaction(tx.to_payload.bth)
       end
     end
   end
