@@ -28,5 +28,5 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'tapyrus'
   spec.add_development_dependency 'activerecord'
-  spec.add_development_dependency 'rspec-rails'
+  spec.add_development_dependency 'sqlite3'
 end
