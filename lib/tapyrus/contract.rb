@@ -9,7 +9,7 @@ module Tapyrus
     autoload :Timestamp, 'tapyrus/contract/timestamp'
     autoload :TxBuilder, 'tapyrus/contract/tx_builder'
     autoload :WalletFeature, 'tapyrus/contract/wallet_feature'
-    autoload :ActiveRecord,  'tapyrus/contract/active_record'
+    autoload :AR,  'tapyrus/contract/active_record'
 
     begin
       class Railtie < ::Rails::Railtie

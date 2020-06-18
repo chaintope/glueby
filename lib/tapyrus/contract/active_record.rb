@@ -2,7 +2,7 @@ require 'active_record'
 
 module Tapyrus
   module Contract
-    module ActiveRecord
+    module AR
       autoload :Timestamp, 'tapyrus/contract/active_record/timestamp'
     end
   end

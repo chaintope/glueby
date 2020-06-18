@@ -119,15 +119,15 @@ bin/rails db:migrate
 == 20200613065511 CreateTimestamp: migrated (0.0024s) =========================
 ```
 
-Now, Tapyrus::Contract::ActiveRecord::Timestamp model is available
+Now, Tapyrus::Contract::AR::Timestamp model is available
 
 ```ruby
-irb(main):001:0> t = Tapyrus::Contract::ActiveRecord::Timestamp.new(content:"\x01010101", prefix: "app")
+irb(main):001:0> t = Tapyrus::Contract::AR::Timestamp.new(content:"\x01010101", prefix: "app")
    (0.4ms)  SELECT sqlite_version(*)
-=> #<Tapyrus::Contract::ActiveRecord::Timestamp id: nil, txid: nil, vout: nil, status: "init", content_hash: "9ccc644b03a88358a754962903a659a2d338767ee61674dde5...", prefix: "app">
+=> #<Tapyrus::Contract::AR::Timestamp id: nil, txid: nil, vout: nil, status: "init", content_hash: "9ccc644b03a88358a754962903a659a2d338767ee61674dde5...", prefix: "app">
 irb(main):002:0> t.save
    (0.1ms)  begin transaction
-  Tapyrus::Contract::ActiveRecord::Timestamp Create (0.7ms)  INSERT INTO "timestamps" ("status", "content_hash", "prefix") VALUES (?, ?, ?)  [["status", 0], ["content_hash", "9ccc644b03a88358a754962903a659a2d338767ee61674dde5434702a6256e6d"], ["prefix", "app"]]
+  Tapyrus::Contract::AR::Timestamp Create (0.7ms)  INSERT INTO "timestamps" ("status", "content_hash", "prefix") VALUES (?, ?, ?)  [["status", 0], ["content_hash", "9ccc644b03a88358a754962903a659a2d338767ee61674dde5434702a6256e6d"], ["prefix", "app"]]
    (2.3ms)  commit transaction
 => true
 ```

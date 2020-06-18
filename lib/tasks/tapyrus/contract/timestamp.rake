@@ -7,7 +7,7 @@ module Tapyrus
         extend Tapyrus::Contract::Timestamp::Util
 
         def create
-          timestamps = Tapyrus::Contract::ActiveRecord::Timestamp.where(status: :init)
+          timestamps = Tapyrus::Contract::AR::Timestamp.where(status: :init)
           timestamps.each do |t|
             begin
               ::ActiveRecord::Base.transaction do
@@ -25,7 +25,7 @@ module Tapyrus
         end
 
         def confirm
-          timestamps = Tapyrus::Contract::ActiveRecord::Timestamp.where(status: :unconfirmed)
+          timestamps = Tapyrus::Contract::AR::Timestamp.where(status: :unconfirmed)
           timestamps.each do |t|
             begin
               ::ActiveRecord::Base.transaction do

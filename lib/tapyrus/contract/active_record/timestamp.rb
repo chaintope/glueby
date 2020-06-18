@@ -1,6 +1,6 @@
 module Tapyrus
   module Contract
-    module ActiveRecord
+    module AR
       class Timestamp < ::ActiveRecord::Base
         include Tapyrus::Contract::Timestamp::Util
         enum status: { init: 0, unconfirmed: 1, confirmed: 2 }
