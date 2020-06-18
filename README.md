@@ -132,16 +132,17 @@ irb(main):002:0> t.save
 => true
 ```
 
-After create timestamp model, run `tapyrus:contract:timestamp:create` task to broadcast the transaction to the Tapyrus Core Network.
+After create timestamp model, run `tapyrus:contract:timestamp:create` task to broadcast the transaction to the Tapyrus Core Network and update status(init -> unconfirmed).
 
 ```
 bin/rails tapyrus:contract:timestamp:create
-46f780dd1f9836fd54103d9cad9817c7468132ecd1ede20c3f822426799b238e
+broadcasted (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
 ```
 
-Run `tapyrus:contract:timestamp:confirm` task to confirm the transaction and update status.
+Run `tapyrus:contract:timestamp:confirm` task to confirm the transaction and update status(unconfirmed -> confirmded).
 ```
 bin/rails tapyrus:contract:timestamp:confirm
+confirmed (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
 ```
 
 
