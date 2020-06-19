@@ -9,5 +9,18 @@ module Tapyrus
     autoload :Timestamp, 'tapyrus/contract/timestamp'
     autoload :TxBuilder, 'tapyrus/contract/tx_builder'
     autoload :WalletFeature, 'tapyrus/contract/wallet_feature'
+    autoload :AR,  'tapyrus/contract/active_record'
+
+    begin
+      class Railtie < ::Rails::Railtie
+        rake_tasks do
+          load "tasks/tapyrus/contract.rake"
+          load "tasks/tapyrus/contract/timestamp.rake"
+        end
+      end
+    rescue
+      # Rake task is unavailable
+      puts "Rake task is unavailable"
+    end  
   end
 end
