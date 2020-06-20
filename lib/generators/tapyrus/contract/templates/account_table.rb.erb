@@ -1,0 +1,15 @@
+class CreateAccount < ActiveRecord::Migration<%= migration_version %>
+  def change
+    create_table :accounts<%= table_options %> do |t|
+      t.string   :name
+    end
+
+    create_table :addresses<%= table_options %> do |t|
+      t.references :account, null: false
+      t.boolean :change, null: false, default: false
+      t.integer :address_index, null: false
+      t.string :pubkey, null: false, index: true
+      t.index [:account_id, :change, :address_index], unique: true
+    end
+  end
+end

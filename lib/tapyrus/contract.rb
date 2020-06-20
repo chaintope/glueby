@@ -10,6 +10,7 @@ module Tapyrus
     autoload :TxBuilder, 'tapyrus/contract/tx_builder'
     autoload :WalletFeature, 'tapyrus/contract/wallet_feature'
     autoload :AR,  'tapyrus/contract/active_record'
+    autoload :Account, 'tapyrus/contract/account'
 
     begin
       class Railtie < ::Rails::Railtie
