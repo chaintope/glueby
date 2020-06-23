@@ -20,7 +20,36 @@ Or install it yourself as:
 
     $ gem install tapyrus-contract
 
+## Rails support
+
+Tapyrus contract library supports ruby on rails integration.
+
+To use in rails, Add dependency to Gemfile.
+
+Then invoke install task.
+```
+bin/rails tapyrus:contract:install
+```
+
+Install task creates a file `tapyrus_contract.rb` in `config/initializers` directory like this.
+```
+require 'tapyrus'
+# Edit configuration for connection to tapyrus core
+config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
+Tapyrus::Contract::RPC.configure(config)
+
+# Edit seed for the master key
+Tapyrus::Contract::Account.set_master_key(seed: ENV['TAPYRUS_CONTRACT_MASTER_KEY_SEED'])
+```
+
 ## Usage
+
+tapyrus-contractrb has below features.
+
+* [Timestamp](#Timestamp)
+* [Account](#Account)
+
+### Timestamp  
 
 ```ruby
 
@@ -89,24 +118,7 @@ We can see the timestamp transaction using getrawblockchain command
 }
 ```
 
-### Rails support
-
-Tapyrus contract library supports ruby on rails integration.
-
-To use in rails, Add dependency to Gemfile.
-
-Then invoke install task.
-```
-bin/rails tapyrus:contract:install
-```
-
-Install task creates a file `tapyrus_contract.rb` in `config/initializers` directory like this.
-```
-require 'tapyrus'
-# Edit configuration for connection to tapyrus core
-config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Tapyrus::Contract::RPC.configure(config)
-```
+#### Rails support 
 
 If you use timestamp feature, use `tapyrus:contract:timestamp` generator.
 ```
@@ -145,6 +157,43 @@ bin/rails tapyrus:contract:timestamp:confirm
 confirmed (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
 ```
 
+### Account
+
+Account feature makes your rails app possible to manage Tapyrus account according to [BIP-0044](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki).
+
+#### Setup
+
+Create migration file for Account feature and do migration task 'db:migrate'.
+
+```
+bin/rails g tapyrus:contract:account
+    create  db/migrate/20200623042936_create_account.rb
+bin/rails db:migrate
+```
+
+Then set master key seed to env `TAPYRUS_CONTRACT_MASTER_KEY_SEED`.
+
+Here is an exmaple to generate a brand new master key.
+```ruby
+require 'tapyrus'
+
+Tapyrus::Wallet::MasterKey.generate # => #<Tapyrus::Wallet::MasterKey:0x00007f...>
+```
+
+#### Example
+
+```ruby
+# Create a new account.
+account = Tapyrus::Contract::Account.create!(name: 'example') # => #<Tapyrus::Contract::Account:0x00...>
+
+# Create keys
+receive_key = account.create_receive # => #<Tapyrus::ExtKey:0x00...>
+change_key = account.create_change # => #<Tapyrus::ExtKey:0x00...>
+
+# Get derived keys
+receive_keys = account.derived_receive_keys # => [#<Tapyrus::ExtPubkey:0x00...>]
+change_keys = account.derived_change_keys # => [#<Tapyrus::ExtPubkey:0x00...>]
+```
 
 ## Development
 
