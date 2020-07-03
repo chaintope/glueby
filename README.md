@@ -1,6 +1,6 @@
-# Tapyrus::Contract
+# Glueby
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/tapyrus/contractrb`. To experiment with that code, run `bin/console` for an interactive prompt.
+Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/glueby`. To experiment with that code, run `bin/console` for an interactive prompt.
 
 TODO: Delete this and the text above, and describe your gem
 
@@ -9,7 +9,7 @@ TODO: Delete this and the text above, and describe your gem
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'tapyrus-contract'
+gem 'glueby'
 ```
 
 And then execute:
@@ -18,16 +18,16 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install tapyrus-contract
+    $ gem install glueby
 
 ## Usage
 
 ```ruby
 
 config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Tapyrus::Contract::RPC.configure(config)
+Glueby::Contract::RPC.configure(config)
 
-timestamp = Tapyrus::Contract::Timestamp.new(content: "\x01\x02\x03")
+timestamp = Glueby::Contract::Timestamp.new(content: "\x01\x02\x03")
 timestamp.save!
 # "a01eace94ce6cdc30f389609de8a7584a4e208ee82fec33a2f5875b7cee47097"
 
@@ -91,26 +91,26 @@ We can see the timestamp transaction using getrawblockchain command
 
 ### Rails support
 
-Tapyrus contract library supports ruby on rails integration.
+Gruby supports ruby on rails integration.
 
 To use in rails, Add dependency to Gemfile.
 
 Then invoke install task.
 ```
-bin/rails tapyrus:contract:install
+bin/rails glueby:contract:install
 ```
 
-Install task creates a file `tapyrus_contract.rb` in `config/initializers` directory like this.
+Install task creates a file `glueby.rb` in `config/initializers` directory like this.
 ```
 require 'tapyrus'
 # Edit configuration for connection to tapyrus core
 config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Tapyrus::Contract::RPC.configure(config)
+Glueby::Contract::RPC.configure(config)
 ```
 
-If you use timestamp feature, use `tapyrus:contract:timestamp` generator.
+If you use timestamp feature, use `glueby:contract:timestamp` generator.
 ```
-bin/rails g tapyrus:contract:timestamp
+bin/rails g glueby:contract:timestamp
     create  db/migrate/20200613065511_create_timestamp.rb
 bin/rails db:migrate
 == 20200613065511 CreateTimestamp: migrating ==================================
@@ -119,29 +119,29 @@ bin/rails db:migrate
 == 20200613065511 CreateTimestamp: migrated (0.0024s) =========================
 ```
 
-Now, Tapyrus::Contract::AR::Timestamp model is available
+Now, Glueby::Contract::AR::Timestamp model is available
 
 ```ruby
-irb(main):001:0> t = Tapyrus::Contract::AR::Timestamp.new(content:"\x01010101", prefix: "app")
+irb(main):001:0> t = Glueby::AR::Contract::Timestamp.new(content:"\x01010101", prefix: "app")
    (0.4ms)  SELECT sqlite_version(*)
-=> #<Tapyrus::Contract::AR::Timestamp id: nil, txid: nil, vout: nil, status: "init", content_hash: "9ccc644b03a88358a754962903a659a2d338767ee61674dde5...", prefix: "app">
+=> #<Glueby::AR::Contract::Timestamp id: nil, txid: nil, vout: nil, status: "init", content_hash: "9ccc644b03a88358a754962903a659a2d338767ee61674dde5...", prefix: "app">
 irb(main):002:0> t.save
    (0.1ms)  begin transaction
-  Tapyrus::Contract::AR::Timestamp Create (0.7ms)  INSERT INTO "timestamps" ("status", "content_hash", "prefix") VALUES (?, ?, ?)  [["status", 0], ["content_hash", "9ccc644b03a88358a754962903a659a2d338767ee61674dde5434702a6256e6d"], ["prefix", "app"]]
+  Glueby::AR::Contract::Timestamp Create (0.7ms)  INSERT INTO "timestamps" ("status", "content_hash", "prefix") VALUES (?, ?, ?)  [["status", 0], ["content_hash", "9ccc644b03a88358a754962903a659a2d338767ee61674dde5434702a6256e6d"], ["prefix", "app"]]
    (2.3ms)  commit transaction
 => true
 ```
 
-After create timestamp model, run `tapyrus:contract:timestamp:create` task to broadcast the transaction to the Tapyrus Core Network and update status(init -> unconfirmed).
+After create timestamp model, run `glueby:contract:timestamp:create` task to broadcast the transaction to the Tapyrus Core Network and update status(init -> unconfirmed).
 
 ```
-bin/rails tapyrus:contract:timestamp:create
+bin/rails glueby:contract:timestamp:create
 broadcasted (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
 ```
 
-Run `tapyrus:contract:timestamp:confirm` task to confirm the transaction and update status(unconfirmed -> confirmded).
+Run `glueby:contract:timestamp:confirm` task to confirm the transaction and update status(unconfirmed -> confirmded).
 ```
-bin/rails tapyrus:contract:timestamp:confirm
+bin/rails glueby:contract:timestamp:confirm
 confirmed (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
 ```
 
@@ -154,7 +154,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/tapyrus-contractrb. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/tapyrus-contractrb/blob/master/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/glueby. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/tapyrus-contractrb/blob/master/CODE_OF_CONDUCT.md).
 
 
 ## License
@@ -163,4 +163,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the Tapyrus::Contractrb project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/tapyrus-contractrb/blob/master/CODE_OF_CONDUCT.md).
+Everyone interacting in the Glueby project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/glueby/blob/master/CODE_OF_CONDUCT.md).
