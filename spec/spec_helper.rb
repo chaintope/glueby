@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "tapyrus/contract"
+require "glueby"
 require "tapyrus"
 
 RSpec.configure do |config|
