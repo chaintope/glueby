@@ -22,6 +22,13 @@ Or install it yourself as:
 
 ## Usage
 
+glueby has below features.
+
+* [Timestamp](#Timestamp)
+* [Wallet](#Wallet)
+
+### Timestamp
+
 ```ruby
 
 config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
@@ -89,7 +96,7 @@ We can see the timestamp transaction using getrawblockchain command
 }
 ```
 
-### Rails support
+#### Rails support
 
 Gruby supports ruby on rails integration.
 
@@ -145,6 +152,27 @@ bin/rails glueby:contract:timestamp:confirm
 confirmed (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
 ```
 
+### Wallet
+
+First, you need to configure which wallet implementation is used in Glueby::Wallet. For now, below wallets are supported.
+
+* [Tapyrus Core](https://github.com/chaintope/tapyrus-core) 
+
+Here shows an example to use Tapyrus Core wallet.
+
+```ruby
+# Setup Tapyrus Core RPC connection
+config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
+Glueby::Contract::RPC.configure(config)
+
+# Setup wallet adapter
+Glueby::Wallet.wallet_adapter = Glueby::Wallet::TapyrusCoreWalletAdapter.new
+
+# Create wallet
+wallet = Glueby::Wallet.create
+wallet.balance # => 0
+wallet.list_unspent
+``` 
 
 ## Development
 
