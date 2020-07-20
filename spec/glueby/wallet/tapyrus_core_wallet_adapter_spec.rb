@@ -62,7 +62,7 @@ RSpec.describe 'Glueby::Wallet::TapyrusCoreWalletAdapter' do
     let(:response) { '0.00000100' }
 
     it 'should return balance as tapyrus unit' do
-      expect(rpc).to receive(:getbalance).with('*', 1).and_return(response)
+      expect(rpc).to receive(:getbalance).and_return(response)
       expect(subject).to be_a Integer
       expect(subject).to eq 100
     end
@@ -71,7 +71,7 @@ RSpec.describe 'Glueby::Wallet::TapyrusCoreWalletAdapter' do
       subject { adapter.balance(wallet_id, only_finalized) }
       let(:only_finalized) { false }
       it 'should call getbalance RPC and getunconfirmedbalance RPC' do
-        expect(rpc).to receive(:getbalance).with('*', 1).and_return(response)
+        expect(rpc).to receive(:getbalance).and_return(response)
         expect(rpc).to receive(:getunconfirmedbalance).and_return('0.00000200')
         expect(subject).to eq 300
       end
@@ -140,7 +140,7 @@ RSpec.describe 'Glueby::Wallet::TapyrusCoreWalletAdapter' do
     context 'only_finalized is false' do
       let(:only_finalized) { false }
       it 'should call listunspent RPC with min_conf = 0' do
-        expect(rpc).to receive(:listunspent).with(0, 999_999).and_return(response)
+        expect(rpc).to receive(:listunspent).with(0).and_return(response)
         subject
       end
     end
@@ -148,7 +148,7 @@ RSpec.describe 'Glueby::Wallet::TapyrusCoreWalletAdapter' do
     context 'only_finalized is true' do
       let(:only_finalized) { true }
       it 'should call getbalance RPC with min_conf = 1' do
-        expect(rpc).to receive(:listunspent).with(1, 999_999).and_return(response)
+        expect(rpc).to receive(:listunspent).with(1).and_return(response)
         subject
       end
     end
