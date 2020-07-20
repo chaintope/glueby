@@ -6,10 +6,10 @@ require 'bigdecimal'
 module Glueby
   class Wallet
     class TapyrusCoreWalletAdapter < AbstractWalletAdapter
-      WALLET_PREFIX = 'wallet-'.freeze
-      ADDRESS_TYPE = 'legacy'.freeze
+      WALLET_PREFIX = 'wallet-'
+      ADDRESS_TYPE = 'legacy'
 
-      RPC_WALLET_NOT_FOUND_ERROR_CODE = '-18'
+      RPC_WALLET_NOT_FOUND_ERROR_CODE = -18
 
       def create_wallet
         wallet_id = SecureRandom.hex(32)
@@ -67,7 +67,7 @@ module Glueby
 
       def sign_tx(wallet_id, tx)
         switch_wallet(wallet_id) do |client|
-          res = client.signrawtransactionwithwallet(tx.to_payload.bth)
+          res = client.signrawtransactionwithwallet(tx.to_hex)
           Tapyrus::Tx.parse_from_payload(res['hex'].htb)
         end
       end
