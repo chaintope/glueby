@@ -42,9 +42,7 @@ module Glueby
 
       def balance(wallet_id, only_finalized = true)
         switch_wallet(wallet_id) do |client|
-          # min_conf option is always 1 because the getbalance RPC never returns unconfirmed balance,
-          # even if the min_conf option is set as 0.
-          confirmed = tpc_to_tapyrus(client.getbalance('*', 1))
+          confirmed = tpc_to_tapyrus(client.getbalance)
           return confirmed if only_finalized
 
           confirmed + tpc_to_tapyrus(client.getunconfirmedbalance)
@@ -54,7 +52,7 @@ module Glueby
       def list_unspent(wallet_id, only_finalized = true)
         switch_wallet(wallet_id) do |client|
           min_conf = only_finalized ? 1 : 0
-          res = client.listunspent(min_conf, 999_999)
+          res = client.listunspent(min_conf)
 
           res.map do |i|
             {
