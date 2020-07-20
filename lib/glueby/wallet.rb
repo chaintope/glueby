@@ -21,9 +21,8 @@ module Glueby
       end
 
       def wallet_adapter
-        if @wallet_adapter.nil?
+        @wallet_adapter or
           raise Errors::ShouldInitializeWalletAdapter, 'You should initialize wallet adapter using `Glueby::Wallet.wallet_adapter = some wallet adapter instance`.'
-        end
 
         @wallet_adapter
       end

@@ -22,7 +22,7 @@ Or install it yourself as:
 
 ## Usage
 
-glueby has below features.
+Glueby has below features.
 
 * [Timestamp](#Timestamp)
 * [Wallet](#Wallet)
@@ -98,7 +98,7 @@ We can see the timestamp transaction using getrawblockchain command
 
 #### Rails support
 
-Gruby supports ruby on rails integration.
+Gluby supports ruby on rails integration.
 
 To use in rails, Add dependency to Gemfile.
 
