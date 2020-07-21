@@ -1,4 +1,30 @@
 module Glueby
+  # # Glueby::Wallet
+  #
+  # This module provides the way to deal about wallet that includes key management, address management, getting UTXOs.
+  #
+  # ## How to use
+  #
+  # First, you need to configure which wallet implementation is used in Glueby::Wallet. For now, below wallets are
+  # supported.
+  #
+  # * [Tapyrus Core](https://github.com/chaintope/tapyrus-core)
+  #
+  # Here shows an example to use Tapyrus Core wallet.
+  #
+  # ```ruby
+  # # Setup Tapyrus Core RPC connection
+  # config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
+  # Glueby::Contract::RPC.configure(config)
+  #
+  # # Setup wallet adapter
+  # Glueby::Wallet.wallet_adapter = Glueby::Wallet::TapyrusCoreWalletAdapter.new
+  #
+  # # Create wallet
+  # wallet = Glueby::Wallet.create
+  # wallet.balance # => 0
+  # wallet.list_unspent
+  # ```
   class Wallet
     autoload :AbstractWalletAdapter, 'glueby/wallet/abstract_wallet_adapter'
     autoload :TapyrusCoreWalletAdapter, 'glueby/wallet/tapyrus_core_wallet_adapter'
