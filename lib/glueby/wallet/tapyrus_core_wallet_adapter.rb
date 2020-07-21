@@ -84,7 +84,7 @@ module Glueby
         end
       end
 
-      def pubkey(wallet_id)
+      def create_pubkey(wallet_id)
         switch_wallet(wallet_id) do |client|
           address = client.getnewaddress('', ADDRESS_TYPE)
           info = client.getaddressinfo(address)
