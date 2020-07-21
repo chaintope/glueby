@@ -212,8 +212,8 @@ RSpec.describe 'Glueby::Wallet::TapyrusCoreWalletAdapter' do
     end
   end
 
-  describe 'pubkey' do
-    subject { adapter.pubkey(wallet_id) }
+  describe 'create_pubkey' do
+    subject { adapter.create_pubkey(wallet_id) }
 
     let(:wallet_id) { SecureRandom.hex(32) }
     let(:getnewaddress_response) { 'mueLMubHXrk6ZxLb1H2C45rT7rraFvkrXM' }

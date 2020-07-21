@@ -58,7 +58,7 @@ module Glueby
       wallet_adapter.change_address(id)
     end
 
-    def pubkey
+    def create_pubkey
       wallet_adapter.pubkey(id)
     end
 
