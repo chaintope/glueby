@@ -33,7 +33,7 @@ module Glueby
 
       def wallets
         Contract::RPC.client.listwallets.map do |wallet_name|
-          match = /#{WALLET_PREFIX}(?<wallet_id>.+)/.match(wallet_name)
+          match = /\A#{WALLET_PREFIX}(?<wallet_id>[0-9A-Fa-f]{64})\z/.match(wallet_name)
           next unless match
 
           match[:wallet_id]
