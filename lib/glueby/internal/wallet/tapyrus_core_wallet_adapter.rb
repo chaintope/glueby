@@ -69,7 +69,11 @@ module Glueby
         def sign_tx(wallet_id, tx)
           switch_wallet(wallet_id) do |client|
             res = client.signrawtransactionwithwallet(tx.to_hex)
-            Tapyrus::Tx.parse_from_payload(res['hex'].htb)
+            if res['complete']
+              Tapyrus::Tx.parse_from_payload(res['hex'].htb)
+            else
+              raise res['errors'].to_json
+            end
           end
         end
 

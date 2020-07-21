@@ -166,7 +166,8 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
     let(:response) do
       {
-        'hex' => '01000000010c22d3f121927c8a241a93cfbb1d6afc451ec7d32e8d37d63eb78d69afc555050000000000ffffffff020000000000000000226a204bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459af0b9f505000000001976a914b0179f0d7d738a51cca26d54d50329cab60a8c1388ac00000000'
+        'hex' => '01000000010c22d3f121927c8a241a93cfbb1d6afc451ec7d32e8d37d63eb78d69afc555050000000000ffffffff020000000000000000226a204bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459af0b9f505000000001976a914b0179f0d7d738a51cca26d54d50329cab60a8c1388ac00000000',
+        'complete' => true
       }
     end
 
@@ -177,6 +178,17 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
     it_behaves_like 'If the wallet is unloaded, it should raise WalletUnloaded error.' do
       let(:rpc_name) { :signrawtransactionwithwallet }
+    end
+
+    context 'signrawtransactionwithwallet RPC returns a error' do
+      let(:response) do
+        JSON.parse('{"hex":"01000000010c22d3f121927c8a241a93cfbb1d6afc451ec7d32e8d37d63eb78d69afc555050000000000ffffffff020000000000000000226a204bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459af0b9f505000000001976a9141989373d44a421a92df00d0237ab85dadd1d229088ac00000000","complete":false,"errors":[{"txid":"0555c5af698db73ed6378d2ed3c71e45fc6a1dbbcf931a248a7c9221f1d3220c","vout":0,"witness":[],"scriptSig":"","sequence":4294967295,"error":"Input not found or already spent"}]}')
+      end
+
+      it 'should raise RuntimeError with received messages' do
+        expect(rpc).to receive(:signrawtransactionwithwallet).and_return(response)
+        expect { subject }.to raise_error(error=RuntimeError, message='[{"txid":"0555c5af698db73ed6378d2ed3c71e45fc6a1dbbcf931a248a7c9221f1d3220c","vout":0,"witness":[],"scriptSig":"","sequence":4294967295,"error":"Input not found or already spent"}]')
+      end
     end
   end
 
