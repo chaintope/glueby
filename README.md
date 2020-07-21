@@ -31,7 +31,7 @@ Glueby has below features.
 ```ruby
 
 config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Glueby::Contract::RPC.configure(config)
+Glueby::Internal::RPC.configure(config)
 
 timestamp = Glueby::Contract::Timestamp.new(content: "\x01\x02\x03")
 timestamp.save!
@@ -111,7 +111,7 @@ Install task creates a file `glueby.rb` in `config/initializers` directory like 
 require 'tapyrus'
 # Edit configuration for connection to tapyrus core
 config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Glueby::Contract::RPC.configure(config)
+Glueby::Internal::RPC.configure(config)
 ```
 
 If you use timestamp feature, use `glueby:contract:timestamp` generator.

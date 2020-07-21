@@ -14,7 +14,7 @@ module Glueby
 
         def create_wallet
           wallet_id = SecureRandom.hex(32)
-          Contract::RPC.client.createwallet(wallet_name(wallet_id))
+          RPC.client.createwallet(wallet_name(wallet_id))
           wallet_id
         end
 
@@ -25,15 +25,15 @@ module Glueby
         end
 
         def load_wallet(wallet_id)
-          Contract::RPC.client.loadwallet(wallet_name(wallet_id))
+          RPC.client.loadwallet(wallet_name(wallet_id))
         end
 
         def unload_wallet(wallet_id)
-          Contract::RPC.client.unloadwallet(wallet_name(wallet_id))
+          RPC.client.unloadwallet(wallet_name(wallet_id))
         end
 
         def wallets
-          Contract::RPC.client.listwallets.map do |wallet_name|
+          RPC.client.listwallets.map do |wallet_name|
             match = /\A#{WALLET_PREFIX}(?<wallet_id>[0-9A-Fa-f]{64})\z/.match(wallet_name)
             next unless match
 
@@ -96,7 +96,7 @@ module Glueby
         private
 
         def switch_wallet(wallet_id)
-          Contract::RPC.switch_wallet(wallet_name(wallet_id)) do |client|
+          RPC.switch_wallet(wallet_name(wallet_id)) do |client|
             begin
               yield(client)
             rescue RuntimeError => ex

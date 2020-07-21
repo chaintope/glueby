@@ -1,5 +1,5 @@
 module Glueby
-  module Contract
+  module Internal
     module RPC
       module_function
 

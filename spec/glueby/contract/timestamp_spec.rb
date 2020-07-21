@@ -28,7 +28,7 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
     end
 
     before do
-      allow(Glueby::Contract::RPC).to receive(:client).and_return(rpc)
+      allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
       allow(rpc).to receive(:listunspent).and_return(response_listunspent)
       allow(rpc).to receive(:signrawtransactionwithwallet).and_return(response_signrawtransactionwithwallet)
       allow(rpc).to receive(:sendrawtransaction).and_return('a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c')

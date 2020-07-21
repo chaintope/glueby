@@ -16,8 +16,8 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   let(:rpc) { double('mock') }
 
   before do
-    allow(Glueby::Contract::RPC).to receive(:client).and_return(rpc)
-    allow(Glueby::Contract::RPC).to receive(:switch_wallet) { |&block| block.call(rpc) }
+    allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
+    allow(Glueby::Internal::RPC).to receive(:switch_wallet) { |&block| block.call(rpc) }
   end
 
   describe 'create_wallet' do
