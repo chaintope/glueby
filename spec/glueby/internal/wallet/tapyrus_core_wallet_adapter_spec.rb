@@ -5,14 +5,14 @@ RSpec.shared_examples 'If the wallet is unloaded, it should raise WalletUnloaded
                      .and_raise(RuntimeError.new('{"code"=>-18, "message"=>"Requested wallet does not exist or is not loaded"}'))
     expect { subject }
       .to raise_error(
-        Glueby::Wallet::Errors::WalletUnloaded,
+        Glueby::Internal::Wallet::Errors::WalletUnloaded,
         "The wallet #{wallet_id} is unloaded. You should load before use it."
       )
   end
 end
 
-RSpec.describe 'Glueby::Wallet::TapyrusCoreWalletAdapter' do
-  let(:adapter) { Glueby::Wallet::TapyrusCoreWalletAdapter.new }
+RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
+  let(:adapter) { Glueby::Internal::Wallet::TapyrusCoreWalletAdapter.new }
   let(:rpc) { double('mock') }
 
   before do
