@@ -104,11 +104,14 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
-        # Returns a public key.
+        # Returns a new public key.
+        #
+        # This method is expected to returns a new public key. The key would generate internally. This key is provided
+        # for contracts that need public key such as multi sig transaction.
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @return [Tapyrus::Key]
-        def pubkey(wallet_id)
+        def create_pubkey(wallet_id)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
       end
