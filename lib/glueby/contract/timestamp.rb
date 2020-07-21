@@ -42,28 +42,28 @@ module Glueby
         end
 
         def create_change_script
-          address = Glueby::Contract::RPC.client.getnewaddress
+          address = Glueby::Internal::RPC.client.getnewaddress
           decoded = Tapyrus.decode_base58_address(address)
           Tapyrus::Script.to_p2pkh(decoded[0])
         end
 
         def sign_tx(tx)
           # TODO: Implement SignatureProvider
-          response = Glueby::Contract::RPC.client.signrawtransactionwithwallet(tx.to_payload.bth)
+          response = Glueby::Internal::RPC.client.signrawtransactionwithwallet(tx.to_payload.bth)
           Tapyrus::Tx.parse_from_payload(response['hex'].htb)
         end
 
         def list_unspent
           # TODO: Implement UtxoProvider
-          Glueby::Contract::RPC.client.listunspent(0, 999_999)
+          Glueby::Internal::RPC.client.listunspent(0, 999_999)
         end
 
         def broadcast_tx(tx)
-          Glueby::Contract::RPC.client.sendrawtransaction(tx.to_payload.bth)
+          Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth)
         end
 
         def get_transaction(tx)
-          Glueby::Contract::RPC.client.getrawtransaction(tx.txid, 1)
+          Glueby::Internal::RPC.client.getrawtransaction(tx.txid, 1)
         end
       end
       include Glueby::Contract::Timestamp::Util

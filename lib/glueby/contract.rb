@@ -3,7 +3,6 @@ module Glueby
     autoload :Errors, 'glueby/contract/errors'
     autoload :FeeProvider, 'glueby/contract/fee_provider'
     autoload :FixedFeeProvider, 'glueby/contract/fee_provider'
-    autoload :RPC, 'glueby/contract/rpc'
     autoload :Timestamp, 'glueby/contract/timestamp'
     autoload :TxBuilder, 'glueby/contract/tx_builder'
     autoload :WalletFeature, 'glueby/contract/wallet_feature'

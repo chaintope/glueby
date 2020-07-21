@@ -16,7 +16,7 @@ module Glueby
     # ```ruby
     # # Setup Tapyrus Core RPC connection
     # config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-    # Glueby::Contract::RPC.configure(config)
+    # Glueby::Internal::RPC.configure(config)
     #
     # # Setup wallet adapter
     # Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::TapyrusCoreWalletAdapter.new
