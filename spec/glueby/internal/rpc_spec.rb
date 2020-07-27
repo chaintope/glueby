@@ -27,5 +27,20 @@ RSpec.describe 'Glueby::Internal::RPC' do
       # It should returns the value the block returns.
       expect(rt).to eq 'Return value of the block'
     end
+
+    context 'raise an error on the RPC calling' do
+      it 'should revert wallet config when the block raises an error' do
+        begin
+          Glueby::Internal::RPC.perform_as(wallet_name) do
+            raise RuntimeError, 'an error'
+          end
+        rescue RuntimeError
+          # Ignore the error.
+        end
+
+        # It should revert the config.
+        expect(Glueby::Internal::RPC.client.config[:wallet]).to be_nil
+      end
+    end
   end
 end
