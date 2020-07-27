@@ -19,7 +19,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
   before do
     allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
-    allow(Glueby::Internal::RPC).to receive(:switch_wallet) { |&block| block.call(rpc) }
+    allow(Glueby::Internal::RPC).to receive(:perform_as) { |&block| block.call(rpc) }
   end
 
   describe 'create_wallet' do

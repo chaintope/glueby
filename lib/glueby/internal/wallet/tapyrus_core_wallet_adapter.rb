@@ -42,7 +42,7 @@ module Glueby
         end
 
         def balance(wallet_id, only_finalized = true)
-          switch_wallet(wallet_id) do |client|
+          perform_as(wallet_id) do |client|
             confirmed = tpc_to_tapyrus(client.getbalance)
             return confirmed if only_finalized
 
@@ -51,7 +51,7 @@ module Glueby
         end
 
         def list_unspent(wallet_id, only_finalized = true)
-          switch_wallet(wallet_id) do |client|
+          perform_as(wallet_id) do |client|
             min_conf = only_finalized ? 1 : 0
             res = client.listunspent(min_conf)
 
@@ -67,7 +67,7 @@ module Glueby
         end
 
         def sign_tx(wallet_id, tx)
-          switch_wallet(wallet_id) do |client|
+          perform_as(wallet_id) do |client|
             res = client.signrawtransactionwithwallet(tx.to_hex)
             if res['complete']
               Tapyrus::Tx.parse_from_payload(res['hex'].htb)
@@ -78,19 +78,19 @@ module Glueby
         end
 
         def receive_address(wallet_id)
-          switch_wallet(wallet_id) do |client|
+          perform_as(wallet_id) do |client|
             client.getnewaddress('', ADDRESS_TYPE)
           end
         end
 
         def change_address(wallet_id)
-          switch_wallet(wallet_id) do |client|
+          perform_as(wallet_id) do |client|
             client.getrawchangeaddress(ADDRESS_TYPE)
           end
         end
 
         def create_pubkey(wallet_id)
-          switch_wallet(wallet_id) do |client|
+          perform_as(wallet_id) do |client|
             address = client.getnewaddress('', ADDRESS_TYPE)
             info = client.getaddressinfo(address)
             Tapyrus::Key.new(pubkey: info['pubkey'])
@@ -99,8 +99,8 @@ module Glueby
 
         private
 
-        def switch_wallet(wallet_id)
-          RPC.switch_wallet(wallet_name(wallet_id)) do |client|
+        def perform_as(wallet_id)
+          RPC.perform_as(wallet_name(wallet_id)) do |client|
             begin
               yield(client)
             rescue RuntimeError => ex
