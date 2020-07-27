@@ -7,6 +7,10 @@ RSpec.describe 'Glueby::Internal::Wallet' do
     Glueby::Internal::Wallet.wallet_adapter = TestWalletAdapter.new
   end
 
+  after do
+    Glueby::Internal::Wallet.wallet_adapter = nil
+  end
+
   describe 'create' do
     subject { Glueby::Internal::Wallet.create }
     it { should be_a Glueby::Internal::Wallet }
