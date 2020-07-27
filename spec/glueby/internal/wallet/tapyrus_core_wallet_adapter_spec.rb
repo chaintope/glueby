@@ -11,7 +11,7 @@ RSpec.shared_examples 'If the wallet is unloaded, it should raise WalletUnloaded
   end
 end
 
-ARBITRARY_WALLET_ID = '00000000000000000000000000000000'
+ARBITRARY_WALLET_ID = '0000000000000000000000000000000000000000000000000000000000000000'
 
 RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   let(:adapter) { Glueby::Internal::Wallet::TapyrusCoreWalletAdapter.new }
