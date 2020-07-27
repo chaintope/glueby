@@ -11,6 +11,8 @@ RSpec.shared_examples 'If the wallet is unloaded, it should raise WalletUnloaded
   end
 end
 
+ARBITRARY_WALLET_ID = '00000000000000000000000000000000'
+
 RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   let(:adapter) { Glueby::Internal::Wallet::TapyrusCoreWalletAdapter.new }
   let(:rpc) { double('mock') }
@@ -57,7 +59,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
   describe 'balance' do
     subject { adapter.balance(wallet_id) }
-    let(:wallet_id) { SecureRandom.hex(32) }
+    let(:wallet_id) { ARBITRARY_WALLET_ID }
 
     let(:response) { '0.00000100' }
 
@@ -85,7 +87,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   describe 'list_unspent' do
     subject { adapter.list_unspent(wallet_id, only_finalized) }
 
-    let(:wallet_id) { SecureRandom.hex(32) }
+    let(:wallet_id) { ARBITRARY_WALLET_ID }
     let(:only_finalized) { nil }
 
     let(:response) do
@@ -161,7 +163,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   describe 'sign_tx' do
     subject { adapter.sign_tx(wallet_id, tx) }
 
-    let(:wallet_id) { SecureRandom.hex(32) }
+    let(:wallet_id) { ARBITRARY_WALLET_ID }
     let(:tx) { Tapyrus::Tx.parse_from_payload("01000000010c22d3f121927c8a241a93cfbb1d6afc451ec7d32e8d37d63eb78d69afc555050000000000ffffffff020000000000000000226a204bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459af0b9f505000000001976a9141989373d44a421a92df00d0237ab85dadd1d229088ac00000000".htb) }
 
     let(:response) do
@@ -195,7 +197,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   describe 'receive_address' do
     subject { adapter.receive_address(wallet_id) }
 
-    let(:wallet_id) { SecureRandom.hex(32) }
+    let(:wallet_id) { ARBITRARY_WALLET_ID }
     let(:response) { 'mjRTJ97nY3zVuvspVQcCoKf3Q8zanVGF8g' }
 
     it 'should call getnewaddress RPC' do
@@ -211,7 +213,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   describe 'change_address' do
     subject { adapter.change_address(wallet_id) }
 
-    let(:wallet_id) { SecureRandom.hex(32) }
+    let(:wallet_id) { ARBITRARY_WALLET_ID }
     let(:response) { 'mjRTJ97nY3zVuvspVQcCoKf3Q8zanVGF8g' }
 
     it 'should call getrawchangeaddress RPC' do
@@ -227,7 +229,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   describe 'create_pubkey' do
     subject { adapter.create_pubkey(wallet_id) }
 
-    let(:wallet_id) { SecureRandom.hex(32) }
+    let(:wallet_id) { ARBITRARY_WALLET_ID }
     let(:getnewaddress_response) { 'mueLMubHXrk6ZxLb1H2C45rT7rraFvkrXM' }
     let(:getaddressinfo_response) do
       JSON.parse(<<-JSON)
