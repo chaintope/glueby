@@ -13,7 +13,7 @@ module Glueby
         RPC_WALLET_NOT_FOUND_ERROR_CODE = -18
 
         def create_wallet
-          wallet_id = SecureRandom.hex(32)
+          wallet_id = SecureRandom.hex(16)
           RPC.client.createwallet(wallet_name(wallet_id))
           wallet_id
         end
@@ -34,7 +34,7 @@ module Glueby
 
         def wallets
           RPC.client.listwallets.map do |wallet_name|
-            match = /\A#{WALLET_PREFIX}(?<wallet_id>[0-9A-Fa-f]{64})\z/.match(wallet_name)
+            match = /\A#{WALLET_PREFIX}(?<wallet_id>[0-9A-Fa-f]{32})\z/.match(wallet_name)
             next unless match
 
             match[:wallet_id]

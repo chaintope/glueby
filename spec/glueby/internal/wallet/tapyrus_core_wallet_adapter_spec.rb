@@ -11,7 +11,7 @@ RSpec.shared_examples 'If the wallet is unloaded, it should raise WalletUnloaded
   end
 end
 
-ARBITRARY_WALLET_ID = '0000000000000000000000000000000000000000000000000000000000000000'
+ARBITRARY_WALLET_ID = '00000000000000000000000000000000'
 
 RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   let(:adapter) { Glueby::Internal::Wallet::TapyrusCoreWalletAdapter.new }
@@ -27,7 +27,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     
     let(:response) do
       {
-        'name' => 'wallet-0828d0ce8ff358cd0d7b19ac5c43c3bbc77c9e42c062174d2901db8caa3a361b',
+        'name' => 'wallet-0828d0ce8ff358cd0d7b19ac5c43c3bb',
         'warning'=> ''
       }
     end
@@ -45,15 +45,14 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       [
         '',
         '1',
-        'wallet-2077c01e386889faa675f434498a4fb469c11adcb40e808459a6913f96aea0e4',
-        'wallet-c23366c9d24493db1bcd38955bd7347d5d7b248165e7da9f92c6d314cbc3ccd9'
+        'wallet-2077c01e386889faa675f434498a4fb4',
+        'wallet-c23366c9d24493db1bcd38955bd7347d'
       ]
     end
 
     it 'should returns array of wallet ids that is the tail of wallet names which starts with "wallet-" prefix.' do
       expect(rpc).to receive(:listwallets).and_return(response)
-      expect(subject).to eq %w[2077c01e386889faa675f434498a4fb469c11adcb40e808459a6913f96aea0e4
-                               c23366c9d24493db1bcd38955bd7347d5d7b248165e7da9f92c6d314cbc3ccd9]
+      expect(subject).to eq %w[2077c01e386889faa675f434498a4fb4 c23366c9d24493db1bcd38955bd7347d]
     end
   end
 
