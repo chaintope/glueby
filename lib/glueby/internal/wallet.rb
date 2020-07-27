@@ -50,8 +50,6 @@ module Glueby
         def wallet_adapter
           @wallet_adapter or
             raise Errors::ShouldInitializeWalletAdapter, 'You should initialize wallet adapter using `Glueby::Internal::Wallet.wallet_adapter = some wallet adapter instance`.'
-
-          @wallet_adapter
         end
       end
 
