@@ -26,9 +26,9 @@ module Glueby
       def perform_as(wallet)
         before = client.config[:wallet]
         client.config[:wallet] = wallet
-        result = yield(client)
+        yield(client)
+      ensure
         client.config[:wallet] = before
-        result
       end
     end
   end
