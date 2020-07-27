@@ -97,7 +97,7 @@ We can see the timestamp transaction using getrawblockchain command
 
 #### Rails support
 
-Gluby supports ruby on rails integration.
+Glueby supports ruby on rails integration.
 
 To use in rails, Add dependency to Gemfile.
 
