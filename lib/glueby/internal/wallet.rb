@@ -84,7 +84,7 @@ module Glueby
       end
 
       def create_pubkey
-        wallet_adapter.pubkey(id)
+        wallet_adapter.create_pubkey(id)
       end
 
       private
