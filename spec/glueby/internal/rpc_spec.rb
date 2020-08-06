@@ -4,6 +4,7 @@ RSpec.describe 'Glueby::Internal::RPC' do
     let(:wallet_name) { 'wallet' }
 
     before do
+      allow_any_instance_of(Tapyrus::RPC::TapyrusCoreClient).to receive(:request).with(:help).and_return("")
       Glueby::Internal::RPC.configure(config)
     end
 
