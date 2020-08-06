@@ -108,7 +108,6 @@ bin/rails glueby:contract:install
 
 Install task creates a file `glueby.rb` in `config/initializers` directory like this.
 ```
-require 'tapyrus'
 # Edit configuration for connection to tapyrus core
 config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
 Glueby::Internal::RPC.configure(config)

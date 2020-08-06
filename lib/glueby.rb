@@ -1,4 +1,5 @@
 require "glueby/version"
+require 'tapyrus'
 
 module Glueby
   autoload :Contract, 'glueby/contract'
