@@ -1,4 +1,4 @@
-# Glueby
+# Glueby [![Build Status](https://travis-ci.org/chaintope/glueby.svg?branch=master)](https://travis-ci.org/chaintope/glueby) [![Gem Version](https://badge.fury.io/rb/glueby.svg)](https://badge.fury.io/rb/glueby) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
 Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/glueby`. To experiment with that code, run `bin/console` for an interactive prompt.
 
