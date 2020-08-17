@@ -82,6 +82,7 @@ module Glueby
               {
                 txid: i['txid'],
                 vout: i['vout'],
+                script_pubkey: i['scriptPubKey'],
                 amount: tpc_to_tapyrus(i['amount']),
                 finalized: i['confirmations'] != 0
               }
@@ -89,9 +90,9 @@ module Glueby
           end
         end
 
-        def sign_tx(wallet_id, tx)
+        def sign_tx(wallet_id, tx, prevtxs = [])
           perform_as(wallet_id) do |client|
-            res = client.signrawtransactionwithwallet(tx.to_hex)
+            res = client.signrawtransactionwithwallet(tx.to_hex, prevtxs)
             if res['complete']
               Tapyrus::Tx.parse_from_payload(res['hex'].htb)
             else

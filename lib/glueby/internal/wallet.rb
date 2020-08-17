@@ -75,8 +75,8 @@ module Glueby
         wallet_adapter.delete_wallet(id)
       end
 
-      def sign_tx(tx)
-        wallet_adapter.sign_tx(id, tx)
+      def sign_tx(tx, prev_txs = [])
+        wallet_adapter.sign_tx(id, tx, prev_txs)
       end
 
       def receive_address
