@@ -4,6 +4,7 @@ module Glueby
       module Errors
         class ShouldInitializeWalletAdapter < StandardError; end
         class WalletUnloaded < StandardError; end
+        class WalletAlreadyLoaded < StandardError; end
       end
     end
   end

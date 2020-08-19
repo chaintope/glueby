@@ -31,7 +31,7 @@ module Glueby
         # wallet, `load_wallet` can be empty method.
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
-        # @return [Boolean] The boolean value whether the loading was success.
+        # @raise [Glueby::Internal::Wallet::Errors::WalletAlreadyLoaded] when the specified wallet has been already loaded.
         def load_wallet(wallet_id)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end

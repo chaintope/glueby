@@ -24,7 +24,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
   describe 'create_wallet' do
     subject { adapter.create_wallet }
-    
+
     let(:response) do
       {
         'name' => 'wallet-0828d0ce8ff358cd0d7b19ac5c43c3bb',
@@ -35,6 +35,32 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     it 'should call createwallet RPC' do
       expect(rpc).to receive(:createwallet).and_return(response)
       subject
+    end
+  end
+
+  describe 'load_wallet' do
+    subject { adapter.load_wallet(wallet_id) }
+    
+    let(:response) do
+      {
+        'name' => 'wallet-0828d0ce8ff358cd0d7b19ac5c43c3bb',
+        'warning'=> ''
+      }
+    end
+    let(:wallet_id) { '0828d0ce8ff358cd0d7b19ac5c43c3bb' }
+
+    it 'should call loadwallet RPC' do
+      expect(rpc).to receive(:loadwallet).and_return(response)
+      subject
+    end
+
+    context 'if already loaded' do
+      let(:error) { RuntimeError.new('{"code"=>-4, "message"=>"Wallet file verification failed: Error loading wallet wallet-0828d0ce8ff358cd0d7b19ac5c43c3bb. Duplicate -wallet filename specified."}') }
+
+      it do
+        allow(rpc).to receive(:loadwallet).and_raise(error)
+        expect { subject }.to raise_error Glueby::Internal::Wallet::Errors::WalletAlreadyLoaded
+      end
     end
   end
 
