@@ -55,10 +55,10 @@ module Glueby
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @param [Boolean] only_finalized - The balance includes only finalized UTXO value if it
-        #                                   is true. Default is false.
+        #                                   is true. Default is true.
         # @return [Integer] The balance of the wallet. The unit is 'tapyrus'.
         #                   1 TPC equals to 10^8 'tapyrus'.
-        def balance(wallet_id, only_finalized = false)
+        def balance(wallet_id, only_finalized = true)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
@@ -66,7 +66,7 @@ module Glueby
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @param [Boolean] only_finalized - The UTXOs includes only finalized UTXO value if it
-        #                                   is true. Default is false.
+        #                                   is true. Default is true.
         # @return [Array of UTXO]
         #
         # ## The UTXO structure
