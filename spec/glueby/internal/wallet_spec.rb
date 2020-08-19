@@ -1,6 +1,7 @@
 RSpec.describe 'Glueby::Internal::Wallet' do
   class TestWalletAdapter < Glueby::Internal::Wallet::AbstractWalletAdapter
     def create_wallet; end
+    def load_wallet(wallet_id); end
   end
 
   before do
@@ -14,6 +15,29 @@ RSpec.describe 'Glueby::Internal::Wallet' do
   describe 'create' do
     subject { Glueby::Internal::Wallet.create }
     it { should be_a Glueby::Internal::Wallet }
+  end
+
+  describe 'load' do
+    subject { Glueby::Internal::Wallet.load(wallet_id) }
+
+    let(:wallet_id) { '0828d0ce8ff358cd0d7b19ac5c43c3bb' }
+
+    it { expect(subject).to be_kind_of Glueby::Internal::Wallet }
+
+    context 'if already loaded' do
+      let(:error) { Glueby::Internal::Wallet::Errors::WalletAlreadyLoaded }
+
+      it do
+        allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:load_wallet).and_raise(error)
+        expect { subject }.not_to raise_error
+      end
+    end
+
+    context 'if not initialized' do
+      before { Glueby::Internal::Wallet.wallet_adapter = nil }
+
+      it { expect { subject }.to raise_error(Glueby::Internal::Wallet::Errors::ShouldInitializeWalletAdapter) }
+    end
   end
 
   describe 'ShouldInitializeWalletAdapter Error' do

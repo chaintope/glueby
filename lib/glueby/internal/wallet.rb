@@ -39,7 +39,11 @@ module Glueby
         end
 
         def load(wallet_id)
-          wallet_adapter.load_wallet(wallet_id)
+          begin
+            wallet_adapter.load_wallet(wallet_id)
+          rescue Errors::WalletAlreadyLoaded => _
+            # Ignore when wallet is already loaded.
+          end
           new(wallet_id)
         end
 
