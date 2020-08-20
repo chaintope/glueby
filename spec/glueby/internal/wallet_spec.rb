@@ -22,14 +22,14 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
     let(:wallet_id) { '0828d0ce8ff358cd0d7b19ac5c43c3bb' }
 
-    it { expect(subject).to be_kind_of Glueby::Internal::Wallet }
+    it { expect(subject.id).to eq wallet_id }
 
     context 'if already loaded' do
       let(:error) { Glueby::Internal::Wallet::Errors::WalletAlreadyLoaded }
 
       it do
         allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:load_wallet).and_raise(error)
-        expect { subject }.not_to raise_error
+        expect(subject.id).to eq wallet_id
       end
     end
 
