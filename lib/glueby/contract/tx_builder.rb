@@ -8,7 +8,7 @@ module Glueby
       # @raise [InsufficientFunds] if result of listunspent is not enough to pay the specified amount
       def collect_outputs(results, amount)
         results.inject([0, []]) do |sum, output|
-          new_sum = sum[0] + (output['amount'] * 100_000_000)
+          new_sum = sum[0] + (output['amount'].to_i * 100_000_000)
           new_outputs = sum[1] << output
           return [new_sum, new_outputs] if new_sum >= amount
 
