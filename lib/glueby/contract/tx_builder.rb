@@ -1,6 +1,8 @@
 module Glueby
   module Contract
     module TxBuilder
+      include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
+
       # collect outputs in results so that sum of them exceeds up to the specified amount.
       # @param [Array] results of listunspent
       # @param [Numeric] amount
@@ -8,7 +10,7 @@ module Glueby
       # @raise [InsufficientFunds] if result of listunspent is not enough to pay the specified amount
       def collect_outputs(results, amount)
         results.inject([0, []]) do |sum, output|
-          new_sum = sum[0] + (output['amount'].to_i * 100_000_000)
+          new_sum = sum[0] + tpc_to_tapyrus(output['amount'])
           new_outputs = sum[1] << output
           return [new_sum, new_outputs] if new_sum >= amount
 
