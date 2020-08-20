@@ -7,6 +7,21 @@ module Glueby
   module Internal
     class Wallet
       class TapyrusCoreWalletAdapter < AbstractWalletAdapter
+        module Util
+          module_function
+
+          # Convert TPC to tapyrus. 1 TPC is 10**8 tapyrus.
+          # @param [String] tpc
+          # @return [Integer] tapyrus
+          #
+          # Example) "0.00000010" to 10.
+          def tpc_to_tapyrus(tpc)
+            (BigDecimal(tpc) * 10**8).to_i
+          end
+        end
+
+        include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
+
         WALLET_PREFIX = 'wallet-'
         ADDRESS_TYPE = 'legacy'
 
@@ -122,15 +137,6 @@ module Glueby
 
         def wallet_name(wallet_id)
           "#{WALLET_PREFIX}#{wallet_id}"
-        end
-
-        # Convert TPC to tapyrus. 1 TPC is 10**8 tapyrus.
-        # @param [String] tpc
-        # @return [Integer] tapyrus
-        #
-        # Example) "0.00000010" to 10.
-        def tpc_to_tapyrus(tpc)
-          (BigDecimal(tpc) * 10**8).to_i
         end
       end
     end
