@@ -26,11 +26,11 @@ RSpec.describe 'Glueby::Contract::Task::Timestamp' do
     [{
       'txid' => '0555c5af698db73ed6378d2ed3c71e45fc6a1dbbcf931a248a7c9221f1d3220c',
       'vout' => 0,
-      'amount' => 1.00000000
+      'amount' => '1.00000000'
     }, {
       'txid' => 'ac56a45f094f9d9e5af2f5f65e8e82e41db18f62646c53b1cefab081a60a11c7',
       'vout' => 0,
-      'amount' => 1.00000000
+      'amount' => '1.00000000'
     }]
   end
   let(:response_signrawtransactionwithwallet) do
@@ -45,8 +45,8 @@ RSpec.describe 'Glueby::Contract::Task::Timestamp' do
       "features"=>1, "size"=>128, "vsize"=>128, "weight"=>512, "locktime"=>0, 
       "vin"=>[{"txid"=>"0555c5af698db73ed6378d2ed3c71e45fc6a1dbbcf931a248a7c9221f1d3220c", "vout"=>0, "scriptSig"=>{"asm"=>"", "hex"=>""}, "sequence"=>4294967295}], 
       "vout"=>[
-        {"value"=>0.0, "n"=>0, "scriptPubKey"=>{"asm"=>"OP_RETURN 4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a", "hex"=>"6a204bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a", "type"=>"nulldata"}}, 
-        {"value"=>0.9999, "n"=>1, "scriptPubKey"=>{"asm"=>"OP_DUP OP_HASH160 b0179f0d7d738a51cca26d54d50329cab60a8c13 OP_EQUALVERIFY OP_CHECKSIG", "hex"=>"76a914b0179f0d7d738a51cca26d54d50329cab60a8c1388ac", "reqSigs"=>1, "type"=>"pubkeyhash", "addresses"=>["1H46Dzw3DaeV4QKGYMhnNHY6zViHWcBp6w"]}}
+        {"value"=>"0.0", "n"=>0, "scriptPubKey"=>{"asm"=>"OP_RETURN 4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a", "hex"=>"6a204bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a", "type"=>"nulldata"}}, 
+        {"value"=>"0.9999", "n"=>1, "scriptPubKey"=>{"asm"=>"OP_DUP OP_HASH160 b0179f0d7d738a51cca26d54d50329cab60a8c13 OP_EQUALVERIFY OP_CHECKSIG", "hex"=>"76a914b0179f0d7d738a51cca26d54d50329cab60a8c1388ac", "reqSigs"=>1, "type"=>"pubkeyhash", "addresses"=>["1H46Dzw3DaeV4QKGYMhnNHY6zViHWcBp6w"]}}
       ],
       "blockhash" => "02d65a0e88f8427bff77cee0a0b90eeddab927ebfcaf8c57b9c57d2b95219a81",
       "confirmations" => 282,
