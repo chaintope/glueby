@@ -11,6 +11,7 @@ module Glueby
       include Glueby::Contract::TxBuilder
 
       module Util
+        include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
         module_function
 
         def create_tx(prefix, data_hash, fee_provider)
@@ -55,7 +56,8 @@ module Glueby
 
         def list_unspent
           # TODO: Implement UtxoProvider
-          Glueby::Internal::RPC.client.listunspent(0, 999_999)
+          res = Glueby::Internal::RPC.client.listunspent(0, 999_999)
+          res.map { |i| i.merge({ 'amount' => tpc_to_tapyrus(i['amount']) }) }
         end
 
         def broadcast_tx(tx)
