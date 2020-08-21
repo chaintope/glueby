@@ -13,11 +13,11 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
       [{
         'txid' => '0555c5af698db73ed6378d2ed3c71e45fc6a1dbbcf931a248a7c9221f1d3220c',
         'vout' => 0,
-        'amount' => '1.00000000'
+        'amount' => 100000000
       }, {
         'txid' => 'ac56a45f094f9d9e5af2f5f65e8e82e41db18f62646c53b1cefab081a60a11c7',
         'vout' => 0,
-        'amount' => '1.00000000'
+        'amount' => 100000000
       }]
     end
 

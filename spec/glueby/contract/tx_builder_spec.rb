@@ -8,15 +8,15 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     [{
       'txid' => '0555c5af698db73ed6378d2ed3c71e45fc6a1dbbcf931a248a7c9221f1d3220c',
       'vout' => 0,
-      'amount' => '0.90000000'
+      'amount' => 100000000
     }, {
       'txid' => 'ac56a45f094f9d9e5af2f5f65e8e82e41db18f62646c53b1cefab081a60a11c7',
       'vout' => 0,
-      'amount' => '1.10000000'
+      'amount' => 100000000
     }, {
       'txid' => '266cf0f9dd234deb68f6c7fc2f733b6ce3fc02ae43ffa80a7374014c9609f460',
       'vout' => 4,
-      'amount' => '1.00000000'
+      'amount' => 100000000
     }]
   end
 
