@@ -145,19 +145,26 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
   end
 
   describe '#create_reissue_tx' do
-    subject { mock.create_reissue_tx(issuer: issuer, amount: amount, funding_script: funding_script, color_id: color_id) }
+    subject { mock.create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id) }
 
+    let(:funding_tx) do
+      tx = Tapyrus::Tx.new
+      tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid('5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5', 0))
+      tx.outputs << Tapyrus::TxOut.new(value: 100_000_000, script_pubkey: script_pubkey)
+      tx
+    end
+    let(:script_pubkey) { Tapyrus::Script.parse_from_payload('76a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
     let(:issuer) { wallet }
     let(:amount) { 1_000 }
-    let(:funding_script) { Tapyrus::Script.parse_from_payload('76a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
 
-    it { expect(subject.size).to eq 2 }
-    it { expect(subject[1].inputs.size).to eq 1 }
-    it { expect(subject[1].outputs.size).to eq 1 }
-    it { expect(subject[1].outputs[0].value).to eq 1_000 }
-    it { expect(subject[1].outputs[0].colored?).to be_truthy }
-    it { expect(subject[1].outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    it { expect(subject.inputs.size).to eq 1 }
+    it { expect(subject.inputs[0].out_point.txid).to eq funding_tx.txid }
+    it { expect(subject.inputs[0].out_point.index).to eq 0 }
+    it { expect(subject.outputs.size).to eq 2 }
+    it { expect(subject.outputs[0].value).to eq 1_000 }
+    it { expect(subject.outputs[0].colored?).to be_truthy }
+    it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
   end
   
   describe '#create_transfer_tx' do

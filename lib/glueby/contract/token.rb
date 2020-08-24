@@ -76,7 +76,7 @@ module Glueby
         private
 
         def issue_reissuable_token(issuer:, amount:)
-          estimated_fee = 20_000
+          estimated_fee = FixedFeeProvider.new.fee(Tapyrus::Tx.new)
           funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee)
           tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount)
           payload = funding_tx.outputs.first.script_pubkey.to_payload
@@ -107,9 +107,11 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
 
+        estimated_fee = FixedFeeProvider.new.fee(Tapyrus::Tx.new)
         funding_script = Tapyrus::Script.parse_from_payload(@payload)
-        txs = create_reissue_tx(issuer: issuer, amount: amount, funding_script: funding_script, color_id: color_id)
-        txs.each { |tx| Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth) }
+        funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: funding_script)
+        tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
+        [funding_tx, tx].each { |tx| Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth) }
       end
 
       # Send the token to other wallet
