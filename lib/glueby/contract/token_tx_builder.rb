@@ -10,7 +10,7 @@ module Glueby
       end
 
       # Create new public key, and new transaction that sends TPC to it
-      def create_funding_tx(wallet:, amount:, fee_provider: FixedFeeProvider.new)
+      def create_funding_tx(wallet:, amount:, script: nil, fee_provider: FixedFeeProvider.new)
         tx = Tapyrus::Tx.new
         fee = fee_provider.fee(tx)
 
@@ -18,10 +18,10 @@ module Glueby
         sum, outputs = collect_uncolored_outputs(utxos, fee + amount)
         fill_input(tx, outputs)
 
-        receive_script = Tapyrus::Script.parse_from_addr(wallet.receive_address)
-        tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receive_script)
+        receiver_script = script ? script : Tapyrus::Script.parse_from_addr(wallet.receive_address)
+        tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_script)
 
-        fill_change_tpc(tx, wallet, sum - amount - fee)
+        fill_change_tpc(tx, wallet, sum - fee - amount)
         wallet.sign_tx(tx)
       end
 
@@ -33,7 +33,7 @@ module Glueby
         tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
         output = funding_tx.outputs.first
 
-        receiver_script = Tapyrus::Script.parse_from_payload(output.script_pubkey.to_payload)
+        receiver_script = Tapyrus::Script.parse_from_addr(issuer.receive_address)
         color_id = Tapyrus::Color::ColorIdentifier.reissuable(receiver_script)
         receiver_colored_script = receiver_script.add_color(color_id)
         tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
@@ -87,19 +87,7 @@ module Glueby
         issuer.sign_tx(tx)
       end
 
-      def create_reissue_tx(issuer:, amount:, funding_script:, color_id:, fee_provider: FixedFeeProvider.new)
-        funding_tx = Tapyrus::Tx.new
-        fee = fee_provider.fee(funding_tx)
-
-        utxos = issuer.list_unspent
-        sum, outputs = collect_uncolored_outputs(utxos, fee + amount)
-        fill_input(funding_tx, outputs)
-
-        funding_tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: funding_script)
-
-        fill_change_tpc(funding_tx, issuer, sum - amount - fee)
-        funding_tx = issuer.sign_tx(funding_tx)
-
+      def create_reissue_tx(funding_tx:, issuer:, amount:, color_id:, fee_provider: FixedFeeProvider.new)
         tx = Tapyrus::Tx.new
         fee = fee_provider.fee(tx)
 
@@ -107,13 +95,18 @@ module Glueby
         tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
         output = funding_tx.outputs.first
 
-        receiver_script = Tapyrus::Script.parse_from_payload(output.script_pubkey.to_payload)
+        receiver_script = Tapyrus::Script.parse_from_addr(issuer.receive_address)
         receiver_colored_script = receiver_script.add_color(color_id)
         tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
 
         fill_change_tpc(tx, issuer, output.value - fee)
-        issuer.sign_tx(tx)
-        [funding_tx, tx]
+        prev_txs = [{
+          txid: funding_tx.txid,
+          vout: 0,
+          scriptPubKey: output.script_pubkey.to_hex,
+          amount: output.value
+        }]
+        issuer.sign_tx(tx, prev_txs)
       end
 
       def create_transfer_tx(color_id:, sender:, receiver:, amount:, fee_provider: FixedFeeProvider.new)
