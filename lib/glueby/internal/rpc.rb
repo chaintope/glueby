@@ -4,11 +4,11 @@ module Glueby
       module_function
 
       def client
-        @rpc
+        @rpc ||= Tapyrus::RPC::TapyrusCoreClient.new(@config)
       end
 
       def configure(config)
-        @rpc = Tapyrus::RPC::TapyrusCoreClient.new(config)
+        @config = config
       end
 
       # Perform RPC call on the specific wallet.
