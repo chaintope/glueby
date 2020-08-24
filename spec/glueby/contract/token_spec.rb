@@ -2,6 +2,20 @@
 
 RSpec.describe 'Glueby::Contract::Token' do
   class TestWallet
+    def internal_wallet
+      @internal_wallet
+    end
+
+    def initialize(internal_wallet)
+      @internal_wallet = internal_wallet
+    end
+  end
+
+  class TestInternalWallet
+    def receive_address
+      '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
+    end
+
     def list_unspent
       []
     end
@@ -9,18 +23,15 @@ RSpec.describe 'Glueby::Contract::Token' do
     def change_address
       '1LUMPgobnSdbaA4iaikHKjCDLHveWYUSt5'
     end
-
-    def receive_address
-      '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
-    end
-
+  
     def sign_tx(tx, _prevtxs = [])
       tx
     end
   end
 
   let(:mock) { Mock.new }
-  let(:wallet) { TestWallet.new }
+  let(:wallet) { TestWallet.new(internal_wallet) }
+  let(:internal_wallet) { TestInternalWallet.new }
   let(:unspents) do
     [
       {
@@ -71,7 +82,7 @@ RSpec.describe 'Glueby::Contract::Token' do
 
   let(:rpc) { double('rpc') }
   before do
-    allow(wallet).to receive(:list_unspent).and_return(unspents)
+    allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
     allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
     allow(rpc).to receive(:sendrawtransaction).and_return('')
   end

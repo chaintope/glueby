@@ -6,25 +6,36 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
   end
 
   class TestWallet
-    def list_unspent
-      []
+    def internal_wallet
+      @internal_wallet
     end
 
-    def change_address
-      '1LUMPgobnSdbaA4iaikHKjCDLHveWYUSt5'
+    def initialize(internal_wallet)
+      @internal_wallet = internal_wallet
+    end
+  end
+
+  class TestInternalWallet
+    def list_unspent
+      []
     end
 
     def receive_address
       '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
     end
 
+    def change_address
+      '1LUMPgobnSdbaA4iaikHKjCDLHveWYUSt5'
+    end
+  
     def sign_tx(tx, _prevtxs = [])
       tx
     end
   end
 
   let(:mock) { TokenTxBuilderMock.new }
-  let(:wallet) { TestWallet.new }
+  let(:wallet) { TestWallet.new(internal_wallet) }
+  let(:internal_wallet) { TestInternalWallet.new }
   let(:unspents) do
     [
       {
@@ -73,7 +84,7 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
     ]
   end
 
-  before { allow(wallet).to receive(:list_unspent).and_return(unspents) }
+  before { allow(internal_wallet).to receive(:list_unspent).and_return(unspents) }
 
   describe '#create_funding_tx' do
     subject { mock.create_funding_tx(wallet: wallet, amount: amount) }
@@ -252,7 +263,6 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
   describe '#fill_change_tpc' do
     subject { mock.fill_change_tpc(tx, wallet, amount) }
     let(:tx) { Tapyrus::Tx.new }
-    let(:wallet) { TestWallet.new }
     let(:amount) { 1 }
 
     it { expect { subject }.to change { tx.outputs.size }.from(0).to(1) }

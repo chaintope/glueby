@@ -47,25 +47,5 @@ module Glueby
     def initialize(internal_wallet)
       @internal_wallet = internal_wallet
     end
-
-    module InternalWallet
-      refine Wallet do
-        def list_unspent
-          @internal_wallet.list_unspent
-        end
-
-        def change_address
-          @internal_wallet.change_address
-        end
-  
-        def receive_address
-          @internal_wallet.receive_address
-        end
-
-        def sign_tx(tx, prevtxs = [])
-          @internal_wallet.sign_tx(tx, prevtxs)
-        end
-      end
-    end
   end
 end

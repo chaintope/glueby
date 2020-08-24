@@ -41,7 +41,6 @@ module Glueby
     class Token
       include Glueby::Contract::TokenTxBuilder
       extend Glueby::Contract::TokenTxBuilder
-      using Glueby::Wallet::InternalWallet
 
       class << self
         # Issue new token with specified amount and token type.
@@ -150,7 +149,7 @@ module Glueby
       # @return [Integer] amount of utxo value associated with this token.
       def amount(wallet:)
         # collect utxo associated with this address
-        utxos = wallet.list_unspent
+        utxos = wallet.internal_wallet.list_unspent
         _, results = collect_colored_outputs(utxos, color_id)
         results.sum { |result| result[:amount] }
       end
