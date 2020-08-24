@@ -2,9 +2,7 @@
 
 RSpec.describe 'Glueby::Contract::Token' do
   class TestWallet
-    def internal_wallet
-      @internal_wallet
-    end
+    attr_reader :internal_wallet
 
     def initialize(internal_wallet)
       @internal_wallet = internal_wallet
