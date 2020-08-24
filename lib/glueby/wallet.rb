@@ -2,6 +2,8 @@
 
 module Glueby
   class Wallet
+    attr_reader :internal_wallet
+
     class << self
       def create
         new(Glueby::Internal::Wallet.create)

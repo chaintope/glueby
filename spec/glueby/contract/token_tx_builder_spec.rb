@@ -6,9 +6,7 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
   end
 
   class TestWallet
-    def internal_wallet
-      @internal_wallet
-    end
+    attr_reader :internal_wallet
 
     def initialize(internal_wallet)
       @internal_wallet = internal_wallet
