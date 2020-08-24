@@ -31,7 +31,7 @@ module Glueby
         tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
         output = funding_tx.outputs.first
 
-        receiver_script = Tapyrus::Script.parse_from_addr(issuer.internal_wallet.receive_address)
+        receiver_script = Tapyrus::Script.parse_from_payload(output.script_pubkey.to_payload)
         color_id = Tapyrus::Color::ColorIdentifier.reissuable(receiver_script)
         receiver_colored_script = receiver_script.add_color(color_id)
         tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
@@ -92,7 +92,7 @@ module Glueby
         tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
         output = funding_tx.outputs.first
 
-        receiver_script = Tapyrus::Script.parse_from_addr(issuer.internal_wallet.receive_address)
+        receiver_script = Tapyrus::Script.parse_from_payload(output.script_pubkey.to_payload)
         receiver_colored_script = receiver_script.add_color(color_id)
         tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
 
