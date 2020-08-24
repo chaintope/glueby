@@ -152,8 +152,7 @@ module Glueby
         # collect utxo associated with this address
         utxos = wallet.list_unspent
         _, results = collect_colored_outputs(utxos, color_id)
-        # sum amount in the utxos
-        results.inject(0) { |sum, result| sum + result[:amount] }
+        results.sum { |result| result[:amount] }
       end
 
       # Return color id
