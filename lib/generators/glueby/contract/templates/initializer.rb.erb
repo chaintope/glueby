@@ -1,3 +1,3 @@
 # Edit configuration for connection to tapyrus core
-config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Glueby::Internal::RPC.configure(config)
+config = {adapter: 'core', schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
+Glueby::Wallet.configure(config)
