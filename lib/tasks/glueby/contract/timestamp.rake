@@ -3,7 +3,7 @@ module Glueby
     module Task
       module Timestamp
         module_function
-        extend Glueby::Contract::TxBuilder
+        extend Glueby::Contract::TokenTxBuilder
         extend Glueby::Contract::Timestamp::Util
 
         def create
@@ -11,12 +11,12 @@ module Glueby
           timestamps.each do |t|
             begin
               ::ActiveRecord::Base.transaction do
-                tx = create_tx(t.prefix, t.content_hash, Glueby::Contract::FixedFeeProvider.new)
-                signed_tx = sign_tx(tx)
-                t.update(txid: signed_tx.txid, status: :unconfirmed)
+                wallet = Glueby::Wallet.load(t.wallet_id)
+                tx = create_tx(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeProvider.new)
+                t.update(txid: tx.txid, status: :unconfirmed)
 
-                broadcast_tx(signed_tx)
-                puts "broadcasted (id=#{t.id}, txid=#{signed_tx.txid})"
+                broadcast_tx(tx)
+                puts "broadcasted (id=#{t.id}, txid=#{tx.txid})"
               end
             rescue => e
               puts "failed to broadcast (id=#{t.id}, reason=#{e.message})"

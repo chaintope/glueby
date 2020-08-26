@@ -8,24 +8,23 @@ module Glueby
     #
     # Storing timestamp transaction to the blockchain enables everyone to verify that the data existed at that time and a user signed it.
     class Timestamp
-      include Glueby::Contract::TxBuilder
+      include Glueby::Contract::TokenTxBuilder
 
       module Util
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
         module_function
 
-        def create_tx(prefix, data_hash, fee_provider)
+        def create_tx(wallet, prefix, data_hash, fee_provider)
           tx = Tapyrus::Tx.new
           tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: create_script(prefix, data_hash))
   
-          results = list_unspent
-          fee = fee_provider.fee(tx)
-          sum, outputs = collect_outputs(results, fee)
+          results = wallet.internal_wallet.list_unspent
+          fee = fee_provider.fee(dummy_tx(tx))
+          sum, outputs = collect_uncolored_outputs(results, fee)
           fill_input(tx, outputs)
   
-          change_script = create_change_script
-          fill_change_output(tx, fee, change_script, sum)
-          tx
+          fill_change_tpc(tx, wallet, sum - fee)
+          wallet.internal_wallet.sign_tx(tx)
         end
   
         def create_payload(prefix, data_hash)
@@ -40,24 +39,6 @@ module Glueby
           script << Tapyrus::Script::OP_RETURN
           script << create_payload(prefix, data_hash)
           script
-        end
-
-        def create_change_script
-          address = Glueby::Internal::RPC.client.getnewaddress
-          decoded = Tapyrus.decode_base58_address(address)
-          Tapyrus::Script.to_p2pkh(decoded[0])
-        end
-
-        def sign_tx(tx)
-          # TODO: Implement SignatureProvider
-          response = Glueby::Internal::RPC.client.signrawtransactionwithwallet(tx.to_payload.bth)
-          Tapyrus::Tx.parse_from_payload(response['hex'].htb)
-        end
-
-        def list_unspent
-          # TODO: Implement UtxoProvider
-          res = Glueby::Internal::RPC.client.listunspent(0, 999_999)
-          res.map { |i| i.merge({ 'amount' => tpc_to_tapyrus(i['amount']) }) }
         end
 
         def broadcast_tx(tx)
@@ -76,10 +57,12 @@ module Glueby
       # @param [String] prefix prefix of op_return data
       # @param [Glueby::Contract::FeeProvider] fee_provider
       def initialize(
+        wallet:,
         content:,
         prefix: '',
         fee_provider: Glueby::Contract::FixedFeeProvider.new
       )
+        @wallet = wallet
         @content = content
         @prefix = prefix
         @fee_provider = fee_provider
@@ -92,8 +75,7 @@ module Glueby
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        @tx = create_tx(@prefix, Tapyrus.sha256(@content), @fee_provider)
-        @tx = sign_tx(@tx)
+        @tx = create_tx(@wallet, @prefix, Tapyrus.sha256(@content), @fee_provider)
         @txid = broadcast_tx(@tx)
       end
     end
