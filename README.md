@@ -24,16 +24,17 @@ Or install it yourself as:
 
 Glueby has below features.
 
-* [Timestamp](#Timestamp)
+- [Timestamp](#Timestamp)
 
 ### Timestamp
 
 ```ruby
 
-config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Glueby::Internal::RPC.configure(config)
+config = {adapter: 'core', schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
+Glueby::Wallet.configure(config)
 
-timestamp = Glueby::Contract::Timestamp.new(content: "\x01\x02\x03")
+wallet = Glueby::Wallet.create
+timestamp = Glueby::Contract::Timestamp.new(wallet: wallet, content: "\x01\x02\x03")
 timestamp.save!
 # "a01eace94ce6cdc30f389609de8a7584a4e208ee82fec33a2f5875b7cee47097"
 
@@ -102,18 +103,21 @@ Glueby supports ruby on rails integration.
 To use in rails, Add dependency to Gemfile.
 
 Then invoke install task.
+
 ```
 bin/rails glueby:contract:install
 ```
 
 Install task creates a file `glueby.rb` in `config/initializers` directory like this.
+
 ```
 # Edit configuration for connection to tapyrus core
-config = {schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Glueby::Internal::RPC.configure(config)
+config = {adapter: 'core', schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
+Glueby::Wallet.configure(config)
 ```
 
 If you use timestamp feature, use `glueby:contract:timestamp` generator.
+
 ```
 bin/rails g glueby:contract:timestamp
     create  db/migrate/20200613065511_create_timestamp.rb
@@ -127,13 +131,15 @@ bin/rails db:migrate
 Now, Glueby::Contract::AR::Timestamp model is available
 
 ```ruby
-irb(main):001:0> t = Glueby::AR::Contract::Timestamp.new(content:"\x01010101", prefix: "app")
-   (0.4ms)  SELECT sqlite_version(*)
-=> #<Glueby::AR::Contract::Timestamp id: nil, txid: nil, vout: nil, status: "init", content_hash: "9ccc644b03a88358a754962903a659a2d338767ee61674dde5...", prefix: "app">
-irb(main):002:0> t.save
+irb(main):001:0> wallet = Glueby::Wallet.create
+=> #<Glueby::Wallet:0x00007fe8333f7d98 @internal_wallet=#<Glueby::Internal::Wallet:0x00007fe8333f7dc0 @id="70a58204a7f4cb10d973b762f17fdb4b">>
+irb(main):003:0> t = Glueby::Contract::AR::Timestamp.new(wallet_id: wallet.id, content:"\x01010101", prefix: "app")
+   (0.5ms)  SELECT sqlite_version(*)
+=> #<Glueby::Contract::AR::Timestamp id: nil, txid: nil, status: "init", content_hash: "9ccc644b03a88358a754962903a659a2d338767ee61674dde5...", prefix: "app", wallet_id: "70a58204a7f4cb10d973b762f17fdb4b">
+irb(main):004:0> t.save
    (0.1ms)  begin transaction
-  Glueby::AR::Contract::Timestamp Create (0.7ms)  INSERT INTO "timestamps" ("status", "content_hash", "prefix") VALUES (?, ?, ?)  [["status", 0], ["content_hash", "9ccc644b03a88358a754962903a659a2d338767ee61674dde5434702a6256e6d"], ["prefix", "app"]]
-   (2.3ms)  commit transaction
+  Glueby::Contract::AR::Timestamp Create (0.4ms)  INSERT INTO "timestamps" ("status", "content_hash", "prefix", "wallet_id") VALUES (?, ?, ?, ?)  [["status", 0], ["content_hash", "9ccc644b03a88358a754962903a659a2d338767ee61674dde5434702a6256e6d"], ["prefix", "app"], ["wallet_id", "70a58204a7f4cb10d973b762f17fdb4b"]]
+   (2.1ms)  commit transaction
 => true
 ```
 
@@ -145,10 +151,11 @@ broadcasted (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd
 ```
 
 Run `glueby:contract:timestamp:confirm` task to confirm the transaction and update status(unconfirmed -> confirmded).
+
 ```
 bin/rails glueby:contract:timestamp:confirm
 confirmed (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
-``` 
+```
 
 ## Development
 
@@ -159,7 +166,6 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/glueby. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/tapyrus-contractrb/blob/master/CODE_OF_CONDUCT.md).
-
 
 ## License
 
