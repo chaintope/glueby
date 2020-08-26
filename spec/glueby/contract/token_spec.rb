@@ -1,33 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe 'Glueby::Contract::Token' do
-  class TestWallet
-    attr_reader :internal_wallet
-
-    def initialize(internal_wallet)
-      @internal_wallet = internal_wallet
-    end
-  end
-
-  class TestInternalWallet
-    def receive_address
-      '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
-    end
-
-    def list_unspent
-      []
-    end
-
-    def change_address
-      '1LUMPgobnSdbaA4iaikHKjCDLHveWYUSt5'
-    end
-  
-    def sign_tx(tx, _prevtxs = [])
-      tx
-    end
-  end
-
-  let(:mock) { Mock.new }
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
   let(:unspents) do

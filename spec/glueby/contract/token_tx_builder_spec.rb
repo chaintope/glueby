@@ -5,32 +5,6 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
     include Glueby::Contract::TokenTxBuilder
   end
 
-  class TestWallet
-    attr_reader :internal_wallet
-
-    def initialize(internal_wallet)
-      @internal_wallet = internal_wallet
-    end
-  end
-
-  class TestInternalWallet
-    def list_unspent
-      []
-    end
-
-    def receive_address
-      '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
-    end
-
-    def change_address
-      '1LUMPgobnSdbaA4iaikHKjCDLHveWYUSt5'
-    end
-  
-    def sign_tx(tx, _prevtxs = [])
-      tx
-    end
-  end
-
   let(:mock) { TokenTxBuilderMock.new }
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
