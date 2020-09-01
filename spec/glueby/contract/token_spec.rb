@@ -128,7 +128,7 @@ RSpec.describe 'Glueby::Contract::Token' do
   describe '#transfer!' do
     subject { token.transfer!(sender: sender, receiver: receiver, amount: amount) }
 
-    let(:token) { Glueby::Contract::Token.parse_from_payload('c176a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
+    let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
     let(:sender) { wallet }
     let(:receiver) { wallet }
     let(:amount) { 200_000 }
@@ -187,7 +187,7 @@ RSpec.describe 'Glueby::Contract::Token' do
   describe '#burn!' do
     subject { token.burn!(sender: sender, amount: amount) }
 
-    let(:token) { Glueby::Contract::Token.parse_from_payload('c176a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
+    let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
     let(:sender) { wallet }
     let(:amount) { 200_000 }
 
@@ -245,7 +245,7 @@ RSpec.describe 'Glueby::Contract::Token' do
   describe '#amount' do
     subject { token.amount(wallet: wallet) }
 
-    let(:token) { Glueby::Contract::Token.parse_from_payload('c176a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
+    let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
 
     it { is_expected.to eq 200_000 }
   end
@@ -253,16 +253,28 @@ RSpec.describe 'Glueby::Contract::Token' do
   describe '#color_id' do
     subject { token.color_id.to_payload.bth }
 
-    let(:token) { Glueby::Contract::Token.parse_from_payload('c176a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
+    let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
 
     it { is_expected.to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' }
+
+    context 'with no script pubkey' do
+      let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
+
+      it { is_expected.to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' }
+    end
   end
 
   describe '#to_payload' do
     subject { token.to_payload.bth }
 
-    let(:token) { Glueby::Contract::Token.parse_from_payload('c176a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
+    let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
 
-    it { is_expected.to eq 'c176a914234113b860822e68f9715d1957af28b8f5117ee288ac' }
+    it { is_expected.to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac' }
+
+    context 'with no script pubkey' do
+      let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
+
+      it { is_expected.to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' }
+    end
   end
 end

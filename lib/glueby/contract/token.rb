@@ -58,7 +58,7 @@ module Glueby
         def issue!(issuer:, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 1)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-          txs, payload = case token_type
+          txs, color_id, payload = case token_type
                          when Tapyrus::Color::TokenTypes::REISSUABLE
                            issue_reissuable_token(issuer: issuer, amount: amount)
                          when Tapyrus::Color::TokenTypes::NON_REISSUABLE
@@ -69,7 +69,7 @@ module Glueby
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
           txs.each { |tx| Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth) }
-          new(token_type: token_type, payload: payload)
+          new(color_id: color_id, payload: payload)
         end
 
         private
@@ -78,22 +78,27 @@ module Glueby
           estimated_fee = FixedFeeProvider.new.fee(Tapyrus::Tx.new)
           funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee)
           tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount)
-          payload = funding_tx.outputs.first.script_pubkey.to_payload
-          [[funding_tx, tx], payload]
+          script_pubkey = funding_tx.outputs.first.script_pubkey
+          color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
+          [[funding_tx, tx], color_id, script_pubkey.to_payload]
         end
 
         def issue_non_reissuable_token(issuer:, amount:)
           tx = create_issue_tx_for_non_reissuable_token(issuer: issuer, amount: amount)
-          payload = tx.inputs.first.out_point.to_payload
-          [[tx], payload]
+          out_point = tx.inputs.first.out_point
+          color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
+          [[tx], color_id, out_point.to_payload]
         end
 
         def issue_nft_token(issuer:)
           tx = create_issue_tx_for_nft_token(issuer: issuer)
-          payload = tx.inputs.first.out_point.to_payload
-          [[tx], payload]
+          out_point = tx.inputs.first.out_point
+          color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
+          [[tx], color_id, out_point.to_payload]
         end
       end
+
+      attr_reader :color_id
 
       # Re-issue the token with specified amount.
       # A wallet can issue the token only when it is REISSUABLE token.
@@ -102,9 +107,11 @@ module Glueby
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InvalidAmount] if amount is not positive integer.
       # @raise [InvalidTokenType] if token is not reissuable.
+      # @raise [UnknownScriptPubkey] when token is reissuable but it doesn't know script pubkey to issue token.
       def reissue!(issuer:, amount:)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
+        raise Glueby::Contract::Errors::UnknownScriptPubkey unless @payload
 
         estimated_fee = FixedFeeProvider.new.fee(Tapyrus::Tx.new)
         funding_script = Tapyrus::Script.parse_from_payload(@payload)
@@ -154,12 +161,6 @@ module Glueby
         results.sum { |result| result[:amount] }
       end
 
-      # Return color id
-      # @return [Tapyrus::Color::ColorIdentifier]
-      def color_id
-        Tapyrus::Color::ColorIdentifier.parse_from_payload([@token_type, Tapyrus.sha256(@payload)].pack('Ca*'))
-      end
-
       # Return token type
       # @return [Tapyrus::Color::TokenTypes]
       def token_type
@@ -169,21 +170,20 @@ module Glueby
       # Return serialized payload
       # @return [String] payload
       def to_payload
-        [@token_type, @payload].pack('Ca*')
+        [@color_id.to_payload, @payload].pack('a33a*')
       end
 
       # Restore token from payload
       # @param payload [String]
       # @return [Glueby::Contract::Token]
       def self.parse_from_payload(payload)
-        token_type, payload = payload.unpack('Ca*')
-        new(token_type: token_type, payload: payload)
+        color_id, payload = payload.unpack('a33a*')
+        color_id = Tapyrus::Color::ColorIdentifier.parse_from_payload(color_id)
+        new(color_id: color_id, payload: payload)
       end
 
-      private
-
-      def initialize(token_type: Tapyrus::Color::TokenTypes::REISSUABLE, payload:)
-        @token_type = token_type
+      def initialize(color_id:, payload:nil)
+        @color_id = color_id
         @payload = payload
       end
     end

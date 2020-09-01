@@ -7,6 +7,7 @@ module Glueby
       class InvalidTokenType < StandardError; end
       class TxAlreadyBroadcasted < StandardError; end
       class UnsupportedTokenType < StandardError; end
+      class UnknownScriptPubkey < StandardError; end
     end
   end
 end
