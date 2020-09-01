@@ -58,7 +58,7 @@ module Glueby
         def issue!(issuer:, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 1)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-          txs, color_id, payload = case token_type
+          txs, color_id, script_pubkey = case token_type
                          when Tapyrus::Color::TokenTypes::REISSUABLE
                            issue_reissuable_token(issuer: issuer, amount: amount)
                          when Tapyrus::Color::TokenTypes::NON_REISSUABLE
@@ -69,7 +69,7 @@ module Glueby
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
           txs.each { |tx| Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth) }
-          new(color_id: color_id, payload: payload)
+          new(color_id: color_id, script_pubkey: script_pubkey)
         end
 
         private
@@ -80,21 +80,21 @@ module Glueby
           tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount)
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
-          [[funding_tx, tx], color_id, script_pubkey.to_payload]
+          [[funding_tx, tx], color_id, script_pubkey]
         end
 
         def issue_non_reissuable_token(issuer:, amount:)
           tx = create_issue_tx_for_non_reissuable_token(issuer: issuer, amount: amount)
           out_point = tx.inputs.first.out_point
           color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
-          [[tx], color_id, out_point.to_payload]
+          [[tx], color_id, nil]
         end
 
         def issue_nft_token(issuer:)
           tx = create_issue_tx_for_nft_token(issuer: issuer)
           out_point = tx.inputs.first.out_point
           color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
-          [[tx], color_id, out_point.to_payload]
+          [[tx], color_id, nil]
         end
       end
 
@@ -111,11 +111,10 @@ module Glueby
       def reissue!(issuer:, amount:)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
-        raise Glueby::Contract::Errors::UnknownScriptPubkey unless @payload
+        raise Glueby::Contract::Errors::UnknownScriptPubkey unless @script_pubkey
 
         estimated_fee = FixedFeeProvider.new.fee(Tapyrus::Tx.new)
-        funding_script = Tapyrus::Script.parse_from_payload(@payload)
-        funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: funding_script)
+        funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
         tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
         [funding_tx, tx].each { |tx| Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth) }
       end
@@ -170,21 +169,24 @@ module Glueby
       # Return serialized payload
       # @return [String] payload
       def to_payload
-        [@color_id.to_payload, @payload].pack('a33a*')
+        payload = +''
+        payload << @color_id.to_payload
+        payload << @script_pubkey.to_payload
       end
 
       # Restore token from payload
       # @param payload [String]
       # @return [Glueby::Contract::Token]
       def self.parse_from_payload(payload)
-        color_id, payload = payload.unpack('a33a*')
+        color_id, script_pubkey = payload.unpack('a33a*')
         color_id = Tapyrus::Color::ColorIdentifier.parse_from_payload(color_id)
-        new(color_id: color_id, payload: payload)
+        script_pubkey = Tapyrus::Script.parse_from_payload(script_pubkey) if script_pubkey
+        new(color_id: color_id, script_pubkey: script_pubkey)
       end
 
-      def initialize(color_id:, payload:nil)
+      def initialize(color_id:, script_pubkey:nil)
         @color_id = color_id
-        @payload = payload
+        @script_pubkey = script_pubkey
       end
     end
   end
