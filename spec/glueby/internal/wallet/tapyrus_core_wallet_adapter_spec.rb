@@ -141,6 +141,18 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
             "spendable": true,
             "solvable": true,
             "safe": false
+          },
+          {
+            "txid": "864247cd4cae4b1f5bd3901be9f7a4ccba5bdea7db1d8bbd78b944da9cf39ef5",
+            "vout": 0,
+            "address": "w25MP2mrNU4oFqouSdwmSJHd8YntErqMwYk3vHr6RRjwZYWV6NfNZhgMfVWABRadn3RutmxAogoQCG",
+            "label": "",
+            "scriptPubKey": "21c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893bc76a914bfeca7aed62174a7c60ebc63c7bd797bad46157a88ac",
+            "amount": "0.00000001",
+            "confirmations": 1,
+            "spendable": true,
+            "solvable": true,
+            "safe": false
           }
         ]
       JSON
@@ -154,6 +166,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
                                 script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
                                 vout: 0,
                                 amount: 100000000,
+                                color_id: nil,
                                 finalized: false
                               },
                               {
@@ -161,6 +174,15 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
                                 script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
                                 vout: 1,
                                 amount: 100000000,
+                                color_id: nil,
+                                finalized: true
+                              },
+                              {
+                                txid: '864247cd4cae4b1f5bd3901be9f7a4ccba5bdea7db1d8bbd78b944da9cf39ef5',
+                                vout: 0,
+                                script_pubkey: '21c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893bc76a914bfeca7aed62174a7c60ebc63c7bd797bad46157a88ac',
+                                color_id: 'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893',
+                                amount: 1,
                                 finalized: true
                               }
                             ])

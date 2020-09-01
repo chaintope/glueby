@@ -79,10 +79,15 @@ module Glueby
             res = client.listunspent(min_conf)
 
             res.map do |i|
+              script = Tapyrus::Script.parse_from_payload(i['scriptPubKey'].htb)
+              color_id = if script.cp2pkh? || script.cp2sh?
+                Tapyrus::Color::ColorIdentifier.parse_from_payload(script.chunks[0].pushed_data).to_hex
+              end
               {
                 txid: i['txid'],
                 vout: i['vout'],
                 script_pubkey: i['scriptPubKey'],
+                color_id: color_id,
                 amount: tpc_to_tapyrus(i['amount']),
                 finalized: i['confirmations'] != 0
               }
