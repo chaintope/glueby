@@ -168,8 +168,7 @@ module Glueby
 
       def collect_uncolored_outputs(results, amount)
         results.inject([0, []]) do |sum, output|
-          script = Tapyrus::Script.parse_from_payload(output[:script_pubkey].htb)
-          next sum if script.cp2pkh? || script.cp2sh?
+          next sum if output[:color_id]
 
           new_sum = sum[0] + output[:amount]
           new_outputs = sum[1] << output
@@ -182,9 +181,7 @@ module Glueby
 
       def collect_colored_outputs(results, color_id, amount = 0)
         results = results.inject([0, []]) do |sum, output|
-          script = Tapyrus::Script.parse_from_payload(output[:script_pubkey].htb)
-          next sum unless script.cp2pkh? || script.cp2sh?
-          next sum unless Tapyrus::Color::ColorIdentifier.parse_from_payload(script.chunks[0].pushed_data) == color_id
+          next sum unless output[:color_id] == color_id.to_hex
 
           new_sum = sum[0] + output[:amount]
           new_outputs = sum[1] << output

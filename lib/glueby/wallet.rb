@@ -32,12 +32,7 @@ module Glueby
     def balances
       utxos = @internal_wallet.list_unspent
       utxos.inject({}) do |balances, output|
-        script = Tapyrus::Script.parse_from_payload(output[:script_pubkey].htb)
-        key = if script.cp2pkh? || script.cp2sh?
-                Tapyrus::Color::ColorIdentifier.parse_from_payload(script.chunks[0].pushed_data).to_hex
-              else
-                ''
-              end
+        key = output[:color_id] || ''
         balances[key] ||= 0
         balances[key] += output[:amount]
         balances
