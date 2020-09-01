@@ -47,6 +47,14 @@ module Glueby
       end
 
       def create_issue_tx_for_non_reissuable_token(issuer:, amount:, fee_provider: FixedFeeProvider.new)
+        create_issue_tx_from_out_point(token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, fee_provider: fee_provider)
+      end
+
+      def create_issue_tx_for_nft_token(issuer:, fee_provider: FixedFeeProvider.new)
+        create_issue_tx_from_out_point(token_type: Tapyrus::Color::TokenTypes::NFT, issuer: issuer, amount: 1, fee_provider: fee_provider)
+      end
+
+      def create_issue_tx_from_out_point(token_type:, issuer:, amount:, fee_provider: FixedFeeProvider.new)
         tx = Tapyrus::Tx.new
         fee = fee_provider.fee(tx)
 
@@ -55,30 +63,18 @@ module Glueby
         fill_input(tx, outputs)
 
         out_point = tx.inputs.first.out_point
-        color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
+        color_id = case token_type
+        when Tapyrus::Color::TokenTypes::NON_REISSUABLE
+          Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
+        when Tapyrus::Color::TokenTypes::NFT
+          Tapyrus::Color::ColorIdentifier.nft(out_point)
+        else
+          raise Glueby::Contract::Errors::UnsupportedTokenType  
+        end
 
         receiver_script = Tapyrus::Script.parse_from_addr(issuer.internal_wallet.receive_address)
         receiver_colored_script = receiver_script.add_color(color_id)
         tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
-
-        fill_change_tpc(tx, issuer, sum - fee)
-        issuer.internal_wallet.sign_tx(tx)
-      end
-
-      def create_issue_tx_for_nft_token(issuer:, fee_provider: FixedFeeProvider.new)
-        tx = Tapyrus::Tx.new
-        fee = fee_provider.fee(tx)
-
-        utxos = issuer.internal_wallet.list_unspent
-        sum, outputs = collect_uncolored_outputs(utxos, fee)
-        fill_input(tx, outputs)
-
-        out_point = tx.inputs.first.out_point
-        color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
-
-        receiver_script = Tapyrus::Script.parse_from_addr(issuer.internal_wallet.receive_address)
-        receiver_colored_script = receiver_script.add_color(color_id)
-        tx.outputs << Tapyrus::TxOut.new(value: 1, script_pubkey: receiver_colored_script)
 
         fill_change_tpc(tx, issuer, sum - fee)
         issuer.internal_wallet.sign_tx(tx)
