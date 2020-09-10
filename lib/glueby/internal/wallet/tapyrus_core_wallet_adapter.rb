@@ -43,7 +43,8 @@ module Glueby
         def load_wallet(wallet_id)
           RPC.client.loadwallet(wallet_name(wallet_id))
         rescue RuntimeError => ex
-          if /"code"=>#{RPC_WALLET_ERROR_ERROR_CODE}/ =~ ex.message && /Duplicate -wallet filename specified/ =~ ex.message
+          json = JSON.parse(ex.message)
+          if json.is_a?(Hash) && json['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Duplicate -wallet filename specified/ =~ ex.message
             raise Errors::WalletAlreadyLoaded, "Wallet #{wallet_id} has been already loaded."
           else
             raise ex
@@ -126,7 +127,8 @@ module Glueby
             begin
               yield(client)
             rescue RuntimeError => ex
-              if /"code"=>#{RPC_WALLET_NOT_FOUND_ERROR_CODE}/ =~ ex.message
+              json = JSON.parse(ex.message)
+              if json.is_a?(Hash) && json['code'] == RPC_WALLET_NOT_FOUND_ERROR_CODE
                 raise Errors::WalletUnloaded, "The wallet #{wallet_id} is unloaded. You should load before use it."
               else
                 raise ex
