@@ -163,12 +163,12 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
     let(:amount) { 100_001 }
 
     it { expect(subject.inputs.size).to eq 3 }
-    it { expect(subject.inputs[0].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5' }
+    it { expect(subject.inputs[0].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2' }
     it { expect(subject.inputs[0].out_point.index).to eq 0 }
-    it { expect(subject.inputs[1].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2' }
-    it { expect(subject.inputs[1].out_point.index).to eq 0 }
-    it { expect(subject.inputs[2].out_point.txid).to eq 'a3f20bc94c8d77c35ba1770116d2b34375475a4194d15f76442636e9f77d50d9' }
-    it { expect(subject.inputs[2].out_point.index).to eq 2 }
+    it { expect(subject.inputs[1].out_point.txid).to eq 'a3f20bc94c8d77c35ba1770116d2b34375475a4194d15f76442636e9f77d50d9' }
+    it { expect(subject.inputs[1].out_point.index).to eq 2 }
+    it { expect(subject.inputs[2].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5' }
+    it { expect(subject.inputs[2].out_point.index).to eq 0 }
     it { expect(subject.outputs.size).to eq 3 }
     it { expect(subject.outputs[0].value).to eq 100_001 }
     it { expect(subject.outputs[0].colored?).to be_truthy }
@@ -188,9 +188,9 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
     let(:fee_provider) { Glueby::Contract::FixedFeeProvider.new }
 
     it { expect(subject.inputs.size).to eq 2 }
-    it { expect(subject.inputs[0].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5' }
+    it { expect(subject.inputs[0].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2' }
     it { expect(subject.inputs[0].out_point.index).to eq 0 }
-    it { expect(subject.inputs[1].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2' }
+    it { expect(subject.inputs[1].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5' }
     it { expect(subject.inputs[1].out_point.index).to eq 0 }
     it { expect(subject.outputs.size).to eq 2 }
     it { expect(subject.outputs[0].value).to eq 50_000 }
@@ -212,14 +212,14 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
 
       it 'should have at least one output' do
         expect(subject.inputs.size).to eq 4
-        expect(subject.inputs[0].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5'
+        expect(subject.inputs[0].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2'
         expect(subject.inputs[0].out_point.index).to eq 0
-        expect(subject.inputs[1].out_point.txid).to eq '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db'
-        expect(subject.inputs[1].out_point.index).to eq 1
-        expect(subject.inputs[2].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2'
+        expect(subject.inputs[1].out_point.txid).to eq 'a3f20bc94c8d77c35ba1770116d2b34375475a4194d15f76442636e9f77d50d9'
+        expect(subject.inputs[1].out_point.index).to eq 2
+        expect(subject.inputs[2].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5'
         expect(subject.inputs[2].out_point.index).to eq 0
-        expect(subject.inputs[3].out_point.txid).to eq 'a3f20bc94c8d77c35ba1770116d2b34375475a4194d15f76442636e9f77d50d9'
-        expect(subject.inputs[3].out_point.index).to eq 2
+        expect(subject.inputs[3].out_point.txid).to eq '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db'
+        expect(subject.inputs[3].out_point.index).to eq 1
         expect(subject.outputs.size).to eq 1
         expect(subject.outputs[0].value).to eq 100_000_000
         expect(subject.outputs[0].colored?).to be_falsy
@@ -306,5 +306,21 @@ RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
         expect(subject[1].size).to eq 2
       end
     end
+  end
+
+  describe '#dummy_tx' do
+    subject { mock.dummy_tx(Tapyrus::Tx.new) }
+
+    it { expect(subject.inputs.size).to eq 1 }
+    it { expect(subject.outputs.size).to eq 1 }
+  end
+
+  describe '#dummy_issue_tx_from_out_point' do
+    subject { mock.dummy_issue_tx_from_out_point }
+
+    it { expect(subject.inputs.size).to eq 1 }
+    it { expect(subject.outputs.size).to eq 2 }
+    it { expect(subject.outputs[0].colored?).to be_truthy }
+    it { expect(subject.outputs[1].colored?).to be_falsy }
   end
 end
