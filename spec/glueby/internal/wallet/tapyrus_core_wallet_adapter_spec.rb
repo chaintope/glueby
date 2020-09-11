@@ -2,7 +2,7 @@ RSpec.shared_examples 'If the wallet is unloaded, it should raise WalletUnloaded
   let(:rpc_name) { :listunspent }
   it 'should raise WalletUnloaded error.' do
     expect(rpc).to receive(rpc_name)
-                     .and_raise(RuntimeError.new('{"code"=>-18, "message"=>"Requested wallet does not exist or is not loaded"}'))
+                     .and_raise(RuntimeError.new('{"code": -18, "message": "Requested wallet does not exist or is not loaded"}'))
     expect { subject }
       .to raise_error(
         Glueby::Internal::Wallet::Errors::WalletUnloaded,
@@ -55,7 +55,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     end
 
     context 'if already loaded' do
-      let(:error) { RuntimeError.new('{"code"=>-4, "message"=>"Wallet file verification failed: Error loading wallet wallet-0828d0ce8ff358cd0d7b19ac5c43c3bb. Duplicate -wallet filename specified."}') }
+      let(:error) { RuntimeError.new('{"code": -4, "message": "Wallet file verification failed: Error loading wallet wallet-0828d0ce8ff358cd0d7b19ac5c43c3bb. Duplicate -wallet filename specified."}') }
 
       it do
         allow(rpc).to receive(:loadwallet).and_raise(error)
