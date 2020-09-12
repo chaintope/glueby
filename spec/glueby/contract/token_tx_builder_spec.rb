@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Glueby::Contract::TokenTxBuilder' do
-  class TokenTxBuilderMock
-    include Glueby::Contract::TokenTxBuilder
+RSpec.describe 'Glueby::Contract::TxBuilder' do
+  class TxBuilderMock
+    include Glueby::Contract::TxBuilder
   end
 
-  let(:mock) { TokenTxBuilderMock.new }
+  let(:mock) { TxBuilderMock.new }
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
   let(:unspents) do
