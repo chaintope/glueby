@@ -3,7 +3,7 @@ module Glueby
     module Task
       module Timestamp
         module_function
-        extend Glueby::Contract::TokenTxBuilder
+        extend Glueby::Contract::TxBuilder
         extend Glueby::Contract::Timestamp::Util
 
         def create

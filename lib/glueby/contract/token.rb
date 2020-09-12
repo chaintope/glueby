@@ -39,8 +39,8 @@ module Glueby
     # => 100
     #
     class Token
-      include Glueby::Contract::TokenTxBuilder
-      extend Glueby::Contract::TokenTxBuilder
+      include Glueby::Contract::TxBuilder
+      extend Glueby::Contract::TxBuilder
 
       class << self
         # Issue new token with specified amount and token type.

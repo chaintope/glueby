@@ -2,7 +2,7 @@
 
 module Glueby
   module Contract
-    module TokenTxBuilder
+    module TxBuilder
       def receive_address(wallet:)
         wallet.receive_address
       end

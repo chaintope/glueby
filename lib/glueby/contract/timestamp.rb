@@ -8,7 +8,7 @@ module Glueby
     #
     # Storing timestamp transaction to the blockchain enables everyone to verify that the data existed at that time and a user signed it.
     class Timestamp
-      include Glueby::Contract::TokenTxBuilder
+      include Glueby::Contract::TxBuilder
 
       module Util
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
