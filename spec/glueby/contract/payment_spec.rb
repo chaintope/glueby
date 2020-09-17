@@ -1,7 +1,7 @@
 RSpec.describe 'Glueby::Contract::Payment' do
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
-    let(:unspents) do
+  let(:unspents) do
     [
       {
         txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
@@ -64,6 +64,12 @@ RSpec.describe 'Glueby::Contract::Payment' do
     let(:amount) { 200_000 }
 
     it { expect { subject }.not_to raise_error }
+
+    it do
+      allow(rpc).to receive(:sendrawtransaction) do |raw_transaction|
+        expect(raw_transaction).to eq('0100000001c57c5e3dfb5a147710a080cb73628b5df12e7d5172abb8824297f41f04793d5c0000000000ffffffff02400d0300000000001976a91485a683e7863456fb1455e09d288800317445167488acb0acf205000000001976a914d596a47cc210a61949e0af4d5dff1099416331dc88ac00000000')
+      end
+    end
 
     context 'invalid amount' do
       let(:amount) { 0 }
