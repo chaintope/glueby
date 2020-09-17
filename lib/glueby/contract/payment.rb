@@ -35,7 +35,7 @@ module Glueby
           tx = Tapyrus::Tx.new
           dummy_fee = fee_provider.fee(dummy_tx(tx))
 
-          sum, outputs = collect_uncolored_outputs(utxos, dummy_fee + amount)
+          sum, outputs = sender.internal_wallet.collect_uncolored_outputs(dummy_fee + amount)
           fill_input(tx, outputs)
 
           receiver_script = Tapyrus::Script.parse_from_addr(receiver.internal_wallet.receive_address)
