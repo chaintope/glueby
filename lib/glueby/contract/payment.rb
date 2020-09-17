@@ -33,14 +33,15 @@ module Glueby
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
           tx = Tapyrus::Tx.new
-          fee = fee_provider.fee(dummy_tx(tx))
-          utxos = sender_wallet.internal_wallet.list_unspent
+          dummy_fee = fee_provider.fee(dummy_tx(tx))
 
-          sum, outputs = collect_uncolored_outputs(utxos, fee + amount)
+          sum, outputs = collect_uncolored_outputs(utxos, dummy_fee + amount)
           fill_input(tx, outputs)
 
           receiver_script = Tapyrus::Script.parse_from_addr(receiver.internal_wallet.receive_address)
           tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_script)
+
+          fee = fee_provider.fee(tx)
 
           fill_change_tpc(tx, sender, sum - fee - amount)
 
