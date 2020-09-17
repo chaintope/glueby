@@ -47,7 +47,7 @@ module Glueby
 
           tx = sender.internal_wallet.sign_tx(tx)
 
-          Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth)
+          Glueby::Internal::RPC.client.sendrawtransaction(tx.to_hex)
         end
       end
     end
