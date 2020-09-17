@@ -29,7 +29,7 @@ module Glueby
       extend Glueby::Contract::TxBuilder
 
       class << self
-        def transfer(sender_wallet:, receiver_wallet:, amount:, fee_provider: FixedFeeProvider.new)
+        def transfer(sender:, receiver:, amount:, fee_provider: FixedFeeProvider.new)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
           tx = Tapyrus::Tx.new
@@ -39,12 +39,12 @@ module Glueby
           sum, outputs = collect_uncolored_outputs(utxos, fee + amount)
           fill_input(tx, outputs)
 
-          receiver_script = Tapyrus::Script.parse_from_addr(receiver_wallet.internal_wallet.receive_address)
+          receiver_script = Tapyrus::Script.parse_from_addr(receiver.internal_wallet.receive_address)
           tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_script)
 
-          fill_change_tpc(tx, sender_wallet, sum - fee - amount)
+          fill_change_tpc(tx, sender, sum - fee - amount)
 
-          tx = sender_wallet.internal_wallet.sign_tx(tx)
+          tx = sender.internal_wallet.sign_tx(tx)
 
           Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth)
         end
