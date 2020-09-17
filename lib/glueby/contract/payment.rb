@@ -25,7 +25,6 @@ module Glueby
     # => 10_000
     #
     class Payment
-      include Glueby::Contract::TxBuilder
       extend Glueby::Contract::TxBuilder
 
       class << self
