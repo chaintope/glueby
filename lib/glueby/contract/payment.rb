@@ -12,16 +12,16 @@ module Glueby
     #            Glueby::Wallet.create
     #
     # Balance of sender and reciever before send
-    # sender.internal_wallet.balance
+    # sender.balances[""]
     # => 100_000(tapyrus)
-    # reciever.internal_wallet.balance
+    # reciever.balances[""]
     # => 0(tapyrus)
     #
     # Send
     # Payment.transfer(sender_wallet: sender, receiver_wallet: reciever, amount: 10_000)
-    # sender.internal_wallet.balance
+    # sender.balances[""]
     # => 90_000
-    # reciever.internal_wallet.balance
+    # reciever.balances[""]
     # => 10_000
     #
     class Payment
