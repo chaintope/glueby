@@ -67,8 +67,14 @@ RSpec.describe 'Glueby::Contract::Payment' do
 
     it do
       allow(rpc).to receive(:sendrawtransaction) do |raw_transaction|
-        expect(raw_transaction).to eq('0100000001c57c5e3dfb5a147710a080cb73628b5df12e7d5172abb8824297f41f04793d5c0000000000ffffffff02400d0300000000001976a91485a683e7863456fb1455e09d288800317445167488acb0acf205000000001976a914d596a47cc210a61949e0af4d5dff1099416331dc88ac00000000')
+        tx = Tapyrus::Tx.parse_from_payload([raw_transaction].pack('H*'))
+
+        expect(tx.outputs.count).to eq 2
+        expect(tx.outputs[0].value).to eq 200_000
+        expect(tx.outputs[1].value).to eq 99_790_000
       end
+
+      subject
     end
 
     context 'invalid amount' do
