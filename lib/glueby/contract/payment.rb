@@ -7,21 +7,21 @@ module Glueby
     # Examples:
     #
     # sender = Glueby::Wallet.load("wallet_id")
-    # reciever = Glueby::Wallet.load("wallet_id")
+    # receiver = Glueby::Wallet.load("wallet_id")
     #                      or
     #            Glueby::Wallet.create
     #
-    # Balance of sender and reciever before send
+    # Balance of sender and receiver before send
     # sender.balances[""]
     # => 100_000(tapyrus)
-    # reciever.balances[""]
+    # receiver.balances[""]
     # => 0(tapyrus)
     #
     # Send
-    # Payment.transfer(sender_wallet: sender, receiver_wallet: reciever, amount: 10_000)
+    # Payment.transfer(sender: sender, receiver: receiver, amount: 10_000)
     # sender.balances[""]
     # => 90_000
-    # reciever.balances[""]
+    # receiver.balances[""]
     # => 10_000
     #
     class Payment
