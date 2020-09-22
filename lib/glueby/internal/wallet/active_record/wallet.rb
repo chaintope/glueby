@@ -1,0 +1,42 @@
+# frozen_string_literal: true
+
+require 'active_record'
+
+module Glueby
+  module Internal
+    class Wallet
+      module AR
+        class Wallet < ::ActiveRecord::Base
+          has_many :keys
+          has_many :utxos
+
+          # @param [Tapyrus::Tx] tx
+          def sign(tx)
+            tx.inputs.each.with_index do |input, index|
+              key = key_for_input(input)
+              next unless key
+              sign_tx_for_p2pkh(tx, index, key)
+            end
+            tx
+          end
+
+          private
+
+          def key_for_input(input)
+            out_point = input.out_point
+            utxo = Glueby::Internal::Wallet::AR::Utxo.find_by(txid: out_point.txid, index: out_point.index)
+            return unless utxo
+            Key.find_by(script_pubkey: utxo.script_pubkey)
+          end
+
+          def sign_tx_for_p2pkh(tx, index, key)
+            sighash = tx.sighash_for_input(index, key.to_p2pkh)
+            sig = key.sign(sighash) + [Tapyrus::SIGHASH_TYPE[:all]].pack('C')
+            script_sig = Tapyrus::Script.parse_from_payload(Tapyrus::Script.pack_pushdata(sig) + Tapyrus::Script.pack_pushdata(key.public_key.htb))
+            tx.inputs[index].script_sig = script_sig
+          end
+        end
+      end
+    end
+  end
+end
