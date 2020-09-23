@@ -1,0 +1,16 @@
+class CreateUtxo < ActiveRecord::Migration<%= migration_version %>
+  def change
+    create_table :utxos<%= table_options %> do |t|
+      t.string     :txid
+      t.integer    :index
+      t.bigint     :value
+      t.string     :script_pubkey
+      t.boolean    :spent
+      t.integer    :status
+      t.belongs_to :key, null: true
+      t.timestamps
+    end
+
+    add_index :utxos, [:txid, :index]
+  end
+end

@@ -1,0 +1,10 @@
+class CreateWallet < ActiveRecord::Migration<%= migration_version %>
+  def change
+    create_table :wallets<%= table_options %> do |t|
+      t.string :wallet_id
+      t.timestamps
+    end
+
+    add_index :wallets, [:wallet_id]
+  end
+end

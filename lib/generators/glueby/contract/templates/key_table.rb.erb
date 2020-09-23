@@ -1,0 +1,14 @@
+class CreateKey < ActiveRecord::Migration<%= migration_version %>
+  def change
+    create_table :keys<%= table_options %> do |t|
+      t.string     :private_key
+      t.string     :public_key
+      t.string     :script_pubkey
+      t.integer    :purpose
+      t.belongs_to :wallet
+      t.timestamps
+    end
+
+    add_index :keys, [:script_pubkey]
+  end
+end

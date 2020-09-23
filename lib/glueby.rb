@@ -3,6 +3,7 @@ require 'tapyrus'
 
 module Glueby
   autoload :Contract, 'glueby/contract'
+  autoload :Generator, 'glueby/generator'
   autoload :Wallet, 'glueby/wallet'
   autoload :Internal, 'glueby/internal'
 
