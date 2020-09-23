@@ -199,6 +199,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
 
     it { expect { subject }.to change { wallet.keys.where(purpose: :receive).count }.from(0).to(1) }
     it { expect { subject }.not_to change { wallet.keys.where(purpose: :change).count } }
+    it { expect { Tapyrus.decode_base58_address(subject) }.not_to raise_error }
   end
 
   describe '#change_address' do
@@ -206,11 +207,16 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
 
     it { expect { subject }.to change { wallet.keys.where(purpose: :change).count }.from(0).to(1) }
     it { expect { subject }.not_to change { wallet.keys.where(purpose: :receive).count } }
+    it { expect { Tapyrus.decode_base58_address(subject) }.not_to raise_error }
   end
 
   describe '#create_pubkey' do
-    subject { adapter.create_pubkey(wallet.wallet_id) }
+    subject do
+      pubkey = adapter.create_pubkey(wallet.wallet_id)
+      pubkey.fully_valid_pubkey?
+    end
 
     it { expect { subject }.to change { wallet.keys.count }.from(0).to(1) }
+    it { expect(subject).to be_truthy }
   end
 end
