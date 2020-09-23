@@ -22,6 +22,10 @@ module Glueby
             Tapyrus::Key.new(priv_key: self.private_key).sign(data)
           end
 
+          def address
+            to_p2pkh.addresses.first
+          end
+
           private
 
           def generate_key

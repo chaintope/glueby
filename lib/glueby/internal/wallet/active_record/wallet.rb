@@ -8,7 +8,6 @@ module Glueby
       module AR
         class Wallet < ::ActiveRecord::Base
           has_many :keys
-          has_many :utxos
 
           # @param [Tapyrus::Tx] tx
           def sign(tx)
@@ -18,6 +17,10 @@ module Glueby
               sign_tx_for_p2pkh(tx, index, key)
             end
             tx
+          end
+
+          def utxos
+            Glueby::Internal::Wallet::AR::Utxo.where(key: keys)
           end
 
           private
