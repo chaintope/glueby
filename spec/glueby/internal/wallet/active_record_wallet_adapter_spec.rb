@@ -82,7 +82,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
 
     before do
       Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: '000000000000000000000000000000000000000000000000000000000000000',
+        txid: '0000000000000000000000000000000000000000000000000000000000000000',
         index: 0,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a9140ff36d308d250261c518f2db838f12775476a49788ac',
         value: 1,
@@ -91,7 +91,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         key: key1
       )
       Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: '000000000000000000000000000000000000000000000000000000000000000',
+        txid: '0000000000000000000000000000000000000000000000000000000000000000',
         index: 1,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 2,
@@ -100,7 +100,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         key: key2
       )
       Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: '000000000000000000000000000000000000000000000000000000000000000',
+        txid: '0000000000000000000000000000000000000000000000000000000000000000',
         index: 2,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 3,
@@ -109,7 +109,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         key: key2
       )
       Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: '000000000000000000000000000000000000000000000000000000000000000',
+        txid: '0000000000000000000000000000000000000000000000000000000000000000',
         index: 3,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
         value: 4,
@@ -143,7 +143,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
 
     before do
       Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: '000000000000000000000000000000000000000000000000000000000000000',
+        txid: '0000000000000000000000000000000000000000000000000000000000000001',
         index: 0,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a9140ff36d308d250261c518f2db838f12775476a49788ac',
         value: 1,
@@ -152,7 +152,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         key: key1
       )
       Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: '000000000000000000000000000000000000000000000000000000000000000',
+        txid: '0000000000000000000000000000000000000000000000000000000000000002',
         index: 1,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 2,
@@ -161,7 +161,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         key: key2
       )
       Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: '000000000000000000000000000000000000000000000000000000000000000',
+        txid: '0000000000000000000000000000000000000000000000000000000000000003',
         index: 2,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 3,
@@ -170,7 +170,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         key: key2
       )
       Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: '000000000000000000000000000000000000000000000000000000000000000',
+        txid: '0000000000000000000000000000000000000000000000000000000000000004',
         index: 3,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
         value: 4,

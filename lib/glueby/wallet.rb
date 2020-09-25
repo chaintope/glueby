@@ -18,6 +18,9 @@ module Glueby
         when 'core'
           Glueby::Internal::RPC.configure(config)
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::TapyrusCoreWalletAdapter.new
+        when 'activerecord'
+          Glueby::Internal::RPC.configure(config)
+          Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
         else
           raise 'Not implemented'
         end
