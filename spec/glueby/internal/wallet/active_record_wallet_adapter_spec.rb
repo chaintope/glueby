@@ -25,7 +25,6 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
       t.integer    :index
       t.bigint     :value
       t.string     :script_pubkey
-      t.boolean    :spent
       t.integer    :status
       t.belongs_to :key, null: true
       t.timestamps
@@ -86,7 +85,6 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         index: 0,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a9140ff36d308d250261c518f2db838f12775476a49788ac',
         value: 1,
-        spent: false,
         status: :broadcasted,
         key: key1
       )
@@ -95,7 +93,6 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         index: 1,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 2,
-        spent: false,
         status: :finalized,
         key: key2
       )
@@ -104,7 +101,6 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         index: 2,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 3,
-        spent: true,
         status: :finalized,
         key: key2
       )
@@ -113,19 +109,18 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         index: 3,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
         value: 4,
-        spent: false,
         status: :init,
         key: key3
       )
     end
 
     context 'finalized only' do
-      it { is_expected.to eq 2 }
+      it { is_expected.to eq 5 }
     end
 
     context 'with unconfirmed' do
       let(:only_finalized) { false }
-      it { is_expected.to eq 3 }
+      it { is_expected.to eq 6 }
     end
   end
 
@@ -147,7 +142,6 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         index: 0,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a9140ff36d308d250261c518f2db838f12775476a49788ac',
         value: 1,
-        spent: false,
         status: :broadcasted,
         key: key1
       )
@@ -156,7 +150,6 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         index: 1,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 2,
-        spent: false,
         status: :finalized,
         key: key2
       )
@@ -165,7 +158,6 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         index: 2,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 3,
-        spent: true,
         status: :finalized,
         key: key2
       )
@@ -174,23 +166,24 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
         index: 3,
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
         value: 4,
-        spent: false,
         status: :init,
         key: key3
       )
     end
 
     context 'finalized only' do
-      it { expect(subject.count).to eq 1 }
+      it { expect(subject.count).to eq 2 }
       it { expect(subject[0][:vout]).to eq 1 }
+      it { expect(subject[1][:vout]).to eq 2 }
     end
 
     context 'with unconfirmed' do
       let(:only_finalized) { false }
 
-      it { expect(subject.count).to eq 2 }
+      it { expect(subject.count).to eq 3 }
       it { expect(subject[0][:vout]).to eq 0 }
       it { expect(subject[1][:vout]).to eq 1 }
+      it { expect(subject[2][:vout]).to eq 2 }
     end
   end
 

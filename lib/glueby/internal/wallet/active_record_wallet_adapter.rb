@@ -28,14 +28,14 @@ module Glueby
 
         def balance(wallet_id, only_finalized = true)
           wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet_id)
-          utxos = wallet.utxos.where(spent: false)
+          utxos = wallet.utxos
           utxos = utxos.where(status: :finalized) if only_finalized
           utxos.sum(&:value)
         end
 
         def list_unspent(wallet_id, only_finalized = true)
           wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet_id)
-          utxos = wallet.utxos.where(spent: false)
+          utxos = wallet.utxos
           utxos = utxos.where(status: :finalized) if only_finalized
           utxos.map do |utxo|
             {

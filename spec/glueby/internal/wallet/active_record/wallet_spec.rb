@@ -28,7 +28,6 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
       t.integer    :index
       t.bigint     :value
       t.string     :script_pubkey
-      t.boolean    :spent
       t.integer    :status
       t.belongs_to :key, null: true
       t.timestamps
