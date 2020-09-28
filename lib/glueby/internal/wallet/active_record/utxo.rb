@@ -7,6 +7,8 @@ module Glueby
         class Utxo < ::ActiveRecord::Base
           belongs_to :key
 
+          validates :txid, uniqueness: { scope: :index, case_sensitive: false }
+
           enum status: { init: 0, broadcasted: 1, finalized: 2 }
 
           def color_id

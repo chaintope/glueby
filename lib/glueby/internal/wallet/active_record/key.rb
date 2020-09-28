@@ -13,6 +13,7 @@ module Glueby
           enum purpose: { receive: 0, change: 1 }
 
           validates :purpose, presence: true
+          validates :private_key, uniqueness: { case_sensitive: false }
 
           def to_p2pkh
             Tapyrus::Script.to_p2pkh(Tapyrus.hash160(public_key))

@@ -11,6 +11,6 @@ class CreateUtxo < ActiveRecord::Migration<%= migration_version %>
       t.timestamps
     end
 
-    add_index :utxos, [:txid, :index]
+    add_index :utxos, [:txid, :index], unique: true
   end
 end
