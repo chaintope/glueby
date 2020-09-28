@@ -9,6 +9,7 @@ class CreateKey < ActiveRecord::Migration<%= migration_version %>
       t.timestamps
     end
 
-    add_index :keys, [:script_pubkey]
+    add_index :keys, [:script_pubkey], unique: true
+    add_index :keys, [:private_key], unique: true
   end
 end

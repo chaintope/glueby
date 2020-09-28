@@ -9,6 +9,8 @@ module Glueby
         class Wallet < ::ActiveRecord::Base
           has_many :keys
 
+          validates :wallet_id, uniqueness: { case_sensitive: false }
+
           # @param [Tapyrus::Tx] tx
           def sign(tx)
             tx.inputs.each.with_index do |input, index|

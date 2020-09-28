@@ -10,6 +10,8 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
       t.string :wallet_id
       t.timestamps
     end
+    connection.add_index :wallets, [:wallet_id], unique: true
+
     connection.create_table :keys do |t|
       t.string     :private_key
       t.string     :public_key
@@ -18,6 +20,9 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
       t.belongs_to :wallet, null: true
       t.timestamps
     end
+    connection.add_index :keys, [:script_pubkey], unique: true
+    connection.add_index :keys, [:private_key], unique: true
+
     connection.create_table :utxos do |t|
       t.string     :txid
       t.integer    :index
@@ -28,9 +33,10 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
       t.belongs_to :key, null: true
       t.timestamps
     end
+    connection.add_index :utxos, [:txid, :index], unique: true
   end
 
-  let(:wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: '00000000000000000000000000000000') }
+  let(:wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') }
   let(:config) { { adapter: 'sqlite3', database: 'test' } }
 
   before { setup_database }
@@ -77,6 +83,26 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
       subject
       expect(tx.verify_input_sig(0, key1.to_p2pkh)).to be_truthy
       expect(tx.verify_input_sig(1, key2.to_p2pkh)).to be_truthy
+    end
+  end
+
+  describe '#valid' do
+    subject { wallet }
+    
+    context 'wallet_id is unique' do
+      it { is_expected.to be_valid }
+    end
+
+    context 'wallet_id is not unique' do
+      before { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') }
+
+      it { is_expected.to be_invalid }
+    end
+
+    context 'wallet_id is lower case' do
+      before { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'ffffffffffffffffffffffffffffffff') }
+
+      it { is_expected.to be_invalid }
     end
   end
 end

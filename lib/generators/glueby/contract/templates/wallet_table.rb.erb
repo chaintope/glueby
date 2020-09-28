@@ -5,6 +5,6 @@ class CreateWallet < ActiveRecord::Migration<%= migration_version %>
       t.timestamps
     end
 
-    add_index :wallets, [:wallet_id]
+    add_index :wallets, [:wallet_id], unique: true
   end
 end

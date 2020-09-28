@@ -14,6 +14,8 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Key' do
       t.belongs_to :wallet, null: true
       t.timestamps
     end
+    connection.add_index :keys, [:script_pubkey], unique: true
+    connection.add_index :keys, [:private_key], unique: true
   end
 
   let(:key) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key, purpose: :change) }
@@ -28,6 +30,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Key' do
 
   describe '#valid' do
     subject { key }
+
     context 'no purpose' do
       let(:key) { Glueby::Internal::Wallet::AR::Key.new(private_key: private_key) }
 
@@ -50,6 +53,18 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Key' do
       let(:key) { Glueby::Internal::Wallet::AR::Key.new(private_key: private_key, purpose: :other) }
 
       it { expect{ subject }.to raise_error ArgumentError, "'other' is not a valid purpose" }
+    end
+
+    context 'private_key is not unique' do
+      before { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key, purpose: :receive) }
+
+      it { is_expected.to be_invalid }
+    end
+
+    context 'private_key is lower case' do
+      before { Glueby::Internal::Wallet::AR::Key.create(private_key: '206F3ACB5B7AC66DACF87910BB0B04BED78284B9B50C0D061705A44447A947FF', purpose: :receive) }
+
+      it { is_expected.to be_invalid }
     end
   end
 
