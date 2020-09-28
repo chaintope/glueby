@@ -73,6 +73,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Key' do
 
     let(:data) { '61b04781dec482815d8fc22d6074a57e184973e96870e2f59dab0a5851b1b4dd'.htb }
 
-    it { expect(subject).to eq '304402201322a9efb6b21cbacfc814db423c72347e616d39bcf2fd36934a3e584c40e9330220085a7c1076bfcdf58917694a5d8f453f480abb4c32e0840ea60576b1718519f5' }
+    it { expect(subject).to eq '20661fb45b90f336c150ef7ee1dbcf6872e6e1af34a5d71878d4590e42722500d5ba107944d679a3b9ac30de6f2cbc586498e5a09fdfdeb9c3a3af9971212cda' }
+    it { expect(Tapyrus::Key.new(priv_key: private_key).verify(subject.htb, data, algo: :schnorr)).to be_truthy }
   end
 end

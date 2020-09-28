@@ -19,7 +19,7 @@ module Glueby
           end
 
           def sign(data)
-            Tapyrus::Key.new(priv_key: self.private_key).sign(data)
+            Tapyrus::Key.new(priv_key: self.private_key).sign(data, algo: :schnorr)
           end
 
           def address
