@@ -18,9 +18,8 @@ module Glueby
           tx = Tapyrus::Tx.new
           tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: create_script(prefix, data_hash))
   
-          results = wallet.internal_wallet.list_unspent
           fee = fee_provider.fee(dummy_tx(tx))
-          sum, outputs = collect_uncolored_outputs(results, fee)
+          sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee)
           fill_input(tx, outputs)
   
           fill_change_tpc(tx, wallet, sum - fee)

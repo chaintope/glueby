@@ -12,8 +12,7 @@ module Glueby
         tx = Tapyrus::Tx.new
         fee = fee_provider.fee(dummy_tx(tx))
 
-        utxos = wallet.internal_wallet.list_unspent
-        sum, outputs = collect_uncolored_outputs(utxos, fee + amount)
+        sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + amount)
         fill_input(tx, outputs)
 
         receiver_script = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
@@ -58,8 +57,7 @@ module Glueby
         tx = Tapyrus::Tx.new
 
         fee = fee_provider.fee(dummy_issue_tx_from_out_point)
-        utxos = issuer.internal_wallet.list_unspent
-        sum, outputs = collect_uncolored_outputs(utxos, fee)
+        sum, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee)
         fill_input(tx, outputs)
 
         out_point = tx.inputs.first.out_point
@@ -116,7 +114,7 @@ module Glueby
         fill_change_token(tx, sender, sum_token - amount, color_id)
 
         fee = fee_provider.fee(dummy_tx(tx))
-        sum_tpc, outputs = collect_uncolored_outputs(utxos, fee)
+        sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee)
         fill_input(tx, outputs)
 
         fill_change_tpc(tx, sender, sum_tpc - fee)
@@ -135,7 +133,7 @@ module Glueby
         fee = fee_provider.fee(dummy_tx(tx))
 
         dust = 600 # in case that the wallet has output which has just fee amount.
-        sum_tpc, outputs = collect_uncolored_outputs(utxos, fee + dust)
+        sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + dust)
         fill_input(tx, outputs)
 
         fill_change_tpc(tx, sender, sum_tpc - fee)
