@@ -22,7 +22,9 @@ class TestWallet
   end
 end
 
-class TestInternalWallet
+class TestInternalWallet < Glueby::Internal::Wallet
+  def initialize; end
+
   def receive_address
     '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
   end
