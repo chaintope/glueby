@@ -38,19 +38,4 @@ class TestInternalWallet
   def sign_tx(tx, _prevtxs = [])
     tx
   end
-
-  def collect_uncolored_outputs(amount)
-    utxos = list_unspent
-
-    utxos.inject([0, []]) do |sum, output|
-      next sum if output[:color_id]
-
-      new_sum = sum[0] + output[:amount]
-      new_outputs = sum[1] << output
-      return [new_sum, new_outputs] if new_sum >= amount
-
-      [new_sum, new_outputs]
-    end
-    raise Glueby::Contract::Errors::InsufficientFunds
-  end
 end

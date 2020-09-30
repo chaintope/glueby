@@ -164,19 +164,6 @@ module Glueby
         tx.outputs << Tapyrus::TxOut.new(value: change, script_pubkey: change_colored_script)
       end
 
-      def collect_uncolored_outputs(results, amount)
-        results.inject([0, []]) do |sum, output|
-          next sum if output[:color_id]
-
-          new_sum = sum[0] + output[:amount]
-          new_outputs = sum[1] << output
-          return [new_sum, new_outputs] if new_sum >= amount
-
-          [new_sum, new_outputs]
-        end
-        raise Glueby::Contract::Errors::InsufficientFunds
-      end
-
       # Returns the set of utxos that satisfies the specified amount and has the specified color_id.
       # if amount is not specified or 0, return all utxos with color_id
       # @param results [Array] response of Glueby::Internal::Wallet#list_unspent
