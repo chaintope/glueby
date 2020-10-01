@@ -27,6 +27,24 @@ module Glueby
             to_p2pkh.addresses.first
           end
 
+          # Return Glueby::Internal::Wallet::AR::Key object for input.
+          # If utxo spent by the specified input is colored output, key is found by corresponding `uncolored` script.
+          #
+          # @param [Tapyrus::TxIn] input
+          # @return [Glueby::Internal::Wallet::AR::Key] key for input
+          def self.key_for_input(input)
+            out_point = input.out_point
+            utxo = Glueby::Internal::Wallet::AR::Utxo.find_by(txid: out_point.txid, index: out_point.index)
+            return unless utxo
+            script_pubkey = Tapyrus::Script.parse_from_payload(utxo.script_pubkey.htb)
+            script_pubkey = if script_pubkey.colored?
+              script_pubkey.remove_color.to_hex
+            else
+              script_pubkey.to_hex
+            end
+            find_by(script_pubkey: script_pubkey)
+          end
+
           private
 
           def generate_key

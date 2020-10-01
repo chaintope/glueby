@@ -14,7 +14,7 @@ module Glueby
           # @param [Tapyrus::Tx] tx
           def sign(tx)
             tx.inputs.each.with_index do |input, index|
-              key = key_for_input(input)
+              key = Glueby::Internal::Wallet::AR::Key.key_for_input(input)
               next unless key
               sign_tx_for_p2pkh(tx, index, key)
             end
@@ -26,13 +26,6 @@ module Glueby
           end
 
           private
-
-          def key_for_input(input)
-            out_point = input.out_point
-            utxo = Glueby::Internal::Wallet::AR::Utxo.find_by(txid: out_point.txid, index: out_point.index)
-            return unless utxo
-            Key.find_by(script_pubkey: utxo.script_pubkey)
-          end
 
           def sign_tx_for_p2pkh(tx, index, key)
             sighash = tx.sighash_for_input(index, key.to_p2pkh)
