@@ -16,6 +16,17 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Key' do
     end
     connection.add_index :keys, [:script_pubkey], unique: true
     connection.add_index :keys, [:private_key], unique: true
+
+    connection.create_table :utxos do |t|
+      t.string     :txid
+      t.integer    :index
+      t.bigint     :value
+      t.string     :script_pubkey
+      t.integer    :status
+      t.belongs_to :key, null: true
+      t.timestamps
+    end
+    connection.add_index :utxos, [:txid, :index], unique: true
   end
 
   let(:key) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key, purpose: :change) }
@@ -25,6 +36,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Key' do
   before { setup_database }
   after do
     connection = ::ActiveRecord::Base.connection
+    connection.drop_table :utxos, if_exists: true
     connection.drop_table :keys, if_exists: true
   end
 
@@ -90,5 +102,48 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Key' do
 
     it { expect(subject).to eq '20661fb45b90f336c150ef7ee1dbcf6872e6e1af34a5d71878d4590e42722500d5ba107944d679a3b9ac30de6f2cbc586498e5a09fdfdeb9c3a3af9971212cda' }
     it { expect(Tapyrus::Key.new(priv_key: private_key).verify(subject.htb, data, algo: :schnorr)).to be_truthy }
+  end
+
+  describe '.key_for_input' do
+    subject { Glueby::Internal::Wallet::AR::Key.key_for_input(input) }
+
+    let(:input) { Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid('0000000000000000000000000000000000000000000000000000000000000000', 0)) }
+
+    context 'utxo exists' do
+      before do
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: '0000000000000000000000000000000000000000000000000000000000000000',
+          index: 0,
+          script_pubkey: key.script_pubkey,
+          value: 1,
+          status: :finalized,
+          key: key
+        )
+      end
+
+      it { is_expected.to eq key }
+    end
+
+    context 'utxo does not exist' do
+      it { is_expected.to be_nil}
+    end
+
+    context 'utxo is colored' do
+      let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
+
+      before do
+        colored_script = Tapyrus::Script.parse_from_payload(key.script_pubkey.htb).add_color(color_id)
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: '0000000000000000000000000000000000000000000000000000000000000000',
+          index: 0,
+          script_pubkey: colored_script.to_hex,
+          value: 1,
+          status: :finalized,
+          key: key
+        )
+      end
+
+      it { is_expected.to eq key }
+    end
   end
 end
