@@ -12,7 +12,7 @@ module Glueby
           tx = Glueby::Internal::RPC.client.getrawtransaction(txid)
           tx = Tapyrus::Tx.parse_from_payload(tx.htb)
           Glueby::Internal::Wallet::AR::Utxo.destroy_for_inputs(tx)
-          Glueby::Internal::Wallet::AR::Utxo.create_for_outputs(tx)
+          Glueby::Internal::Wallet::AR::Utxo.create_or_update_for_outputs(tx)
         end
       end
     end

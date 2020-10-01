@@ -79,6 +79,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
       Tapyrus::Tx.new.tap do |tx|
         tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', 0))
         tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', 1))
+        tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', 3))
       end
     end
 
@@ -109,8 +110,8 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
     it { expect { subject }.to change { Glueby::Internal::Wallet::AR::Utxo.count }.from(3).to(1) }
   end
 
-  describe '.create_for_outputs' do
-    subject { Glueby::Internal::Wallet::AR::Utxo.create_for_outputs(tx) }
+  describe '.create_or_update_for_outputs' do
+    subject { Glueby::Internal::Wallet::AR::Utxo.create_or_update_for_outputs(tx) }
 
     let(:tx) do
       Tapyrus::Tx.new.tap do |tx|

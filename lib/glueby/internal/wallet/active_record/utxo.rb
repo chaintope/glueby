@@ -25,18 +25,17 @@ module Glueby
             end
           end
 
-          # Create utxo for tx outputs
+          # Create utxo or update utxo for tx outputs
           # if there is no key for script pubkey in an output, utxo for the output is not created.
           #
           # @param [Tapyrus::Tx] tx
-          def self.create_for_outputs(tx, status: :finalized)
+          def self.create_or_update_for_outputs(tx, status: :finalized)
             tx.outputs.each.with_index do |output, index|
               key = Key.key_for_output(output)
               next unless key
 
-              Utxo.create(
-                txid: tx.txid,
-                index: index,
+              utxo = Utxo.find_or_initialize_by(txid: tx.txid, index: index)
+              utxo.update!(
                 script_pubkey: output.script_pubkey.to_hex,
                 value: output.value,
                 status: status,
