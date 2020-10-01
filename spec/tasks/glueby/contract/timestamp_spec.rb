@@ -1,18 +1,6 @@
 require 'active_record'
 require 'rake'
 
-def setup_database
-  ::ActiveRecord::Base.establish_connection(config)
-  connection = ::ActiveRecord::Base.connection
-  connection.create_table :timestamps, force: true do |t|
-    t.string   :txid
-    t.integer  :status
-    t.string   :content_hash
-    t.string   :prefix
-    t.string   :wallet_id
-  end
-end
-
 def setup_rake_task
   Rake::Application.new.tap do |rake|
     Rake.application = rake
@@ -21,7 +9,7 @@ def setup_rake_task
   end
 end
 
-RSpec.describe 'Glueby::Contract::Task::Timestamp' do
+RSpec.describe 'Glueby::Contract::Task::Timestamp', active_record: true do
   let(:rpc) { double('mock') }
   let(:response_getrawtransaction) do
     {
@@ -88,7 +76,6 @@ RSpec.describe 'Glueby::Contract::Task::Timestamp' do
       }
     ]
   end
-  let(:config) { { adapter: 'sqlite3', database: 'test' } }
 
   before(:all) do
     @rake = setup_rake_task
@@ -101,13 +88,7 @@ RSpec.describe 'Glueby::Contract::Task::Timestamp' do
     allow(Glueby::Wallet).to receive(:load).with("5f924e7e5daf624616f96b2f659938d7").and_return(wallet)
     allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
 
-    setup_database
     Glueby::Contract::AR::Timestamp.create(wallet_id: "5f924e7e5daf624616f96b2f659938d7" , content: "\xFF\xFF\xFF", prefix: "app")
-  end
-
-  after do
-    connection = ::ActiveRecord::Base.connection
-    connection.drop_table :timestamps, if_exists: true
   end
 
   describe '#create' do

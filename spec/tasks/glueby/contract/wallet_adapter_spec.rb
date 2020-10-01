@@ -1,39 +1,7 @@
 require 'active_record'
 require 'rake'
 
-RSpec.describe 'Glueby::Contract::Task::WalletAdapter' do
-  def setup_database
-    ::ActiveRecord::Base.establish_connection(config)
-    connection = ::ActiveRecord::Base.connection
-    connection.create_table :wallets do |t|
-      t.string :wallet_id
-      t.timestamps
-    end
-    connection.add_index :wallets, [:wallet_id], unique: true
-
-    connection.create_table :keys do |t|
-      t.string     :private_key
-      t.string     :public_key
-      t.string     :script_pubkey
-      t.integer    :purpose
-      t.belongs_to :wallet, null: true
-      t.timestamps
-    end
-    connection.add_index :keys, [:script_pubkey], unique: true
-    connection.add_index :keys, [:private_key], unique: true
-
-    connection.create_table :utxos do |t|
-      t.string     :txid
-      t.integer    :index
-      t.bigint     :value
-      t.string     :script_pubkey
-      t.integer    :status
-      t.belongs_to :key, null: true
-      t.timestamps
-    end
-    connection.add_index :utxos, [:txid, :index], unique: true
-  end
-
+RSpec.describe 'Glueby::Contract::Task::WalletAdapter', active_record: true  do
   before(:all) do
     @rake = setup_rake_task
   end
@@ -43,7 +11,6 @@ RSpec.describe 'Glueby::Contract::Task::WalletAdapter' do
     allow(rpc).to receive(:getblock).with('022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7', 0).and_return(response_getblock)
     allow(rpc).to receive(:getrawtransaction).with('2acb0d1015c382d63d4d8404b3219fc37c2c5c49aa6d6994f654758fb0179071').and_return(response_getrawtransaction1)
     allow(rpc).to receive(:getrawtransaction).with('b4d0dbafa6777d8a902cf4359bdf1bdca3dbaca9ad450f284530cf039f49a23b').and_return(response_getrawtransaction2)
-    setup_database
 
     wallet = Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
     Glueby::Internal::Wallet::AR::Key.create(private_key: private_key, purpose: :change, wallet: wallet)
@@ -56,13 +23,6 @@ RSpec.describe 'Glueby::Contract::Task::WalletAdapter' do
       value: 5_000_000_000,
       status: :finalized
     )
-  end
-
-  after do
-    connection = ::ActiveRecord::Base.connection
-    connection.drop_table :utxos, if_exists: true
-    connection.drop_table :wallets, if_exists: true
-    connection.drop_table :keys, if_exists: true
   end
 
   def setup_rake_task

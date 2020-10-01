@@ -2,45 +2,9 @@
 
 require 'active_record'
 
-RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
+RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_record: true do
   let(:adapter) { Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new }
-
-  def setup_database
-    ::ActiveRecord::Base.establish_connection(config)
-    connection = ::ActiveRecord::Base.connection
-    connection.create_table :wallets do |t|
-      t.string :wallet_id
-      t.timestamps
-    end
-    connection.create_table :keys do |t|
-      t.string     :private_key
-      t.string     :public_key
-      t.string     :script_pubkey
-      t.integer    :purpose
-      t.belongs_to :wallet, null: true
-      t.timestamps
-    end
-    connection.create_table :utxos do |t|
-      t.string     :txid
-      t.integer    :index
-      t.bigint     :value
-      t.string     :script_pubkey
-      t.integer    :status
-      t.belongs_to :key, null: true
-      t.timestamps
-    end
-  end
-
   let(:wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: '00000000000000000000000000000000') }
-  let(:config) { { adapter: 'sqlite3', database: 'test' } }
-
-  before { setup_database }
-  after do
-    connection = ::ActiveRecord::Base.connection
-    connection.drop_table :utxos, if_exists: true
-    connection.drop_table :wallets, if_exists: true
-    connection.drop_table :keys, if_exists: true
-  end
 
   describe '#create_wallet' do
     subject { adapter.create_wallet }
