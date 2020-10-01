@@ -40,4 +40,8 @@ class TestInternalWallet < Glueby::Internal::Wallet
   def sign_tx(tx, _prevtxs = [])
     tx
   end
+
+  def broadcast(tx)
+    '0000000000000000000000000000000000000000000000000000000000000000'
+  end
 end

@@ -40,10 +40,6 @@ module Glueby
           script
         end
 
-        def broadcast_tx(tx)
-          Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth)
-        end
-
         def get_transaction(tx)
           Glueby::Internal::RPC.client.getrawtransaction(tx.txid, 1)
         end
@@ -75,7 +71,7 @@ module Glueby
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
         @tx = create_tx(@wallet, @prefix, Tapyrus.sha256(@content), @fee_provider)
-        @txid = broadcast_tx(@tx)
+        @txid = @wallet.internal_wallet.broadcast(@tx)
       end
     end
   end

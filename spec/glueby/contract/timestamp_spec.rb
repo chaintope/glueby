@@ -62,9 +62,9 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
 
     before do
       allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
-      allow(rpc).to receive(:sendrawtransaction).and_return('a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c')
       allow(rpc).to receive(:getnewaddress).and_return('13L2GiUwB3HuyURm81ht6JiQAa8EcBN23H')
       allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
+      allow(internal_wallet).to receive(:broadcast).and_return('a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c')
     end
 
     it { expect(subject).to eq 'a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c' }

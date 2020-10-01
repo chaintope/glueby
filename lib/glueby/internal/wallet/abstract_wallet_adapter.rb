@@ -90,6 +90,15 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
+        # Broadcast the transaction to the Tapyrus Network.
+        #
+        # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [Tapyrus::Tx] tx - The transaction to be broadcasterd.
+        # @return [String] txid
+        def broadcast(wallet_id, tx)
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
+
         # Returns an address to receive coin.
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.

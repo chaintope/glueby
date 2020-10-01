@@ -54,6 +54,14 @@ module Glueby
           wallet.sign(tx, prevtxs)
         end
 
+        def broadcast(wallet_id, tx)
+          ::ActiveRecord::Base.transaction do
+            Glueby::Internal::Wallet::AR::Utxo.destroy_for_inputs(tx)
+            Glueby::Internal::Wallet::AR::Utxo.create_for_outputs(tx, status: :broadcasted)
+            client.sendrawtransaction(tx.to_hex)
+          end
+        end
+
         def receive_address(wallet_id)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           key = wallet.keys.create(purpose: :receive)

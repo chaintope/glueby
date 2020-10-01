@@ -106,6 +106,10 @@ module Glueby
           end
         end
 
+        def broadcast(wallet_id, tx)
+          client.sendrawtransaction(tx.to_hex)
+        end
+
         def receive_address(wallet_id)
           perform_as(wallet_id) do |client|
             client.getnewaddress('', ADDRESS_TYPE)

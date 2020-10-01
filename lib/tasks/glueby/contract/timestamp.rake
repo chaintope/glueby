@@ -15,7 +15,7 @@ module Glueby
                 tx = create_tx(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeProvider.new)
                 t.update(txid: tx.txid, status: :unconfirmed)
 
-                broadcast_tx(tx)
+                wallet.internal_wallet.broadcast(tx)
                 puts "broadcasted (id=#{t.id}, txid=#{tx.txid})"
               end
             rescue => e
