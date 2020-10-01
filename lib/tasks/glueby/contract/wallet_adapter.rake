@@ -16,12 +16,7 @@ module Glueby
           end
 
           tx.outputs.each.with_index do |output, index|
-            script_pubkey = if output.colored?
-              output.script_pubkey.remove_color.to_hex
-            else
-              output.script_pubkey.to_hex
-            end
-            key = Glueby::Internal::Wallet::AR::Key.find_by(script_pubkey: script_pubkey)
+            key = Glueby::Internal::Wallet::AR::Key.key_for_output(output)
             next unless key
 
             Glueby::Internal::Wallet::AR::Utxo.create(

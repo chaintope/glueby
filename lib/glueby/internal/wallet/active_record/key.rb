@@ -45,6 +45,20 @@ module Glueby
             find_by(script_pubkey: script_pubkey)
           end
 
+          # Return Glueby::Internal::Wallet::AR::Key object for output.
+          # If output is colored output, key is found by corresponding `uncolored` script.
+          #
+          # @param [Tapyrus::TxOut] output
+          # @return [Glueby::Internal::Wallet::AR::Key] key for output
+          def self.key_for_output(output)
+            script_pubkey = if output.colored?
+              output.script_pubkey.remove_color.to_hex
+            else
+              output.script_pubkey.to_hex
+            end
+            find_by(script_pubkey: script_pubkey)
+          end
+
           private
 
           def generate_key
