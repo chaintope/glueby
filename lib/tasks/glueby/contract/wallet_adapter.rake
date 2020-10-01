@@ -11,23 +11,8 @@ module Glueby
         def import_tx(txid)
           tx = Glueby::Internal::RPC.client.getrawtransaction(txid)
           tx = Tapyrus::Tx.parse_from_payload(tx.htb)
-          tx.inputs.each do |input|
-            Glueby::Internal::Wallet::AR::Utxo.destroy_by(txid: input.out_point.txid, index: input.out_point.index)
-          end
-
-          tx.outputs.each.with_index do |output, index|
-            key = Glueby::Internal::Wallet::AR::Key.key_for_output(output)
-            next unless key
-
-            Glueby::Internal::Wallet::AR::Utxo.create(
-              txid: txid,
-              index: index,
-              script_pubkey: output.script_pubkey.to_hex,
-              value: output.value,
-              status: :finalized,
-              key: key
-            )
-          end
+          Glueby::Internal::Wallet::AR::Utxo.destroy_for_inputs(tx)
+          Glueby::Internal::Wallet::AR::Utxo.create_for_outputs(tx)
         end
       end
     end
