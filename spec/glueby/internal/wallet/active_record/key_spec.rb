@@ -2,43 +2,9 @@
 
 require 'active_record'
 
-RSpec.describe 'Glueby::Internal::Wallet::AR::Key' do
-  def setup_database
-    ::ActiveRecord::Base.establish_connection(config)
-    connection = ::ActiveRecord::Base.connection
-    connection.create_table :keys do |t|
-      t.string     :private_key
-      t.string     :public_key
-      t.string     :script_pubkey
-      t.integer    :purpose
-      t.belongs_to :wallet, null: true
-      t.timestamps
-    end
-    connection.add_index :keys, [:script_pubkey], unique: true
-    connection.add_index :keys, [:private_key], unique: true
-
-    connection.create_table :utxos do |t|
-      t.string     :txid
-      t.integer    :index
-      t.bigint     :value
-      t.string     :script_pubkey
-      t.integer    :status
-      t.belongs_to :key, null: true
-      t.timestamps
-    end
-    connection.add_index :utxos, [:txid, :index], unique: true
-  end
-
+RSpec.describe 'Glueby::Internal::Wallet::AR::Key', active_record: true  do
   let(:key) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key, purpose: :change) }
   let(:private_key) { '206f3acb5b7ac66dacf87910bb0b04bed78284b9b50c0d061705a44447a947ff' }
-  let(:config) { { adapter: 'sqlite3', database: 'test' } }
-
-  before { setup_database }
-  after do
-    connection = ::ActiveRecord::Base.connection
-    connection.drop_table :utxos, if_exists: true
-    connection.drop_table :keys, if_exists: true
-  end
 
   describe '#valid' do
     subject { key }
