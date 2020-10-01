@@ -81,6 +81,10 @@ module Glueby
         wallet_adapter.sign_tx(id, tx, prev_txs)
       end
 
+      def broadcast(tx)
+        wallet_adapter.broadcast(id, tx)
+      end
+
       def receive_address
         wallet_adapter.receive_address(id)
       end
