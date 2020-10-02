@@ -56,9 +56,9 @@ module Glueby
 
         def broadcast(wallet_id, tx)
           ::ActiveRecord::Base.transaction do
-            Glueby::Internal::Wallet::AR::Utxo.destroy_for_inputs(tx)
-            Glueby::Internal::Wallet::AR::Utxo.create_for_outputs(tx, status: :broadcasted)
-            client.sendrawtransaction(tx.to_hex)
+            AR::Utxo.destroy_for_inputs(tx)
+            AR::Utxo.create_or_update_for_outputs(tx, status: :broadcasted)
+            Glueby::Internal::RPC.client.sendrawtransaction(tx.to_hex)
           end
         end
 
