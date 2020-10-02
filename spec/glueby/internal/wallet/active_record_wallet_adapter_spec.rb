@@ -174,7 +174,9 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
     context 'finalized only' do
       it { expect(subject.count).to eq 2 }
       it { expect(subject[0][:vout]).to eq 1 }
+      it { expect(subject[0][:finalized]).to be_truthy }
       it { expect(subject[1][:vout]).to eq 2 }
+      it { expect(subject[1][:finalized]).to be_truthy }
     end
 
     context 'with unconfirmed' do
@@ -182,8 +184,11 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter' do
 
       it { expect(subject.count).to eq 3 }
       it { expect(subject[0][:vout]).to eq 0 }
+      it { expect(subject[0][:finalized]).to be_falsy }
       it { expect(subject[1][:vout]).to eq 1 }
+      it { expect(subject[1][:finalized]).to be_truthy }
       it { expect(subject[2][:vout]).to eq 2 }
+      it { expect(subject[2][:finalized]).to be_truthy }
     end
   end
 
