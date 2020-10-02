@@ -14,7 +14,7 @@ module Glueby
           # @param [Tapyrus::Tx] tx
           def sign(tx)
             tx.inputs.each.with_index do |input, index|
-              key = Glueby::Internal::Wallet::AR::Key.key_for_input(input)
+              key = Key.key_for_input(input)
               next unless key
               sign_tx_for_p2pkh(tx, index, key)
             end

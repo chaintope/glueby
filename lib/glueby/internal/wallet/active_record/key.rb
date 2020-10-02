@@ -34,7 +34,7 @@ module Glueby
           # @return [Glueby::Internal::Wallet::AR::Key] key for input
           def self.key_for_input(input)
             out_point = input.out_point
-            utxo = Glueby::Internal::Wallet::AR::Utxo.find_by(txid: out_point.txid, index: out_point.index)
+            utxo = Utxo.find_by(txid: out_point.txid, index: out_point.index)
             return unless utxo
             script_pubkey = Tapyrus::Script.parse_from_payload(utxo.script_pubkey.htb)
             script_pubkey = if script_pubkey.colored?

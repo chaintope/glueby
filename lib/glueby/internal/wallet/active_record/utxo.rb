@@ -21,7 +21,7 @@ module Glueby
           # @param [Tapyrus::Tx] the spending tx
           def self.destroy_for_inputs(tx)
             tx.inputs.each do |input|
-              Glueby::Internal::Wallet::AR::Utxo.destroy_by(txid: input.out_point.txid, index: input.out_point.index)
+              Utxo.destroy_by(txid: input.out_point.txid, index: input.out_point.index)
             end
           end
 
@@ -31,10 +31,10 @@ module Glueby
           # @param [Tapyrus::Tx] tx
           def self.create_for_outputs(tx, status: :finalized)
             tx.outputs.each.with_index do |output, index|
-              key = Glueby::Internal::Wallet::AR::Key.key_for_output(output)
+              key = Key.key_for_output(output)
               next unless key
 
-              Glueby::Internal::Wallet::AR::Utxo.create(
+              Utxo.create(
                 txid: tx.txid,
                 index: index,
                 script_pubkey: output.script_pubkey.to_hex,
