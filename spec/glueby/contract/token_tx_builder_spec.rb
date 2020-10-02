@@ -266,22 +266,6 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     end
   end
 
-  describe '#collect_uncolored_outputs' do
-    subject { mock.collect_uncolored_outputs(results, amount) }
-
-    let(:results) { unspents }
-    let(:amount) { 150_000_000 }
-
-    it { expect(subject[0]).to eq 200_000_000 }
-    it { expect(subject[1].size).to eq 2 }
-
-    context 'does not have enough tpc' do
-      let(:amount) { 250_000_001 }
-
-      it { expect { subject }.to raise_error Glueby::Contract::Errors::InsufficientFunds }
-    end
-  end
-
   describe '#collect_colored_outputs' do
     subject { mock.collect_colored_outputs(results, color_id, amount) }
 
