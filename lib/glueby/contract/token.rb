@@ -68,7 +68,7 @@ module Glueby
                          else
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
-          txs.each { |tx| Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth) }
+          txs.each { |tx| issuer.internal_wallet.broadcast(tx) }
           new(color_id: color_id, script_pubkey: script_pubkey)
         end
 
@@ -116,7 +116,7 @@ module Glueby
         estimated_fee = FixedFeeProvider.new.fee(Tapyrus::Tx.new)
         funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
         tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
-        [funding_tx, tx].each { |tx| Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth) }
+        [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }
       end
 
       # Send the token to other wallet
@@ -132,7 +132,7 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
         tx = create_transfer_tx(color_id: color_id, sender: sender, receiver: receiver, amount: amount)
-        Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth)
+        sender.internal_wallet.broadcast(tx)
       end
 
       # Burn token
@@ -147,7 +147,7 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
         tx = create_burn_tx(color_id: color_id, sender: sender, amount: amount)
-        Glueby::Internal::RPC.client.sendrawtransaction(tx.to_payload.bth)
+        sender.internal_wallet.broadcast(tx)
       end
 
       # Return balance of token in the specified wallet.
@@ -171,7 +171,7 @@ module Glueby
       def to_payload
         payload = +''
         payload << @color_id.to_payload
-        payload << @script_pubkey.to_payload
+        payload << @script_pubkey.to_payload if @script_pubkey
       end
 
       # Restore token from payload
