@@ -8,12 +8,12 @@ module Glueby
       class ActiveRecordWalletAdapter < AbstractWalletAdapter
         def create_wallet
           wallet_id = SecureRandom.hex(16)
-          wallet = Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: wallet_id)
+          wallet = AR::Wallet.create(wallet_id: wallet_id)
           wallet_id
         end
 
         def delete_wallet(wallet_id)
-          Glueby::Internal::Wallet::AR::Wallet.destroy_by(wallet_id: wallet_id)
+          AR::Wallet.destroy_by(wallet_id: wallet_id)
         end
 
         def load_wallet(wallet_id)
@@ -23,18 +23,18 @@ module Glueby
         end
 
         def wallets
-          Glueby::Internal::Wallet::AR::Wallet.all.map(&:wallet_id).sort
+          AR::Wallet.all.map(&:wallet_id).sort
         end
 
         def balance(wallet_id, only_finalized = true)
-          wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet_id)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.utxos
           utxos = utxos.where(status: :finalized) if only_finalized
           utxos.sum(&:value)
         end
 
         def list_unspent(wallet_id, only_finalized = true)
-          wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet_id)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.utxos
           utxos = utxos.where(status: :finalized) if only_finalized
           utxos.map do |utxo|
@@ -50,24 +50,24 @@ module Glueby
         end
 
         def sign_tx(wallet_id, tx, prevtxs = [])
-          wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet_id)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           wallet.sign(tx)
         end
 
         def receive_address(wallet_id)
-          wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet_id)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           key = wallet.keys.create(purpose: :receive)
           key.address
         end
 
         def change_address(wallet_id)
-          wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet_id)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           key = wallet.keys.create(purpose: :change)
           key.address
         end
 
         def create_pubkey(wallet_id)
-          wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet_id)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           key = wallet.keys.create(purpose: :receive)
           Tapyrus::Key.new(pubkey: key.public_key)
         end
