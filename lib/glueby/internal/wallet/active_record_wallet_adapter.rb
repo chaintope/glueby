@@ -44,7 +44,7 @@ module Glueby
               script_pubkey: utxo.script_pubkey,
               color_id: utxo.color_id,
               amount: utxo.value,
-              finalized: utxo.status == :finalized
+              finalized: utxo.status == 'finalized'
             }
           end
         end
