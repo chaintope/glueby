@@ -51,7 +51,7 @@ module Glueby
 
         def sign_tx(wallet_id, tx, prevtxs = [])
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
-          wallet.sign(tx)
+          wallet.sign(tx, prevtxs)
         end
 
         def receive_address(wallet_id)
