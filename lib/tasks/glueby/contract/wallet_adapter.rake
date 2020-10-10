@@ -28,14 +28,14 @@ namespace :glueby do
       task :import_block, [:block_hash] => [:environment] do |_, args|
         block_hash = args[:block_hash]
 
-        import_block(block_hash)
+        ::ActiveRecord::Base.transaction { import_block(block_hash) }
       end
 
       desc 'import transaction into database'
       task :import_tx, [:txid] => [:environment] do |_, args|
         txid = args[:txid]
 
-        import_tx(txid)
+        ::ActiveRecord::Base.transaction { import_tx(txid) }
       end
     end
   end
