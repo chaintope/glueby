@@ -170,4 +170,26 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Key' do
       it { is_expected.to eq key }
     end
   end
+
+  describe '.key_for_script' do
+    subject { Glueby::Internal::Wallet::AR::Key.key_for_script(script) }
+
+    let(:script) { Tapyrus::Script.parse_from_payload(key.script_pubkey.htb) }
+
+    context 'key exists' do
+      it { is_expected.to eq key }
+    end
+
+    context 'key does not exist' do
+      let(:script) { Tapyrus::Script.new }
+      it { is_expected.to be_nil }
+    end
+
+    context 'script is colored' do
+      let(:script) { Tapyrus::Script.parse_from_payload(key.script_pubkey.htb).add_color(color_id) }
+      let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
+
+      it { is_expected.to eq key }
+    end
+  end
 end

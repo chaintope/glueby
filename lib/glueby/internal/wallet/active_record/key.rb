@@ -37,12 +37,7 @@ module Glueby
             utxo = Utxo.find_by(txid: out_point.txid, index: out_point.index)
             return unless utxo
             script_pubkey = Tapyrus::Script.parse_from_payload(utxo.script_pubkey.htb)
-            script_pubkey = if script_pubkey.colored?
-              script_pubkey.remove_color.to_hex
-            else
-              script_pubkey.to_hex
-            end
-            find_by(script_pubkey: script_pubkey)
+            key_for_script(script_pubkey)
           end
 
           # Return Glueby::Internal::Wallet::AR::Key object for output.
@@ -51,15 +46,24 @@ module Glueby
           # @param [Tapyrus::TxOut] output
           # @return [Glueby::Internal::Wallet::AR::Key] key for output
           def self.key_for_output(output)
-            script_pubkey = if output.colored?
-              output.script_pubkey.remove_color.to_hex
-            else
-              output.script_pubkey.to_hex
-            end
-            find_by(script_pubkey: script_pubkey)
+            key_for_script(output.script_pubkey)
           end
 
           private
+
+          # Return Glueby::Internal::Wallet::AR::Key object for script.
+          # If script is colored, key is found by corresponding `uncolored` script.
+          #
+          # @param [Tapyrus::Script] script_pubkey
+          # @return [Glueby::Internal::Wallet::AR::Key] key for input
+          def self.key_for_script(script_pubkey)
+            script_pubkey = if script_pubkey.colored?
+              script_pubkey.remove_color.to_hex
+            else
+              script_pubkey.to_hex
+            end
+            find_by(script_pubkey: script_pubkey)
+          end
 
           def generate_key
             key = if private_key
