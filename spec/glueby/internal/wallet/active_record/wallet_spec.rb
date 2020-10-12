@@ -47,7 +47,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
   end
 
   describe '#sign' do
-    subject { wallet.sign(tx) }
+    subject { wallet.sign(tx, prevtxs) }
 
     let(:key1) { wallet.keys.create(purpose: :receive) }
     let(:key2) { wallet.keys.create(purpose: :receive) }
@@ -60,6 +60,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
       tx
     end
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
+    let(:prevtxs) { [] }
 
     before do
       Glueby::Internal::Wallet::AR::Utxo.create(
@@ -94,6 +95,46 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
       expect(tx.verify_input_sig(0, key1.to_p2pkh)).to be_truthy
       expect(tx.verify_input_sig(1, key2.to_p2pkh)).to be_truthy
       expect(tx.verify_input_sig(2, key1.to_p2pkh.add_color(color_id))).to be_truthy
+    end
+
+    context 'with previout txs' do
+      let(:prevtxs) do
+        [
+          {
+            txid: '33' * 32,
+            vout: 0,
+            scriptPubKey: key1.to_p2pkh.to_hex,
+            amount: 1
+          }
+        ]
+      end
+
+      before { tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.new('33' * 32, 0)) }
+
+      it do
+        subject
+        expect(tx.verify_input_sig(3, key1.to_p2pkh)).to be_truthy
+      end
+    end
+
+    context 'utxo is not stored and is not contained in prevtxs' do
+      let(:prevtxs) do
+        [
+          {
+            txid: '33' * 32,
+            vout: 0,
+            scriptPubKey: key1.to_p2pkh.to_hex,
+            amount: 1
+          }
+        ]
+      end
+
+      before { tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.new('33' * 32, 1)) }
+
+      it 'does not sign to unknown input' do
+        subject
+        expect(tx.inputs[3].script_sig).to eq Tapyrus::Script.new
+      end
     end
   end
 
