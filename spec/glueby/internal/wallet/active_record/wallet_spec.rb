@@ -55,9 +55,11 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
       tx = Tapyrus::Tx.new
       tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.new('00' * 32, 0))
       tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.new('11' * 32, 0))
+      tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.new('22' * 32, 0))
       tx.outputs << Tapyrus::TxOut.new(value: 1, script_pubkey: Tapyrus::Script.new)
       tx
     end
+    let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
 
     before do
       Glueby::Internal::Wallet::AR::Utxo.create(
@@ -76,12 +78,22 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet' do
         status: :init,
         key: key2
       )
+      colored_script = key1.to_p2pkh.add_color(color_id)
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '2222222222222222222222222222222222222222222222222222222222222222',
+        index: 0,
+        script_pubkey: colored_script.to_hex,
+        value: 1,
+        status: :finalized,
+        key: key1
+      )
     end
 
     it do
       subject
       expect(tx.verify_input_sig(0, key1.to_p2pkh)).to be_truthy
       expect(tx.verify_input_sig(1, key2.to_p2pkh)).to be_truthy
+      expect(tx.verify_input_sig(2, key1.to_p2pkh.add_color(color_id))).to be_truthy
     end
   end
 
