@@ -36,8 +36,6 @@ module Glueby
             key_for_script(output.script_pubkey)
           end
 
-          private
-
           # Return Glueby::Internal::Wallet::AR::Key object for script.
           # If script is colored, key is found by corresponding `uncolored` script.
           #
@@ -51,6 +49,8 @@ module Glueby
             end
             find_by(script_pubkey: script_pubkey)
           end
+
+          private
 
           def generate_key
             key = if private_key
