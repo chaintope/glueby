@@ -107,7 +107,7 @@ module Glueby
         end
 
         def broadcast(wallet_id, tx)
-          client.sendrawtransaction(tx.to_hex)
+          RPC.client.sendrawtransaction(tx.to_hex)
         end
 
         def receive_address(wallet_id)
