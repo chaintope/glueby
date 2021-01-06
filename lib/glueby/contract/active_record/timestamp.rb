@@ -5,7 +5,7 @@ module Glueby
         include Glueby::Contract::Timestamp::Util
         enum status: { init: 0, unconfirmed: 1, confirmed: 2 }
 
-        # @param [Hash] attributes an attributes which consist of:
+        # @param [Hash] attributes attributes which consist of:
         # - wallet_id
         # - content
         # - prefix(optional)
