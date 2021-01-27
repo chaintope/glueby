@@ -51,12 +51,17 @@ module Glueby
       # @param [String] content Data to be hashed and stored in blockchain.
       # @param [String] prefix prefix of op_return data
       # @param [Glueby::Contract::FeeProvider] fee_provider
+      # @param [Symbol] digest type which select of:
+      # - :sha256
+      # - :double_sha256
+      # - :none
+      # @raise [Glueby::Contract::Errors::UnsupportedDigestType] if digest unsupport
       def initialize(
         wallet:,
         content:,
         prefix: '',
         fee_provider: Glueby::Contract::FixedFeeProvider.new,
-        digest: 'sha256'
+        digest: :sha256
       )
         @wallet = wallet
         @content = content
@@ -72,21 +77,22 @@ module Glueby
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        content = digest_content(@digest)
-        @tx = create_tx(@wallet, @prefix, content, @fee_provider)
+        @tx = create_tx(@wallet, @prefix, digest_content, @fee_provider)
         @txid = @wallet.internal_wallet.broadcast(@tx)
       end
 
       private
 
-      def digest_content(digest = '')
-        case digest&.downcase
-        when 'sha256'
+      def digest_content
+        case @digest&.downcase
+        when :sha256
           Tapyrus.sha256(@content)
-        when 'double_sha256'
+        when :double_sha256
           Tapyrus.double_sha256(@content)
-        else
+        when :none
           @content
+        else
+          raise Glueby::Contract::Errors::UnsupportedDigestType
         end
       end
     end

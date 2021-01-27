@@ -8,6 +8,7 @@ module Glueby
       class TxAlreadyBroadcasted < StandardError; end
       class UnsupportedTokenType < StandardError; end
       class UnknownScriptPubkey < StandardError; end
+      class UnsupportedDigestType < StandardError; end
     end
   end
 end
