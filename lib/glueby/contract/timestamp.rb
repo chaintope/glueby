@@ -55,12 +55,14 @@ module Glueby
         wallet:,
         content:,
         prefix: '',
-        fee_provider: Glueby::Contract::FixedFeeProvider.new
+        fee_provider: Glueby::Contract::FixedFeeProvider.new,
+        digest: 'sha256'
       )
         @wallet = wallet
         @content = content
         @prefix = prefix
         @fee_provider = fee_provider
+        @digest = digest
       end
 
       # broadcast to Tapyrus Core
@@ -70,8 +72,22 @@ module Glueby
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        @tx = create_tx(@wallet, @prefix, Tapyrus.sha256(@content), @fee_provider)
+        content = digest_content(@digest)
+        @tx = create_tx(@wallet, @prefix, content, @fee_provider)
         @txid = @wallet.internal_wallet.broadcast(@tx)
+      end
+
+      private
+
+      def digest_content(digest = '')
+        case digest&.downcase
+        when 'sha256'
+          Tapyrus.sha256(@content)
+        when 'double_sha256'
+          Tapyrus.double_sha256(@content)
+        else
+          @content
+        end
       end
     end
   end
