@@ -88,7 +88,7 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
       let(:contract) do
         Glueby::Contract::Timestamp.new(
           wallet: wallet,
-          content: "\01",
+          content: "01",
           prefix: '',
           digest: :none
         )
@@ -100,7 +100,7 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
         expect(contract.tx.outputs.size).to eq 2
         expect(contract.tx.outputs[0].value).to eq 0
         expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
-        expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq '10'
+        expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq '01'
         expect(contract.tx.outputs[1].value).to eq 99_990_000
       end
     end
@@ -109,7 +109,7 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
       let(:contract) do
         Glueby::Contract::Timestamp.new(
           wallet: wallet,
-          content: "\01",
+          content: "01",
           prefix: '',
           digest: :double_sha256
         )
@@ -121,7 +121,7 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
         expect(contract.tx.outputs.size).to eq 2
         expect(contract.tx.outputs[0].value).to eq 0
         expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
-        expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq '9c12cfdc04c74584d787ac3d23772132c18524bc7ab28dec4219b8fc5b425f70'
+        expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq 'bf3ae3deccfdee0ebf03fc924aea3dad4b1068acdd27e98d9e6cc9a140e589d1'
         expect(contract.tx.outputs[1].value).to eq 99_990_000
       end
     end
@@ -130,7 +130,7 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
       let(:contract) do
         Glueby::Contract::Timestamp.new(
           wallet: wallet,
-          content: "\01",
+          content: "01",
           prefix: '',
           digest: nil
         )
