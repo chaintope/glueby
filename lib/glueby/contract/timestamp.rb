@@ -14,9 +14,9 @@ module Glueby
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
         module_function
 
-        def create_tx(wallet, prefix, data_hash, fee_provider)
+        def create_tx(wallet, prefix, data, fee_provider)
           tx = Tapyrus::Tx.new
-          tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: create_script(prefix, data_hash))
+          tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: create_script(prefix, data))
   
           fee = fee_provider.fee(dummy_tx(tx))
           sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee)
@@ -26,17 +26,17 @@ module Glueby
           wallet.internal_wallet.sign_tx(tx)
         end
   
-        def create_payload(prefix, data_hash)
+        def create_payload(prefix, data)
           payload = +''
           payload << prefix
-          payload << data_hash
+          payload << data
           payload
         end
 
-        def create_script(prefix, data_hash)
+        def create_script(prefix, data)
           script = Tapyrus::Script.new
           script << Tapyrus::Script::OP_RETURN
-          script << create_payload(prefix, data_hash)
+          script << create_payload(prefix, data)
           script
         end
 
