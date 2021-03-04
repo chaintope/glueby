@@ -11,6 +11,10 @@ module Glueby
     #                      or
     #            Glueby::Wallet.create
     #
+    # Use `Glueby::Internal::Wallet#receive_address` to generate the address of a receiver
+    # receiver.internal_wallet.receive_address
+    # => '1CY6TSSARn8rAFD9chCghX5B7j4PKR8S1a'
+    #
     # Balance of sender and receiver before send
     # sender.balances[""]
     # => 100_000(tapyrus)
@@ -18,7 +22,7 @@ module Glueby
     # => 0(tapyrus)
     #
     # Send
-    # Payment.transfer(sender: sender, receiver: receiver, amount: 10_000)
+    # Payment.transfer(sender: sender, receiver_address: '1CY6TSSARn8rAFD9chCghX5B7j4PKR8S1a', amount: 10_000)
     # sender.balances[""]
     # => 90_000
     # receiver.balances[""]
@@ -28,7 +32,7 @@ module Glueby
       extend Glueby::Contract::TxBuilder
 
       class << self
-        def transfer(sender:, receiver:, amount:, fee_provider: FixedFeeProvider.new)
+        def transfer(sender:, receiver_address:, amount:, fee_provider: FixedFeeProvider.new)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
           tx = Tapyrus::Tx.new
@@ -37,7 +41,7 @@ module Glueby
           sum, outputs = sender.internal_wallet.collect_uncolored_outputs(dummy_fee + amount)
           fill_input(tx, outputs)
 
-          receiver_script = Tapyrus::Script.parse_from_addr(receiver.internal_wallet.receive_address)
+          receiver_script = Tapyrus::Script.parse_from_addr(receiver_address)
           tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_script)
 
           fee = fee_provider.fee(tx)
