@@ -11,6 +11,10 @@ module Glueby
     #                      or
     #            Glueby::Wallet.create
     #
+    # Use `Glueby::Internal::Wallet#receive_address` to generate the address of a receiver
+    # receiver.internal_wallet.receive_address
+    # => '1CY6TSSARn8rAFD9chCghX5B7j4PKR8S1a'
+    #
     # Balance of sender and receiver before send
     # sender.balances[""]
     # => 100_000(tapyrus)
@@ -18,7 +22,7 @@ module Glueby
     # => 0(tapyrus)
     #
     # Send
-    # Payment.transfer(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 10_000)
+    # Payment.transfer(sender: sender, receiver_address: '1CY6TSSARn8rAFD9chCghX5B7j4PKR8S1a', amount: 10_000)
     # sender.balances[""]
     # => 90_000
     # receiver.balances[""]

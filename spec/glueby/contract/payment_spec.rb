@@ -57,10 +57,10 @@ RSpec.describe 'Glueby::Contract::Payment' do
   end
 
   describe '#transfer' do
-    subject { Glueby::Contract::Payment.transfer(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: amount) }
+    subject { Glueby::Contract::Payment.transfer(sender: sender, receiver_address: receiver_address, amount: amount) }
 
     let(:sender) { wallet }
-    let(:receiver) { wallet }
+    let(:receiver_address) { wallet.internal_wallet.receive_address }
     let(:amount) { 200_000 }
 
     it { expect { subject }.not_to raise_error }
@@ -117,7 +117,7 @@ RSpec.describe 'Glueby::Contract::Payment' do
     end
 
     context 'does not have enough tpc because the fee is too high' do
-      subject { Glueby::Contract::Payment.transfer(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: amount, fee_provider: fee_provider) }
+      subject { Glueby::Contract::Payment.transfer(sender: sender, receiver_address: receiver_address, amount: amount, fee_provider: fee_provider) }
 
       let(:fee_provider) { Glueby::Contract::FixedFeeProvider.new(fixed_fee: 1_000_000_000) }
 
