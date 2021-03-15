@@ -126,11 +126,11 @@ RSpec.describe 'Glueby::Contract::Token' do
   end
 
   describe '#transfer!' do
-    subject { token.transfer!(sender: sender, receiver: receiver, amount: amount) }
+    subject { token.transfer!(sender: sender, receiver_address: receiver_address, amount: amount) }
 
     let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
     let(:sender) { wallet }
-    let(:receiver) { wallet }
+    let(:receiver_address) { wallet.internal_wallet.receive_address }
     let(:amount) { 200_000 }
 
     it { expect { subject }.not_to raise_error }

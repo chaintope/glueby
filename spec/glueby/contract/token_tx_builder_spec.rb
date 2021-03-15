@@ -155,11 +155,11 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   end
   
   describe '#create_transfer_tx' do
-    subject { mock.create_transfer_tx(color_id: color_id, sender: sender, receiver: receiver, amount: amount) }
+    subject { mock.create_transfer_tx(color_id: color_id, sender: sender, receiver_address: receiver_address, amount: amount) }
 
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
     let(:sender) { wallet }
-    let(:receiver) { wallet }
+    let(:receiver_address) { wallet.internal_wallet.receive_address }
     let(:amount) { 100_001 }
 
     it { expect(subject.inputs.size).to eq 3 }

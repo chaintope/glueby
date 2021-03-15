@@ -100,14 +100,14 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_transfer_tx(color_id:, sender:, receiver:, amount:, fee_provider: FixedFeeProvider.new)
+      def create_transfer_tx(color_id:, sender:, receiver_address:, amount:, fee_provider: FixedFeeProvider.new)
         tx = Tapyrus::Tx.new
 
         utxos = sender.internal_wallet.list_unspent
         sum_token, outputs = collect_colored_outputs(utxos, color_id, amount)
         fill_input(tx, outputs)
 
-        receiver_script = Tapyrus::Script.parse_from_addr(receiver.internal_wallet.receive_address)
+        receiver_script = Tapyrus::Script.parse_from_addr(receiver_address)
         receiver_colored_script = receiver_script.add_color(color_id)
         tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
 

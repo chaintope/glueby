@@ -13,13 +13,17 @@ module Glueby
     # alice = Glueby::Wallet.create
     # bob = Glueby::Wallet.create
     #
+    # Use `Glueby::Internal::Wallet#receive_address` to generate the address of bob
+    # bob.internal_wallet.receive_address
+    # => '1CY6TSSARn8rAFD9chCghX5B7j4PKR8S1a'
+    #
     # Issue
     # token = Token.issue!(issuer: alice, amount: 100)
     # token.amount(wallet: alice)
     # => 100
     #
     # Send
-    # token.transfer!(sender: alice, receiver: bob, amount: 1)
+    # token.transfer!(sender: alice, receiver: '1CY6TSSARn8rAFD9chCghX5B7j4PKR8S1a', amount: 1)
     # token.amount(wallet: alice)
     # => 99
     # token.amount(wallet: bob)
@@ -122,16 +126,16 @@ module Glueby
       # Send the token to other wallet
       #
       # @param sender [Glueby::Wallet] wallet to send this token
-      # @param receiver [Glueby::Wallet] wallet to receive this token
+      # @param receiver_address [String] address to receive this token
       # @param amount [Integer]
       # @return [Token] receiver token
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InsufficientTokens] if wallet does not have enough token to send.
       # @raise [InvalidAmount] if amount is not positive integer.
-      def transfer!(sender:, receiver:, amount: 1)
+      def transfer!(sender:, receiver_address:, amount: 1)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-        tx = create_transfer_tx(color_id: color_id, sender: sender, receiver: receiver, amount: amount)
+        tx = create_transfer_tx(color_id: color_id, sender: sender, receiver_address: receiver_address, amount: amount)
         sender.internal_wallet.broadcast(tx)
       end
 
