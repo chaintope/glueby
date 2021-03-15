@@ -23,7 +23,7 @@ module Glueby
     # => 100
     #
     # Send
-    # token.transfer!(sender: alice, receiver: '1CY6TSSARn8rAFD9chCghX5B7j4PKR8S1a', amount: 1)
+    # token.transfer!(sender: alice, receiver_address: '1CY6TSSARn8rAFD9chCghX5B7j4PKR8S1a', amount: 1)
     # token.amount(wallet: alice)
     # => 99
     # token.amount(wallet: bob)
