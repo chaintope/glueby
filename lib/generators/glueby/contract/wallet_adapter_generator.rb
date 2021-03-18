@@ -40,6 +40,16 @@ module Glueby
             table_options: table_options,
           )
         end
+        if self.class.migration_exists?(migration_dir, "create_block")
+          ::Kernel.warn "Migration already exists: create_block"
+        else
+          migration_template(
+            "block_table.rb.erb",
+            "db/migrate/create_block.rb",
+            migration_version: migration_version,
+            table_options: table_options,
+          )
+        end
       end
     end
   end

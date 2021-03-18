@@ -11,6 +11,9 @@ RSpec.describe 'Glueby::Contract::Task::WalletAdapter', active_record: true  do
     allow(rpc).to receive(:getblock).with('022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7', 0).and_return(response_getblock)
     allow(rpc).to receive(:getrawtransaction).with('2acb0d1015c382d63d4d8404b3219fc37c2c5c49aa6d6994f654758fb0179071').and_return(response_getrawtransaction1)
     allow(rpc).to receive(:getrawtransaction).with('b4d0dbafa6777d8a902cf4359bdf1bdca3dbaca9ad450f284530cf039f49a23b').and_return(response_getrawtransaction2)
+    allow(rpc).to receive(:getblockcount).and_return(response_getblockcount1)
+    allow(rpc).to receive(:getblockhash).with(0).and_return(response_getblockhash1)
+    allow(rpc).to receive(:getblockhash).with(1).and_return(response_getblockhash1)
 
     wallet = Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
     Glueby::Internal::Wallet::AR::Key.create(private_key: private_key, purpose: :change, wallet: wallet)
@@ -75,6 +78,9 @@ RSpec.describe 'Glueby::Contract::Task::WalletAdapter', active_record: true  do
     '001976a9143f90406e69facde1c8b08ddd9cf3d41f69ff2c3b88ac00000000'
   end
 
+  let(:response_getblockcount1) { 1 }
+  let(:response_getblockhash1) { '022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7' }
+
   describe '#import_block' do
     subject { @rake['glueby:contract:wallet_adapter:import_block'].invoke('022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7') }
 
@@ -108,5 +114,23 @@ RSpec.describe 'Glueby::Contract::Task::WalletAdapter', active_record: true  do
 
       it { expect { subject }.to change { Glueby::Internal::Wallet::AR::Utxo.count }.from(1).to(0) }
     end
+  end
+
+  describe '#sync_block' do
+    subject { @rake['glueby:contract:wallet_adapter:sync_block'].invoke }
+    after { @rake['glueby:contract:wallet_adapter:sync_block'].reenable }
+    let (:synced_block_number) { Glueby::Internal::Wallet::AR::Block.find(1).synced_block_number }
+    
+
+    it do
+      expect(rpc).to receive(:getblockcount).once
+      expect(rpc).to receive(:getblockhash).twice
+      expect(rpc).to receive(:getblock).twice
+      expect(rpc).to receive(:getrawtransaction).exactly(4).times
+      subject
+      expect(Glueby::Internal::Wallet::AR::Block.find(1)).not_to be_nil
+    end
+    
+    it { expect { subject }.to change { Glueby::Internal::Wallet::AR::Utxo.count }.from(1).to(2) }
   end
 end

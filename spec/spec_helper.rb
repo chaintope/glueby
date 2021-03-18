@@ -65,6 +65,11 @@ def setup_database
     t.string   :prefix
     t.string   :wallet_id
   end
+
+  connection.create_table :blocks, force: true do |t|
+    t.integer  :synced_block_number
+  end
+  connection.execute("INSERT INTO blocks (synced_block_number) VALUES (0)")
 end
 
 def teardown_database
