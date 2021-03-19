@@ -2,7 +2,7 @@ module Glueby
   module Internal
     class Wallet
       module AR
-        class Block < ::ActiveRecord::Base
+        class SystemInformation < ::ActiveRecord::Base
 
         end
       end

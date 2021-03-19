@@ -1,9 +1,0 @@
-class CreateBlock < ActiveRecord::Migration<%= migration_version %>
-  def change
-    create_table :blocks<%= table_options %> do |t|
-      t.integer   :synced_block_number
-    end
-
-    Glueby::Internal::Wallet::AR::Block.create(synced_block_number: 0)
-  end
-end

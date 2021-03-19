@@ -53,11 +53,6 @@ namespace :glueby do
         Glueby::Contract::Task::Timestamp.create
       end
 
-      desc 'sync block into database'
-      task :sync_block, [] => [:environment] do |_, _|
-        Glueby::Contract::Task::WalletAdapter.sync_block
-      end
-
       desc 'confirm glueby timestamp tx'
       task :confirm, [] => [:environment] do |_, _|
         Glueby::Contract::Task::Timestamp.confirm
