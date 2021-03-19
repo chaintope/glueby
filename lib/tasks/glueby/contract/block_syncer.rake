@@ -7,15 +7,11 @@ module Glueby
           latest_block_num = Glueby::Internal::RPC.client.getblockcount
           saved_block = Glueby::Internal::Wallet::AR::SystemInformation.find_by(info_key: "synced_block_number")
           (saved_block.info_value.to_i..latest_block_num).each do |i|
-            begin
-              ::ActiveRecord::Base.transaction do
-                block_hash = Glueby::Internal::RPC.client.getblockhash(i)
-                import_block(block_hash)
-                saved_block.update(info_value: i.to_s)
-                puts "success in synchronization (block count=#{i.to_s})"
-              end
-            rescue => e
-              puts "failed in synchronization (block count=#{saved_block.info_value}, reason=#{e.message})"
+            ::ActiveRecord::Base.transaction do
+              block_hash = Glueby::Internal::RPC.client.getblockhash(i)
+              import_block(block_hash)
+              saved_block.update(info_value: i.to_s)
+              puts "success in synchronization (block count=#{i.to_s})"
             end
           end
         end 

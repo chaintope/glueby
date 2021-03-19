@@ -24,6 +24,16 @@ RSpec.configure do |config|
       teardown_database
     end
   end
+
+  config.before(:suite) do
+    Rake::Application.new.tap do |rake|
+      Rake.application = rake
+      Rake.application.rake_require 'tasks/glueby/contract/timestamp'
+      Rake.application.rake_require 'tasks/glueby/contract/wallet_adapter'
+      Rake.application.rake_require 'tasks/glueby/contract/block_syncer'
+      Rake::Task.define_task(:environment)
+    end
+  end
 end
 
 def setup_database
@@ -71,7 +81,7 @@ def setup_database
     t.string  :info_value
     t.timestamps
   end
-  Glueby::Internal::Wallet::AR::SystemInformation.create(info_key: 'synced_block_number', info_value: '0')
+  Glueby::Internal::Wallet::AR::SystemInformation.create(info_key: 'synced_block_number', info_value: '1')
 end
 
 def teardown_database

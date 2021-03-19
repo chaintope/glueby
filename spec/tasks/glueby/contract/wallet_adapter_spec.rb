@@ -2,28 +2,16 @@ require 'active_record'
 require 'rake'
 
 RSpec.describe 'Glueby::Contract::Task::WalletAdapter', active_record: true  do
-  before(:all) do
-    @rake = setup_rake_task
-  end
-
   before(:each) do
     setup_mock
   end
 
   setup_responses
 
-  def setup_rake_task
-    Rake::Application.new.tap do |rake|
-      Rake.application = rake
-      Rake.application.rake_require 'tasks/glueby/contract/wallet_adapter'
-      Rake::Task.define_task(:environment)
-    end
-  end
-
   describe '#import_block' do
-    subject { @rake['glueby:contract:wallet_adapter:import_block'].invoke('022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7') }
+    subject { Rake.application['glueby:contract:wallet_adapter:import_block'].invoke('022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7') }
 
-    after { @rake['glueby:contract:wallet_adapter:import_block'].reenable }
+    after { Rake.application['glueby:contract:wallet_adapter:import_block'].reenable }
 
     it do
       expect(rpc).to receive(:getblock).once
@@ -36,9 +24,9 @@ RSpec.describe 'Glueby::Contract::Task::WalletAdapter', active_record: true  do
   end
 
   describe '#import_tx' do
-    subject { @rake['glueby:contract:wallet_adapter:import_tx'].invoke('b4d0dbafa6777d8a902cf4359bdf1bdca3dbaca9ad450f284530cf039f49a23b') }
+    subject { Rake.application['glueby:contract:wallet_adapter:import_tx'].invoke('b4d0dbafa6777d8a902cf4359bdf1bdca3dbaca9ad450f284530cf039f49a23b') }
 
-    after { @rake['glueby:contract:wallet_adapter:import_tx'].reenable }
+    after { Rake.application['glueby:contract:wallet_adapter:import_tx'].reenable }
 
     it do
       expect(rpc).to receive(:getrawtransaction).once
