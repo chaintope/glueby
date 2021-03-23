@@ -1,13 +1,4 @@
 require 'active_record'
-require 'rake'
-
-def setup_rake_task
-  Rake::Application.new.tap do |rake|
-    Rake.application = rake
-    Rake.application.rake_require 'tasks/glueby/contract/timestamp'
-    Rake::Task.define_task(:environment)
-  end
-end
 
 RSpec.describe 'Glueby::Contract::Task::Timestamp', active_record: true do
   let(:rpc) { double('mock') }
@@ -77,9 +68,6 @@ RSpec.describe 'Glueby::Contract::Task::Timestamp', active_record: true do
     ]
   end
 
-  before(:all) do
-    @rake = setup_rake_task
-  end
   
   before(:each) do
     allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
@@ -92,22 +80,15 @@ RSpec.describe 'Glueby::Contract::Task::Timestamp', active_record: true do
   end
 
   describe '#create' do
-    subject { @rake['glueby:contract:timestamp:create'].invoke }
-
-    after { @rake['glueby:contract:timestamp:create'].reenable }
+    subject { Rake.application['glueby:contract:timestamp:create'].execute }
 
     it { expect { subject }.to change { Glueby::Contract::AR::Timestamp.first.status }.from("init").to("unconfirmed") }
   end
 
   describe '#confirm' do
-    subject { @rake['glueby:contract:timestamp:confirm'].invoke }
+    subject { Rake.application['glueby:contract:timestamp:confirm'].execute }
     
     before { Glueby::Contract::AR::Timestamp.first.update(txid: 'a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c', status: :unconfirmed) }
-
-    after do
-      @rake['glueby:contract:timestamp:create'].reenable
-      @rake['glueby:contract:timestamp:confirm'].reenable
-    end
 
     it { expect { subject }.to change { Glueby::Contract::AR::Timestamp.first.status }.from("unconfirmed").to("confirmed") }
   end
