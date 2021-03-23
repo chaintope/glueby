@@ -25,7 +25,7 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
   describe '.synced_block_height' do
     subject { Glueby::AR::SystemInformation.synced_block_height }
 
-    it { expect(subject).to be 1 }
+    it { expect(subject.info_value.to_i).to be 1 }
   end
 
 end
