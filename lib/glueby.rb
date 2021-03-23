@@ -6,6 +6,7 @@ module Glueby
   autoload :Generator, 'glueby/generator'
   autoload :Wallet, 'glueby/wallet'
   autoload :Internal, 'glueby/internal'
+  autoload :AR, 'glueby/active_record'
 
   begin
     class Railtie < ::Rails::Railtie

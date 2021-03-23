@@ -1,5 +1,4 @@
 require 'active_record'
-require 'rake'
 
 RSpec.describe 'Glueby::Contract::Task::Timestamp', active_record: true do
   let(:rpc) { double('mock') }

@@ -1,5 +1,8 @@
 require 'active_record'
-require 'rake'
+
+RSpec.shared_context 'Set rpc responses' do
+  setup_responses
+end
 
 RSpec.describe 'Glueby::Contract::Task::BlockSyncer', active_record: true do
 
@@ -7,22 +10,22 @@ RSpec.describe 'Glueby::Contract::Task::BlockSyncer', active_record: true do
     setup_mock
   end
 
-  setup_responses
-
+  include_context 'Set rpc responses'
 
   describe '#start' do
     subject { Rake.application['glueby:contract:block_syncer:start'].execute }
 
     it do
       expect(rpc).to receive(:getblockcount).once
-      expect(rpc).to receive(:getblock).once
-      expect(rpc).to receive(:getblockhash).once
-      expect(rpc).to receive(:getrawtransaction).twice
-      subject
-      expect(Glueby::Internal::Wallet::AR::SystemInformation.find(1)).not_to be_nil
+      expect(rpc).to receive(:getblock).twice
+      expect(rpc).to receive(:getblockhash).twice
+      expect(rpc).to receive(:getrawtransaction).exactly(4).times
+      expect { subject }.to change { Glueby::AR::SystemInformation.synced_block_height }.from(1).to(2)
     end
-    
-    it { expect { subject }.to change { Glueby::Internal::Wallet::AR::Utxo.count }.from(1).to(2) }
+
+    it do 
+      expect { subject }.to change { Glueby::Internal::Wallet::AR::Utxo.count }.from(1).to(2)
+    end
   end
 
 end

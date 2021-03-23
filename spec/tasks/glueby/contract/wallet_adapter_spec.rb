@@ -1,12 +1,15 @@
 require 'active_record'
-require 'rake'
+
+RSpec.shared_context 'Set rpc responses' do
+  setup_responses
+end
 
 RSpec.describe 'Glueby::Contract::Task::WalletAdapter', active_record: true  do
   before(:each) do
     setup_mock
   end
 
-  setup_responses
+  include_context 'Set rpc responses'
 
   describe '#import_block' do
     subject { Rake.application['glueby:contract:wallet_adapter:import_block'].invoke('022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7') }

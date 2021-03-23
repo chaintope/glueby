@@ -1,6 +1,7 @@
 require "bundler/setup"
 require "glueby"
 require "tapyrus"
+require 'rake'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -81,7 +82,8 @@ def setup_database
     t.string  :info_value
     t.timestamps
   end
-  Glueby::Internal::Wallet::AR::SystemInformation.create(info_key: 'synced_block_number', info_value: '1')
+  connection.add_index  :system_informations, [:info_key], unique: true
+  Glueby::AR::SystemInformation.create(info_key: 'synced_block_number', info_value: '1')
 end
 
 def teardown_database
@@ -131,9 +133,9 @@ def setup_mock
   allow(rpc).to receive(:getblock).with('022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7', 0).and_return(response_getblock)
   allow(rpc).to receive(:getrawtransaction).with('2acb0d1015c382d63d4d8404b3219fc37c2c5c49aa6d6994f654758fb0179071').and_return(response_getrawtransaction1)
   allow(rpc).to receive(:getrawtransaction).with('b4d0dbafa6777d8a902cf4359bdf1bdca3dbaca9ad450f284530cf039f49a23b').and_return(response_getrawtransaction2)
-  allow(rpc).to receive(:getblockcount).and_return(response_getblockcount1)
-  allow(rpc).to receive(:getblockhash).with(0).and_return(response_getblockhash1)
-  allow(rpc).to receive(:getblockhash).with(1).and_return(response_getblockhash1)
+  allow(rpc).to receive(:getblockcount).and_return(response_getblockcount)
+  allow(rpc).to receive(:getblockhash).with(1).and_return(response_getblockhash)
+  allow(rpc).to receive(:getblockhash).with(2).and_return(response_getblockhash)
 
   wallet = Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF')
     Glueby::Internal::Wallet::AR::Key.create(private_key: private_key, purpose: :change, wallet: wallet)
@@ -190,6 +192,6 @@ def setup_responses
     '5b8581afb8e98cb2b6151184bd12fd81c48fc167ffffffff01f0ca052a010000' \
     '001976a9143f90406e69facde1c8b08ddd9cf3d41f69ff2c3b88ac00000000'
   end
-  let(:response_getblockcount1) { 1 }
-  let(:response_getblockhash1) { '022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7' }
+  let(:response_getblockcount) { 2 }
+  let(:response_getblockhash) { '022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7' }
 end
