@@ -7,6 +7,6 @@ class CreateSystemInformation < ActiveRecord::Migration<%= migration_version %>
     end
     add_index  :system_informations, [:info_key], unique: true
 
-    Glueby::AR::CreateSystemInformation.create(info_key: "synced_block_number", info_value: "1")
+    Glueby::AR::SystemInformation.create(info_key: "synced_block_number", info_value: "1")
   end
 end
