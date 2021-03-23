@@ -20,10 +20,10 @@ RSpec.describe 'Glueby::Contract::Task::BlockSyncer', active_record: true do
       expect(rpc).to receive(:getblock).twice
       expect(rpc).to receive(:getblockhash).twice
       expect(rpc).to receive(:getrawtransaction).exactly(4).times
-      expect(Glueby::AR::SystemInformation.synced_block_height.info_value.to_i).to eq(1)
+      expect(Glueby::AR::SystemInformation.synced_block_height.int_value).to eq(1)
       expect(Glueby::Internal::Wallet::AR::Utxo.count).to eq(1)
       subject.invoke
-      expect(Glueby::AR::SystemInformation.synced_block_height.info_value.to_i).to eq(2)
+      expect(Glueby::AR::SystemInformation.synced_block_height.int_value).to eq(2)
       expect(Glueby::Internal::Wallet::AR::Utxo.count).to eq(2)
     end
   end

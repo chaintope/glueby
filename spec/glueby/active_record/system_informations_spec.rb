@@ -28,4 +28,10 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
     it { expect(subject.info_value.to_i).to be 1 }
   end
 
+  describe '.int_value' do
+    subject { Glueby::AR::SystemInformation.synced_block_height }
+
+    it { expect(subject.int_value).to be 1 }
+  end
+
 end
