@@ -6,7 +6,7 @@ module Glueby
         def sync_block
           latest_block_num = Glueby::Internal::RPC.client.getblockcount
           synced_block = Glueby::AR::SystemInformation.synced_block_height
-          (synced_block.int_value..latest_block_num).each do |i|
+          (synced_block.int_value + 1..latest_block_num).each do |i|
             ::ActiveRecord::Base.transaction do
               block_hash = Glueby::Internal::RPC.client.getblockhash(i)
               import_block(block_hash)
