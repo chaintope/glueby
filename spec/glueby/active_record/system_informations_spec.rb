@@ -14,7 +14,7 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
         subject do
           Glueby::AR::SystemInformation.create(
             info_key: 'synced_block_number',
-            info_value: '1'
+            info_value: '0'
           )
         end
         it { expect {subject}.to raise_error ActiveRecord::RecordNotUnique }
@@ -25,13 +25,13 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
   describe '.synced_block_height' do
     subject { Glueby::AR::SystemInformation.synced_block_height }
 
-    it { expect(subject.info_value.to_i).to be 1 }
+    it { expect(subject.info_value.to_i).to be 0 }
   end
 
   describe '.int_value' do
     subject { Glueby::AR::SystemInformation.synced_block_height }
 
-    it { expect(subject.int_value).to be 1 }
+    it { expect(subject.int_value).to be 0 }
   end
 
 end

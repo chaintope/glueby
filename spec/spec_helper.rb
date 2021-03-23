@@ -83,7 +83,7 @@ def setup_database
     t.timestamps
   end
   connection.add_index  :system_informations, [:info_key], unique: true
-  Glueby::AR::SystemInformation.create(info_key: 'synced_block_number', info_value: '1')
+  Glueby::AR::SystemInformation.create(info_key: 'synced_block_number', info_value: '0')
 end
 
 def teardown_database
