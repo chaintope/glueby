@@ -1,4 +1,6 @@
-RSpec.describe 'Glueby::Contract::Payment' do
+require 'active_record'
+
+RSpec.describe 'Glueby::Contract::Payment', active_record: true do
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
   let(:unspents) do
@@ -77,6 +79,17 @@ RSpec.describe 'Glueby::Contract::Payment' do
       subject
     end
 
+    context 'use active record wallet' do
+      let(:sender) { wallet }
+      let(:wallet) { TestWallet.new(internal_wallet) }
+      let(:internal_wallet) { TestInternalARWallet.new }
+      it do
+        expect(Glueby::Internal::Wallet::AR::Utxo.count).to eq(0)
+        subject
+        expect(Glueby::Internal::Wallet::AR::Utxo.count).to eq(1)
+      end
+    end
+    
     context 'invalid amount' do
       let(:amount) { 0 }
 
