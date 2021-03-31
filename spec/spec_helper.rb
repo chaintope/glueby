@@ -127,33 +127,6 @@ class TestInternalWallet < Glueby::Internal::Wallet
   end
 end
 
-class TestInternalARWallet < Glueby::Internal::Wallet
-  def initialize; end
-
-  def receive_address
-    '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
-  end
-
-  def change_address
-    '1LUMPgobnSdbaA4iaikHKjCDLHveWYUSt5'
-  end
-
-  def sign_tx(tx, _prevtxs = [])
-    tx
-  end
-
-  def broadcast(tx)
-    Glueby::Internal::Wallet::AR::Utxo.create(
-      txid: tx.txid,
-      index: 0,
-      script_pubkey: '76a9143f90406e69facde1c8b08ddd9cf3d41f69ff2c3b88ac',
-      value: 5_000_000_000,
-      status: :finalized
-    )
-  end
-end
-
-
 def setup_mock
   allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
   allow(rpc).to receive(:getblock).with('022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7', 0).and_return(response_getblock)

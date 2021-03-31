@@ -80,13 +80,32 @@ RSpec.describe 'Glueby::Contract::Payment', active_record: true do
     end
 
     context 'use active record wallet' do
-      let(:sender) { wallet }
-      let(:wallet) { TestWallet.new(internal_wallet) }
-      let(:internal_wallet) { TestInternalARWallet.new }
+      before do
+        Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: '0000000000000000000000000000000000000000000000000000000000000000',
+          index: 0,
+          value: 100_000_000,
+          script_pubkey: key1.to_p2pkh.to_hex,
+          status: :finalized,
+          key: key1
+        )
+      end
+
+      let(:wallet_id) { 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' }
+      let(:key1) do 
+        Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: wallet_id)
+        wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet_id)
+        wallet.keys.create(purpose: :receive) 
+      end
+      let(:sender) { Glueby::Wallet.load(wallet_id) }
+
       it do
-        expect(Glueby::Internal::Wallet::AR::Utxo.count).to eq(0)
+        expect(Glueby::Internal::Wallet::AR::Utxo.count).to eq(1)
+        expect(Glueby::Internal::Wallet::AR::Utxo.last.value).to eq(100_000_000)
         subject
         expect(Glueby::Internal::Wallet::AR::Utxo.count).to eq(1)
+        expect(Glueby::Internal::Wallet::AR::Utxo.last.value).to eq(99_790_000)
       end
     end
     
