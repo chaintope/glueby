@@ -127,7 +127,6 @@ class TestInternalWallet < Glueby::Internal::Wallet
   end
 end
 
-
 def setup_mock
   allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
   allow(rpc).to receive(:getblock).with('022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7', 0).and_return(response_getblock)
@@ -195,3 +194,4 @@ def setup_responses
   let(:response_getblockcount) { 2 }
   let(:response_getblockhash) { '022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7' }
 end
+
