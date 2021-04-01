@@ -73,7 +73,7 @@ module Glueby
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
           txs.each { |tx| issuer.internal_wallet.broadcast(tx) }
-          new(color_id: color_id, script_pubkey: script_pubkey)
+          [new(color_id: color_id, script_pubkey: script_pubkey), txs[1]]
         end
 
         private
@@ -121,6 +121,7 @@ module Glueby
         funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
         tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
         [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }
+        [color_id, tx]
       end
 
       # Send the token to other wallet
@@ -137,6 +138,7 @@ module Glueby
 
         tx = create_transfer_tx(color_id: color_id, sender: sender, receiver_address: receiver_address, amount: amount)
         sender.internal_wallet.broadcast(tx)
+        [color_id, tx]
       end
 
       # Burn token

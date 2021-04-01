@@ -68,9 +68,13 @@ RSpec.describe 'Glueby::Contract::Token' do
     let(:issuer) { wallet }
     let(:token_type) { Tapyrus::Color::TokenTypes::REISSUABLE }
     let(:amount) { 1_000 }
-
-    it { expect { subject }.not_to raise_error }
-    it { expect(subject.color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    
+    it {
+      expect {subject}.not_to raise_error
+      expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE
+      expect(subject[0].color_id.valid?).to be true
+      expect(subject[1].valid?).to be true
+    }
 
     context 'invalid amount' do
       let(:amount) { 0 }
@@ -92,13 +96,17 @@ RSpec.describe 'Glueby::Contract::Token' do
   end
 
   describe '#reissue!' do
-    subject { token.reissue!(issuer: issuer, amount: amount) }
+    subject { token[0].reissue!(issuer: issuer, amount: amount) }
 
     let(:token) { Glueby::Contract::Token.issue!(issuer: issuer) }
     let(:issuer) { wallet }
     let(:amount) { 1_000 }
 
-    it { expect { subject }.not_to raise_error }
+    it { 
+      expect { subject }.not_to raise_error
+      expect(subject[0].valid?).to be true
+      expect(subject[1].valid?).to be true
+    }
 
     context 'invalid amount' do
       let(:amount) { 0 }
@@ -133,7 +141,11 @@ RSpec.describe 'Glueby::Contract::Token' do
     let(:receiver_address) { wallet.internal_wallet.receive_address }
     let(:amount) { 200_000 }
 
-    it { expect { subject }.not_to raise_error }
+    it { 
+      expect { subject }.not_to raise_error
+      expect(subject[0].valid?).to be true
+      expect(subject[1].valid?).to be true
+    }
 
     context 'invalid amount' do
       let(:amount) { 0 }
