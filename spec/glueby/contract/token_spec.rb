@@ -73,7 +73,7 @@ RSpec.describe 'Glueby::Contract::Token' do
       expect {subject}.not_to raise_error
       expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE
       expect(subject[0].color_id.valid?).to be true
-      expect(subject[1].valid?).to be true
+      expect(subject[1][1].valid?).to be true
     }
 
     context 'invalid amount' do

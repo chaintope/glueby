@@ -73,7 +73,7 @@ module Glueby
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
           txs.each { |tx| issuer.internal_wallet.broadcast(tx) }
-          [new(color_id: color_id, script_pubkey: script_pubkey), txs[1]]
+          [new(color_id: color_id, script_pubkey: script_pubkey), txs]
         end
 
         private
