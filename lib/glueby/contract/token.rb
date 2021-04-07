@@ -55,7 +55,7 @@ module Glueby
         # @param issuer [Glueby::Wallet]
         # @param token_type [TokenTypes]
         # @param amount [Integer]
-        # @return [Token] token
+        # @return [Array<token, Array<tx>>] Tuple of tx array and token object
         # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
         # @raise [InvalidAmount] if amount is not positive integer.
         # @raise [UnspportedTokenType] if token is not supported.
@@ -108,6 +108,7 @@ module Glueby
       # A wallet can issue the token only when it is REISSUABLE token.
       # @param issuer [Glueby::Wallet]
       # @param amount [Integer]
+      # @return [Array<String, tx>] Tuple of color_id and tx object
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InvalidAmount] if amount is not positive integer.
       # @raise [InvalidTokenType] if token is not reissuable.
@@ -129,7 +130,7 @@ module Glueby
       # @param sender [Glueby::Wallet] wallet to send this token
       # @param receiver_address [String] address to receive this token
       # @param amount [Integer]
-      # @return [Token] receiver token
+      # @return [Array<String, tx>] Tuple of color_id and tx object
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InsufficientTokens] if wallet does not have enough token to send.
       # @raise [InvalidAmount] if amount is not positive integer.
