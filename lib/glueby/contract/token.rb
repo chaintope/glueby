@@ -55,7 +55,7 @@ module Glueby
         # @param issuer [Glueby::Wallet]
         # @param token_type [TokenTypes]
         # @param amount [Integer]
-        # @return [Token] token
+        # @return [Array<token, Array<tx>>] Tuple of tx array and token object
         # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
         # @raise [InvalidAmount] if amount is not positive integer.
         # @raise [UnspportedTokenType] if token is not supported.
@@ -73,7 +73,7 @@ module Glueby
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
           txs.each { |tx| issuer.internal_wallet.broadcast(tx) }
-          new(color_id: color_id, script_pubkey: script_pubkey)
+          [new(color_id: color_id, script_pubkey: script_pubkey), txs]
         end
 
         private
@@ -108,6 +108,7 @@ module Glueby
       # A wallet can issue the token only when it is REISSUABLE token.
       # @param issuer [Glueby::Wallet]
       # @param amount [Integer]
+      # @return [Array<String, tx>] Tuple of color_id and tx object
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InvalidAmount] if amount is not positive integer.
       # @raise [InvalidTokenType] if token is not reissuable.
@@ -121,6 +122,7 @@ module Glueby
         funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
         tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
         [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }
+        [color_id, tx]
       end
 
       # Send the token to other wallet
@@ -128,7 +130,7 @@ module Glueby
       # @param sender [Glueby::Wallet] wallet to send this token
       # @param receiver_address [String] address to receive this token
       # @param amount [Integer]
-      # @return [Token] receiver token
+      # @return [Array<String, tx>] Tuple of color_id and tx object
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InsufficientTokens] if wallet does not have enough token to send.
       # @raise [InvalidAmount] if amount is not positive integer.
@@ -137,6 +139,7 @@ module Glueby
 
         tx = create_transfer_tx(color_id: color_id, sender: sender, receiver_address: receiver_address, amount: amount)
         sender.internal_wallet.broadcast(tx)
+        [color_id, tx]
       end
 
       # Burn token
