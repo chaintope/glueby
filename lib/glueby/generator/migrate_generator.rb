@@ -28,7 +28,7 @@ module Glueby
 
       def table_options
         if mysql?
-          ', { options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci" }'
+          ', :options => "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"'
         else
           ""
         end
