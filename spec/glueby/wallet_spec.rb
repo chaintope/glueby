@@ -74,33 +74,25 @@ RSpec.describe 'Glueby::Wallet' do
   after { Glueby::Internal::Wallet.wallet_adapter = nil }
 
   describe '#balances' do
+    subject { wallet.balances(only_finalized) }
 
     let(:wallet) { Glueby::Wallet.create }
-    let(:expected) do
-      {
-        '' => 150_000_000, 
-        'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893' => 1,
-        'c2dbbebb191128de429084246fa3215f7ccc36d6abde62984eb5a42b1f2253a016' => 100_000,
-        'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000
-      }
-    end
-
-    context 'unset only_finalized' do 
-      subject { wallet.balances }
-
-      it { is_expected.to eq expected }
-    end
 
     context 'only_finalized: true' do 
-      subject { wallet.balances(only_finalized) }
-
       let(:only_finalized) {true}
+      let(:expected) do
+        {
+          '' => 150_000_000,
+          'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893' => 1,
+          'c2dbbebb191128de429084246fa3215f7ccc36d6abde62984eb5a42b1f2253a016' => 100_000,
+          'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000
+        }
+      end
+
       it { is_expected.to eq expected }
     end
 
     context 'only_finalized: false' do
-      subject { wallet.balances(only_finalized) }
-
       let(:only_finalized) {false}
       let(:expected) do
         {
@@ -112,6 +104,7 @@ RSpec.describe 'Glueby::Wallet' do
           'c14362a2e9fb5fa2da041d6a60d474cdc24218b2183855a22b7b20344f618c3ece' => 10_000
         }
       end
+
       it { is_expected.to eq expected }
     end
   end
