@@ -32,8 +32,8 @@ module Glueby
     end
 
     # @return [HashMap] hash of balances which key is color_id or empty string, and value is amount
-    def balances
-      utxos = @internal_wallet.list_unspent
+    def balances(only_finalized = true)
+      utxos = @internal_wallet.list_unspent(only_finalized)
       utxos.inject({}) do |balances, output|
         key = output[:color_id] || ''
         balances[key] ||= 0
