@@ -4,7 +4,7 @@ RSpec.describe 'Glueby::Wallet' do
   class TestWalletAdapter < Glueby::Internal::Wallet::AbstractWalletAdapter
     def create_wallet; end
     def list_unspent(wallet_id, only_finalized = true)
-      [
+      utxos = [
         {
           txid: '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
           script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
@@ -45,8 +45,28 @@ RSpec.describe 'Glueby::Wallet' do
           color_id: 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3',
           amount: 100_000,
           finalized: true
+        }, {
+          txid: '01480aea6f1233e620645f9eaec27e606a795fec07840ed38a0542335a596495',
+          vout: 0,
+          script_pubkey: '21c1de5b53145f480cf431c9697b197eb97da57dee816d068e572a20ebcc1b9cf6eabc76a914bd1025c40a785f3063cbee910c2e2eedcade666d88ac',
+          color_id: 'c1de5b53145f480cf431c9697b197eb97da57dee816d068e572a20ebcc1b9cf6ea',
+          amount: 100,
+          finalized: false
+        }, {
+          txid: '0e8b3689982a00a1b9711ce1c558ab45face3051eb4adbb8d8113f23caacc8dd',
+          vout: 0,
+          script_pubkey: '21c14362a2e9fb5fa2da041d6a60d474cdc24218b2183855a22b7b20344f618c3ecebc76a914b377a81d3ab345b34c6da8530636a498bdd176cb88ac',
+          color_id: 'c14362a2e9fb5fa2da041d6a60d474cdc24218b2183855a22b7b20344f618c3ece',
+          amount: 10_000,
+          finalized: false
         }
       ]
+
+      if only_finalized == true 
+        utxos.select { |utxo| utxo[:finalized] == true }
+      else
+        utxos
+      end
     end
   end
 
@@ -54,17 +74,38 @@ RSpec.describe 'Glueby::Wallet' do
   after { Glueby::Internal::Wallet.wallet_adapter = nil }
 
   describe '#balances' do
-    subject { wallet.balances }
+    subject { wallet.balances(only_finalized) }
 
     let(:wallet) { Glueby::Wallet.create }
-    let(:expected) do
-      {
-        '' => 150_000_000, 
-        'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893' => 1,
-        'c2dbbebb191128de429084246fa3215f7ccc36d6abde62984eb5a42b1f2253a016' => 100_000,
-        'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000
-      }
+
+    context 'only_finalized: true' do 
+      let(:only_finalized) {true}
+      let(:expected) do
+        {
+          '' => 150_000_000,
+          'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893' => 1,
+          'c2dbbebb191128de429084246fa3215f7ccc36d6abde62984eb5a42b1f2253a016' => 100_000,
+          'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000
+        }
+      end
+
+      it { is_expected.to eq expected }
     end
-    it { is_expected.to eq expected }
+
+    context 'only_finalized: false' do
+      let(:only_finalized) {false}
+      let(:expected) do
+        {
+          '' => 150_000_000, 
+          'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893' => 1,
+          'c2dbbebb191128de429084246fa3215f7ccc36d6abde62984eb5a42b1f2253a016' => 100_000,
+          'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000,
+          'c1de5b53145f480cf431c9697b197eb97da57dee816d068e572a20ebcc1b9cf6ea' => 100,
+          'c14362a2e9fb5fa2da041d6a60d474cdc24218b2183855a22b7b20344f618c3ece' => 10_000
+        }
+      end
+
+      it { is_expected.to eq expected }
+    end
   end
 end
