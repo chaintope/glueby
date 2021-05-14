@@ -83,10 +83,11 @@ module Glueby
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @param [Tapyrus::Tx] tx - The transaction will be signed.
-        # @param [Array] prevtxs array of hash that represents unbroadcasted transaction outputs used by signing tx. 
+        # @param [Array] prevtxs - array of hash that represents unbroadcasted transaction outputs used by signing tx.
         #                Each hash has `txid`, `vout`, `scriptPubKey`, `amount` fields.
+        # @param [Integer] sighashtype - The sighash flag for each signature that would be produced here.
         # @return [Tapyrus::Tx]
-        def sign_tx(wallet_id, tx, prevtxs = [])
+        def sign_tx(wallet_id, tx, prevtxs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 

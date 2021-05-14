@@ -95,7 +95,7 @@ module Glueby
           end
         end
 
-        def sign_tx(wallet_id, tx, prevtxs = [])
+        def sign_tx(wallet_id, tx, prevtxs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
           perform_as(wallet_id) do |client|
             res = client.signrawtransactionwithwallet(tx.to_hex, prevtxs)
             if res['complete']
