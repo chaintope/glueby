@@ -77,8 +77,8 @@ module Glueby
         wallet_adapter.delete_wallet(id)
       end
 
-      def sign_tx(tx, prev_txs = [])
-        wallet_adapter.sign_tx(id, tx, prev_txs)
+      def sign_tx(tx, prev_txs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
+        wallet_adapter.sign_tx(id, tx, prev_txs, sighashtype: sighashtype)
       end
 
       def broadcast(tx)
