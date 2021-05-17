@@ -99,7 +99,7 @@ module Glueby
 
         def sign_tx(wallet_id, tx, prevtxs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
-          wallet.sign(tx, prevtxs)
+          wallet.sign(tx, prevtxs, sighashtype: sighashtype)
         end
 
         def broadcast(wallet_id, tx)
