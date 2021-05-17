@@ -11,15 +11,15 @@ module Glueby
 
           validates :wallet_id, uniqueness: { case_sensitive: false }
 
-          # @param [Tapyrus::Tx] tx
-          # @param [Array] prevtxs array of outputs
-          def sign(tx, prevtxs = [])
+          def sign(tx, prevtxs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
+            validate_sighashtype!(sighashtype)
+
             tx.inputs.each.with_index do |input, index|
               script_pubkey = script_for_input(input, prevtxs)
               next unless script_pubkey
               key = Key.key_for_script(script_pubkey)
               next unless key
-              sign_tx_for_p2pkh(tx, index, key, script_pubkey)
+              sign_tx_for_p2pkh(tx, index, key, script_pubkey, sighashtype)
             end
             tx
           end
@@ -30,9 +30,9 @@ module Glueby
 
           private
 
-          def sign_tx_for_p2pkh(tx, index, key, script_pubkey)
-            sighash = tx.sighash_for_input(index, script_pubkey)
-            sig = key.sign(sighash) + [Tapyrus::SIGHASH_TYPE[:all]].pack('C')
+          def sign_tx_for_p2pkh(tx, index, key, script_pubkey, sighashtype)
+            sighash = tx.sighash_for_input(index, script_pubkey, hash_type: sighashtype)
+            sig = key.sign(sighash) + [sighashtype].pack('C')
             script_sig = Tapyrus::Script.parse_from_payload(Tapyrus::Script.pack_pushdata(sig) + Tapyrus::Script.pack_pushdata(key.public_key.htb))
             tx.inputs[index].script_sig = script_sig
           end
@@ -45,6 +45,13 @@ module Glueby
             else
               output = prevtxs.select { |output| output[:txid] == out_point.txid && output[:vout] == out_point.index }.first
               Tapyrus::Script.parse_from_payload(output[:scriptPubKey].htb) if output
+            end
+          end
+
+          def validate_sighashtype!(sighashtype)
+            hash_type = sighashtype & (~(Tapyrus::SIGHASH_TYPE[:anyonecanpay]))
+            if hash_type < Tapyrus::SIGHASH_TYPE[:all] || hash_type > Tapyrus::SIGHASH_TYPE[:single]
+              raise Errors::InvalidSighashType, "Invalid sighash type '#{sighashtype}'"
             end
           end
         end

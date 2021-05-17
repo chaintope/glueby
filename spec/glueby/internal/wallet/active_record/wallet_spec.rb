@@ -6,8 +6,9 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
   let(:wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') }
 
   describe '#sign' do
-    subject { wallet.sign(tx, prevtxs) }
+    subject { wallet.sign(tx, prevtxs, sighashtype: sighashtype) }
 
+    let(:sighashtype) { Tapyrus::SIGHASH_TYPE[:all] }
     let(:key1) { wallet.keys.create(purpose: :receive) }
     let(:key2) { wallet.keys.create(purpose: :receive) }
     let(:tx) do
@@ -93,6 +94,39 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       it 'does not sign to unknown input' do
         subject
         expect(tx.inputs[3].script_sig).to eq Tapyrus::Script.new
+      end
+    end
+
+    context 'sighash type is ALL | ANYONECANPAY' do
+      let(:sighashtype) { Tapyrus::SIGHASH_TYPE[:all] | Tapyrus::SIGHASH_TYPE[:anyonecanpay] }
+
+      it 'generates valid signatures' do
+        subject
+        expect(tx.verify_input_sig(0, key1.to_p2pkh)).to be_truthy
+        expect(tx.verify_input_sig(1, key2.to_p2pkh)).to be_truthy
+        expect(tx.verify_input_sig(2, key1.to_p2pkh.add_color(color_id))).to be_truthy
+      end
+
+      it 'sets sighashtype 0x81 behind signature' do
+        subject
+        signature = tx.inputs[0].script_sig.chunks[0]
+        expect(signature[-1].unpack('C')[0]).to eq sighashtype
+      end
+    end
+
+    context 'invalid sighashtype 1' do
+      let(:sighashtype) { 0x90 }
+
+      it do
+        expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::InvalidSighashType, message='Invalid sighash type \'144\'')
+      end
+    end
+
+    context 'invalid sighashtype 2' do
+      let(:sighashtype) { 0x4 }
+
+      it do
+        expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::InvalidSighashType, message='Invalid sighash type \'4\'')
       end
     end
   end
