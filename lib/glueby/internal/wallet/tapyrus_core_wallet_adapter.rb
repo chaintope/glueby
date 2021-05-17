@@ -97,7 +97,7 @@ module Glueby
 
         def sign_tx(wallet_id, tx, prevtxs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
           perform_as(wallet_id) do |client|
-            res = client.signrawtransactionwithwallet(tx.to_hex, prevtxs)
+            res = client.signrawtransactionwithwallet(tx.to_hex, prevtxs, encode_sighashtype(sighashtype))
             if res['complete']
               Tapyrus::Tx.parse_from_payload(res['hex'].htb)
             else
@@ -151,6 +151,22 @@ module Glueby
 
         def wallet_name(wallet_id)
           "#{WALLET_PREFIX}#{wallet_id}"
+        end
+
+        def encode_sighashtype(sighashtype)
+          type = case sighashtype & (~(Tapyrus::SIGHASH_TYPE[:anyonecanpay]))
+                 when Tapyrus::SIGHASH_TYPE[:all] then 'ALL'
+                 when Tapyrus::SIGHASH_TYPE[:none] then 'NONE'
+                 when Tapyrus::SIGHASH_TYPE[:single] then 'SIGNLE'
+                 else
+                   raise Errors::InvalidSighashType, "Invalid sighash type '#{sighashtype}'"
+                 end
+
+          if sighashtype & Tapyrus::SIGHASH_TYPE[:anyonecanpay] == 0x80
+            type += '|ANYONECANPAY'
+          end
+
+          type
         end
       end
     end

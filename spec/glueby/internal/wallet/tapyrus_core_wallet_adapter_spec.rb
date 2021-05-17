@@ -210,10 +210,11 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   end
 
   describe 'sign_tx' do
-    subject { adapter.sign_tx(wallet_id, tx) }
+    subject { adapter.sign_tx(wallet_id, tx, sighashtype: sighashtype) }
 
     let(:wallet_id) { ARBITRARY_WALLET_ID }
     let(:tx) { Tapyrus::Tx.parse_from_payload("01000000010c22d3f121927c8a241a93cfbb1d6afc451ec7d32e8d37d63eb78d69afc555050000000000ffffffff020000000000000000226a204bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459af0b9f505000000001976a9141989373d44a421a92df00d0237ab85dadd1d229088ac00000000".htb) }
+    let(:sighashtype) { Tapyrus::SIGHASH_TYPE[:all] }
 
     let(:response) do
       {
@@ -222,8 +223,8 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       }
     end
 
-    it 'should call signrawtransactionwithwallet RPC' do
-      expect(rpc).to receive(:signrawtransactionwithwallet).and_return(response)
+    it 'should call signrawtransactionwithwallet RPC with sighashtype is ALL' do
+      expect(rpc).to receive(:signrawtransactionwithwallet).with(tx.to_hex, [], 'ALL').and_return(response)
       subject
     end
 
@@ -239,6 +240,40 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       it 'should raise RuntimeError with received messages' do
         expect(rpc).to receive(:signrawtransactionwithwallet).and_return(response)
         expect { subject }.to raise_error(error=RuntimeError, message='[{"txid":"0555c5af698db73ed6378d2ed3c71e45fc6a1dbbcf931a248a7c9221f1d3220c","vout":0,"witness":[],"scriptSig":"","sequence":4294967295,"error":"Input not found or already spent"}]')
+      end
+    end
+
+    context 'SIGHAHS Type is all | anyonecanpay' do
+      let(:sighashtype) { Tapyrus::SIGHASH_TYPE[:all] | Tapyrus::SIGHASH_TYPE[:anyonecanpay] }
+
+      it do
+        expect(rpc).to receive(:signrawtransactionwithwallet).with(tx.to_hex, [], 'ALL|ANYONECANPAY').and_return(response)
+        subject
+      end
+    end
+
+    context 'SIGHAHS Type is none | anyonecanpay' do
+      let(:sighashtype) { Tapyrus::SIGHASH_TYPE[:none] | Tapyrus::SIGHASH_TYPE[:anyonecanpay] }
+
+      it do
+        expect(rpc).to receive(:signrawtransactionwithwallet).with(tx.to_hex, [], 'NONE|ANYONECANPAY').and_return(response)
+        subject
+      end
+    end
+
+    context 'invalid sighashtype 1' do
+      let(:sighashtype) { 0x90 }
+
+      it do
+        expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::InvalidSighashType, message='Invalid sighash type \'144\'')
+      end
+    end
+
+    context 'invalid sighashtype 2' do
+      let(:sighashtype) { 0x4 }
+
+      it do
+        expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::InvalidSighashType, message='Invalid sighash type \'4\'')
       end
     end
   end
