@@ -79,7 +79,7 @@ module Glueby
         private
 
         def issue_reissuable_token(issuer:, amount:)
-          estimated_fee = FixedFeeProvider.new.fee(Tapyrus::Tx.new)
+          estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
           funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee)
           tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount)
           script_pubkey = funding_tx.outputs.first.script_pubkey
@@ -118,7 +118,7 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
         raise Glueby::Contract::Errors::UnknownScriptPubkey unless @script_pubkey
 
-        estimated_fee = FixedFeeProvider.new.fee(Tapyrus::Tx.new)
+        estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
         funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
         tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
         [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }

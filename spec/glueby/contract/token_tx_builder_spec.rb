@@ -180,12 +180,12 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   end
 
   describe '#create_burn_tx' do
-    subject { mock.create_burn_tx(color_id: color_id, sender: sender, amount: amount, fee_provider: fee_provider) }
+    subject { mock.create_burn_tx(color_id: color_id, sender: sender, amount: amount, fee_estimator: fee_estimator) }
 
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
     let(:sender) { wallet }
     let(:amount) { 50_000 }
-    let(:fee_provider) { Glueby::Contract::FixedFeeProvider.new }
+    let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new }
 
     it { expect(subject.inputs.size).to eq 2 }
     it { expect(subject.inputs[0].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2' }
@@ -207,7 +207,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     end
 
     context 'tx fee is same as value of the first utxo' do
-      let(:fee_provider) { Glueby::Contract::FixedFeeProvider.new(fixed_fee: 100_000_000) }
+      let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: 100_000_000) }
       let(:amount) { 0 }
 
       it 'should have at least one output' do

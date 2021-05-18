@@ -12,7 +12,7 @@ module Glueby
             begin
               ::ActiveRecord::Base.transaction do
                 wallet = Glueby::Wallet.load(t.wallet_id)
-                tx = create_tx(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeProvider.new)
+                tx = create_tx(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeEstimator.new)
                 t.update(txid: tx.txid, status: :unconfirmed)
 
                 wallet.internal_wallet.broadcast(tx)

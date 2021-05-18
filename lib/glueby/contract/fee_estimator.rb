@@ -1,12 +1,12 @@
 module Glueby
   module Contract
-    module FeeProvider
+    module FeeEstimator
       # @return fee by tapyrus(not TPC).
       def fee(_tx); end
     end
 
-    class FixedFeeProvider
-      include FeeProvider
+    class FixedFeeEstimator
+      include FeeEstimator
 
       def initialize(fixed_fee: 10_000)
         @fixed_fee = fixed_fee
