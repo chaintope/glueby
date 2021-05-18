@@ -84,6 +84,12 @@ def setup_database
   end
   connection.add_index  :system_informations, [:info_key], unique: true
   Glueby::AR::SystemInformation.create(info_key: 'synced_block_number', info_value: '0')
+
+  connection.create_table :reissuable_tokens, force: true do |t|
+    t.string :color_id
+    t.string :script_pubkey
+  end
+  connection.add_index :reissuable_tokens, [:color_id], unique: true
 end
 
 def teardown_database
@@ -93,6 +99,7 @@ def teardown_database
   connection.drop_table :keys, if_exists: true
   connection.drop_table :timestamps, if_exists: true
   connection.drop_table :system_informations, if_exists: true
+  connection.drop_table :reissuable_token, if_exists: true
 end
 
 class TestWallet
