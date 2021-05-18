@@ -14,11 +14,11 @@ module Glueby
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
         module_function
 
-        def create_tx(wallet, prefix, data, fee_provider)
+        def create_tx(wallet, prefix, data, fee_estimator)
           tx = Tapyrus::Tx.new
           tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: create_script(prefix, data))
   
-          fee = fee_provider.fee(dummy_tx(tx))
+          fee = fee_estimator.fee(dummy_tx(tx))
           sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee)
           fill_input(tx, outputs)
   
@@ -50,7 +50,7 @@ module Glueby
 
       # @param [String] content Data to be hashed and stored in blockchain.
       # @param [String] prefix prefix of op_return data
-      # @param [Glueby::Contract::FeeProvider] fee_provider
+      # @param [Glueby::Contract::FeeEstimator] fee_estimator
       # @param [Symbol] digest type which select of:
       # - :sha256
       # - :double_sha256
@@ -60,13 +60,13 @@ module Glueby
         wallet:,
         content:,
         prefix: '',
-        fee_provider: Glueby::Contract::FixedFeeProvider.new,
+        fee_estimator: Glueby::Contract::FixedFeeEstimator.new,
         digest: :sha256
       )
         @wallet = wallet
         @content = content
         @prefix = prefix
-        @fee_provider = fee_provider
+        @fee_estimator = fee_estimator
         @digest = digest
       end
 
@@ -77,7 +77,7 @@ module Glueby
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        @tx = create_tx(@wallet, @prefix, digest_content, @fee_provider)
+        @tx = create_tx(@wallet, @prefix, digest_content, @fee_estimator)
         @txid = @wallet.internal_wallet.broadcast(@tx)
       end
 

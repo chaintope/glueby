@@ -8,9 +8,9 @@ module Glueby
       end
 
       # Create new public key, and new transaction that sends TPC to it
-      def create_funding_tx(wallet:, amount:, script: nil, fee_provider: FixedFeeProvider.new)
+      def create_funding_tx(wallet:, amount:, script: nil, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
-        fee = fee_provider.fee(dummy_tx(tx))
+        fee = fee_estimator.fee(dummy_tx(tx))
 
         sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + amount)
         fill_input(tx, outputs)
@@ -22,7 +22,7 @@ module Glueby
         wallet.internal_wallet.sign_tx(tx)
       end
 
-      def create_issue_tx_for_reissuable_token(funding_tx:, issuer:, amount:, fee_provider: FixedFeeProvider.new)
+      def create_issue_tx_for_reissuable_token(funding_tx:, issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -34,7 +34,7 @@ module Glueby
         receiver_colored_script = receiver_script.add_color(color_id)
         tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
 
-        fee = fee_provider.fee(dummy_tx(tx))
+        fee = fee_estimator.fee(dummy_tx(tx))
         fill_change_tpc(tx, issuer, output.value - fee)
         prev_txs = [{
           txid: funding_tx.txid,
@@ -45,18 +45,18 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_issue_tx_for_non_reissuable_token(issuer:, amount:, fee_provider: FixedFeeProvider.new)
-        create_issue_tx_from_out_point(token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, fee_provider: fee_provider)
+      def create_issue_tx_for_non_reissuable_token(issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
+        create_issue_tx_from_out_point(token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, fee_estimator: fee_estimator)
       end
 
-      def create_issue_tx_for_nft_token(issuer:, fee_provider: FixedFeeProvider.new)
-        create_issue_tx_from_out_point(token_type: Tapyrus::Color::TokenTypes::NFT, issuer: issuer, amount: 1, fee_provider: fee_provider)
+      def create_issue_tx_for_nft_token(issuer:, fee_estimator: FixedFeeEstimator.new)
+        create_issue_tx_from_out_point(token_type: Tapyrus::Color::TokenTypes::NFT, issuer: issuer, amount: 1, fee_estimator: fee_estimator)
       end
 
-      def create_issue_tx_from_out_point(token_type:, issuer:, amount:, fee_provider: FixedFeeProvider.new)
+      def create_issue_tx_from_out_point(token_type:, issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
-        fee = fee_provider.fee(dummy_issue_tx_from_out_point)
+        fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
         sum, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee)
         fill_input(tx, outputs)
 
@@ -78,7 +78,7 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx)
       end
 
-      def create_reissue_tx(funding_tx:, issuer:, amount:, color_id:, fee_provider: FixedFeeProvider.new)
+      def create_reissue_tx(funding_tx:, issuer:, amount:, color_id:, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -89,7 +89,7 @@ module Glueby
         receiver_colored_script = receiver_script.add_color(color_id)
         tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
 
-        fee = fee_provider.fee(dummy_tx(tx))
+        fee = fee_estimator.fee(dummy_tx(tx))
         fill_change_tpc(tx, issuer, output.value - fee)
         prev_txs = [{
           txid: funding_tx.txid,
@@ -100,7 +100,7 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_transfer_tx(color_id:, sender:, receiver_address:, amount:, fee_provider: FixedFeeProvider.new)
+      def create_transfer_tx(color_id:, sender:, receiver_address:, amount:, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         utxos = sender.internal_wallet.list_unspent
@@ -113,7 +113,7 @@ module Glueby
 
         fill_change_token(tx, sender, sum_token - amount, color_id)
 
-        fee = fee_provider.fee(dummy_tx(tx))
+        fee = fee_estimator.fee(dummy_tx(tx))
         sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee)
         fill_input(tx, outputs)
 
@@ -121,7 +121,7 @@ module Glueby
         sender.internal_wallet.sign_tx(tx)
       end
 
-      def create_burn_tx(color_id:, sender:, amount: 0, fee_provider: FixedFeeProvider.new)
+      def create_burn_tx(color_id:, sender:, amount: 0, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         utxos = sender.internal_wallet.list_unspent
@@ -130,7 +130,7 @@ module Glueby
 
         fill_change_token(tx, sender, sum_token - amount, color_id) if amount.positive?
 
-        fee = fee_provider.fee(dummy_tx(tx))
+        fee = fee_estimator.fee(dummy_tx(tx))
 
         dust = 600 # in case that the wallet has output which has just fee amount.
         sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + dust)

@@ -1,8 +1,8 @@
 module Glueby
   module Contract
     autoload :Errors, 'glueby/contract/errors'
-    autoload :FeeProvider, 'glueby/contract/fee_provider'
-    autoload :FixedFeeProvider, 'glueby/contract/fee_provider'
+    autoload :FeeEstimator, 'glueby/contract/fee_estimator'
+    autoload :FixedFeeEstimator, 'glueby/contract/fee_estimator'
     autoload :Payment, 'glueby/contract/payment'
     autoload :Timestamp, 'glueby/contract/timestamp'
     autoload :Token, 'glueby/contract/token'
