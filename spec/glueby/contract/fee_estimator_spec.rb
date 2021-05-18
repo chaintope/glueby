@@ -1,4 +1,4 @@
-RSpec.describe 'Glueby::Contract::FeeCaluclator' do
+RSpec.describe 'Glueby::Contract::FeeEstimator' do
   describe 'FixedFeeEstimator' do
     let(:tx) { Tapyrus::Tx.new }
 
