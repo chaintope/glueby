@@ -87,6 +87,7 @@ module Glueby
         #                Each hash has `txid`, `vout`, `scriptPubKey`, `amount` fields.
         # @param [Integer] sighashtype - The sighash flag for each signature that would be produced here.
         # @return [Tapyrus::Tx]
+        # @raise [Glueby::Internal::Wallet::Errors::InvalidSighashType] when the specified sighashtype is invalid
         def sign_tx(wallet_id, tx, prevtxs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
