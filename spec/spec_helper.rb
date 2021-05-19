@@ -88,6 +88,7 @@ def setup_database
   connection.create_table :reissuable_tokens, force: true do |t|
     t.string :color_id
     t.string :script_pubkey
+    t.timestamps
   end
   connection.add_index :reissuable_tokens, [:color_id], unique: true
 end
@@ -99,7 +100,7 @@ def teardown_database
   connection.drop_table :keys, if_exists: true
   connection.drop_table :timestamps, if_exists: true
   connection.drop_table :system_informations, if_exists: true
-  connection.drop_table :reissuable_token, if_exists: true
+  connection.drop_table :reissuable_tokens, if_exists: true
 end
 
 class TestWallet
