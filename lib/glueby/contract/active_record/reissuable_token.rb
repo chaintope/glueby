@@ -7,6 +7,11 @@ module Glueby
           ReissuableToken.find_by(color_id: color_id)
         end
 
+        def self.saved?(color_id)
+          token = Glueby::Contract::AR::ReissuableToken.where(color_id: color_id)
+          token.empty?
+        end
+
       end
     end
   end
