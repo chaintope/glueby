@@ -4,12 +4,11 @@ module Glueby
       class ReissuableToken < ::ActiveRecord::Base
 
         def self.script_pubkey(color_id)
-          ReissuableToken.find_by(color_id: color_id)
+          Glueby::Contract::AR::ReissuableToken.where(color_id: color_id).pluck(:script_pubkey).first
         end
 
         def self.saved?(color_id)
-          token = Glueby::Contract::AR::ReissuableToken.where(color_id: color_id)
-          token.empty?
+          Glueby::Contract::AR::ReissuableToken.where(color_id: color_id).exists?
         end
 
       end
