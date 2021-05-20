@@ -36,6 +36,31 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       expect(rpc).to receive(:createwallet).and_return(response)
       subject
     end
+
+    context 'specify wallet_id' do
+      subject { adapter.create_wallet('wallet') }
+
+      let(:response) do
+        {
+          'name' => 'wallet-wallet',
+          'warning'=> ''
+        }
+      end
+
+      it 'create a new wallet with the wallet_id' do
+        expect(rpc).to receive(:createwallet).and_return(response)
+        subject
+      end
+
+      context 'wallet_id is already exist' do
+        let(:error) { RuntimeError.new('{"code": -4, "message": "Wallet wallet-wallet already exists."}') }
+
+        it 'raise an error' do
+          expect(rpc).to receive(:createwallet).and_raise(error)
+          expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::WalletAlreadyCreated, message="Wallet wallet has been already created.")
+        end
+      end
+    end
   end
 
   describe 'load_wallet' do

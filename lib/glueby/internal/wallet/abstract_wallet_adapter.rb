@@ -7,8 +7,10 @@ module Glueby
       class AbstractWalletAdapter
         # Creates a new wallet inside the wallet component and returns `wallet_id`. The created
         # wallet is loaded from at first.
+        # @params [String] wallet_id - Option. The wallet id that if for the wallet to be created. If this is nil, wallet adapter generates it.
         # @return [String] wallet_id
-        def create_wallet
+        # @raise [Glueby::Internal::Wallet::Errors::WalletAlreadyCreated] when the specified wallet has been already created.
+        def create_wallet(wallet_id = nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 

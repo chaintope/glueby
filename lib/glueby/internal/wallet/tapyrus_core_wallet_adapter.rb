@@ -28,9 +28,19 @@ module Glueby
         RPC_WALLET_ERROR_ERROR_CODE = -4 # Unspecified problem with wallet (key not found etc.)
         RPC_WALLET_NOT_FOUND_ERROR_CODE = -18 # Invalid wallet specified
 
-        def create_wallet
-          wallet_id = SecureRandom.hex(16)
-          RPC.client.createwallet(wallet_name(wallet_id))
+        def create_wallet(wallet_id = nil)
+          wallet_id = SecureRandom.hex(16) unless wallet_id
+          begin
+            RPC.client.createwallet(wallet_name(wallet_id))
+          rescue RuntimeError => ex
+            json = JSON.parse(ex.message)
+            if json.is_a?(Hash) && json['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Wallet wallet-wallet already exists\./ =~ ex.message
+              raise Errors::WalletAlreadyCreated, "Wallet #{wallet_id} has been already created."
+            else
+              raise ex
+            end
+          end
+
           wallet_id
         end
 

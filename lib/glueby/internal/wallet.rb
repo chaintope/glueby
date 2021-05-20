@@ -36,8 +36,13 @@ module Glueby
       class << self
         attr_writer :wallet_adapter
 
-        def create
-          new(wallet_adapter.create_wallet)
+        def create(wallet_id = nil)
+          begin
+            wallet_adapter.create_wallet(wallet_id)
+          rescue Errors::WalletAlreadyCreated => _
+            # Ignore when wallet is already created.
+          end
+          new(wallet_id)
         end
 
         def load(wallet_id)

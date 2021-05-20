@@ -10,6 +10,25 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     subject { adapter.create_wallet }
 
     it { expect { subject }.to change { Glueby::Internal::Wallet::AR::Wallet.count }.from(0).to(1) }
+
+    context 'specify wallet_id' do
+      subject { adapter.create_wallet('wallet') }
+
+      it 'create a new wallet with the wallet_id' do
+        expect { subject }.to change { Glueby::Internal::Wallet::AR::Wallet.count }.from(0).to(1)
+        expect(Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: 'wallet')).not_to be_nil
+      end
+
+      context 'wallet_id is already exist' do
+        before do
+          adapter.create_wallet('wallet')
+        end
+
+        it 'raise an error' do
+          expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::WalletAlreadyCreated, message="wallet_id 'wallet' is already exists")
+        end
+      end
+    end
   end
 
   describe '#delete_wallet' do

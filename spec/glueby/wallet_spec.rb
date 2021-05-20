@@ -2,7 +2,7 @@
 
 RSpec.describe 'Glueby::Wallet' do
   class TestWalletAdapter < Glueby::Internal::Wallet::AbstractWalletAdapter
-    def create_wallet; end
+    def create_wallet(wallet_id = nil); end
     def list_unspent(wallet_id, only_finalized = true)
       utxos = [
         {
