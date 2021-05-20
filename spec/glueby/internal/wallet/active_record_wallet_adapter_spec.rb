@@ -31,6 +31,28 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     end
   end
 
+  describe '#load_wallet' do
+    subject { adapter.load_wallet(wallet_id) }
+
+    let(:wallet_id) { '0828d0ce8ff358cd0d7b19ac5c43c3bb' }
+
+    context 'wallet is exists' do
+      before do
+        adapter.create_wallet(wallet_id)
+      end
+
+      it 'never raise errors' do
+        expect { subject }.not_to raise_error
+      end
+    end
+
+    context 'wallet is not exists' do
+      it 'raise an error' do
+        expect { subject }.to raise_error(Glueby::Internal::Wallet::Errors::WalletNotFound, "Wallet #{wallet_id} does not found")
+      end
+    end
+  end
+
   describe '#delete_wallet' do
     it do
       wallet_id = adapter.create_wallet

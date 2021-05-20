@@ -87,6 +87,15 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
         expect { subject }.to raise_error Glueby::Internal::Wallet::Errors::WalletAlreadyLoaded
       end
     end
+
+    context 'if not exists' do
+      let(:error) { RuntimeError.new("{\"code\":-18,\"message\":\"Wallet wallet-#{wallet_id} not found.\"}") }
+
+      it do
+        allow(rpc).to receive(:loadwallet).and_raise(error)
+        expect { subject }.to raise_error(Glueby::Internal::Wallet::Errors::WalletNotFound, "Wallet #{wallet_id} does not found")
+      end
+    end
   end
 
   describe 'wallets' do

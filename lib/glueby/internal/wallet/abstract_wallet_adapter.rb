@@ -34,6 +34,7 @@ module Glueby
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @raise [Glueby::Internal::Wallet::Errors::WalletAlreadyLoaded] when the specified wallet has been already loaded.
+        # @raise [Glueby::Internal::Wallet::Errors::WalletNotFound] when the specified wallet is not found.
         def load_wallet(wallet_id)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end

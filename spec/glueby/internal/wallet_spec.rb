@@ -38,6 +38,15 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
       it { expect { subject }.to raise_error(Glueby::Internal::Wallet::Errors::ShouldInitializeWalletAdapter) }
     end
+
+    context 'if not exist' do
+      let(:error) { Glueby::Internal::Wallet::Errors::WalletNotFound }
+
+      it do
+        allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:load_wallet).and_raise(error)
+        expect { subject }.to raise_error(Glueby::Internal::Wallet::Errors::WalletNotFound)
+      end
+    end
   end
 
   describe 'ShouldInitializeWalletAdapter Error' do

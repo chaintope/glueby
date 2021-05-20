@@ -56,6 +56,8 @@ module Glueby
           json = JSON.parse(ex.message)
           if json.is_a?(Hash) && json['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Duplicate -wallet filename specified/ =~ ex.message
             raise Errors::WalletAlreadyLoaded, "Wallet #{wallet_id} has been already loaded."
+          elsif json.is_a?(Hash) && json['code'] == RPC_WALLET_NOT_FOUND_ERROR_CODE
+            raise Errors::WalletNotFound, "Wallet #{wallet_id} does not found"
           else
             raise ex
           end

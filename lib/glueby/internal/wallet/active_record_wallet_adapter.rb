@@ -69,6 +69,7 @@ module Glueby
         end
 
         def load_wallet(wallet_id)
+          raise Errors::WalletNotFound, "Wallet #{wallet_id} does not found" unless AR::Wallet.where(wallet_id: wallet_id).exists?
         end
 
         def unload_wallet(wallet_id)
