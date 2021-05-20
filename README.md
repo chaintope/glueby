@@ -189,7 +189,7 @@ Glueby::FeeProvider.configure({
 
 2. Deposit TPC into Fee Provider's wallet
 
-Get an address of the wallet.
+Get an address from the wallet.
 
 ```
 $ bundle exec rake glueby:fee_provider:address
