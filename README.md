@@ -238,8 +238,15 @@ Configuration:
 
 If you want to get the status information, you can use the `status` task.
 
-```shell
+```s
 $ bundle exec rake glueby:fee_provider:status
+Status: Ready
+TPC amount: 999_000
+UTXO pool size: 20
+
+Configuration:
+  fixed_fee = 1000
+  utxo_pool_size = 20
 ```
 
 ## Development
