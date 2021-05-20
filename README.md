@@ -30,8 +30,10 @@ Glueby has below features.
 
 ```ruby
 
-config = {adapter: 'core', schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Glueby::Wallet.configure(config)
+Glurby.configuration do |c|
+  c.wallet_adapter = :core
+  c.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
+end
 
 wallet = Glueby::Wallet.create
 timestamp = Glueby::Contract::Timestamp.new(wallet: wallet, content: "\x01\x02\x03")
@@ -110,10 +112,12 @@ bin/rails glueby:contract:install
 
 Install task creates a file `glueby.rb` in `config/initializers` directory like this.
 
-```
+```ruby
 # Edit configuration for connection to tapyrus core
-config = {adapter: 'core', schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Glueby::Wallet.configure(config)
+Glurby.configuration do |c|
+  c.wallet_adapter = :core
+  c.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
+end
 ```
 
 If you use timestamp feature, use `glueby:contract:timestamp` generator.
@@ -178,13 +182,16 @@ In the second Fee Provider mode, the Fee Provider module pays a fee instead of t
 1. Set like below
 
 ```ruby
-Glueby.fee_mode = :fee_provider_bears
-Glueby::FeeProvider.configure({
-  # The fee that Fee Provider pays on each transaction.
-  fixed_fee: 1000,
-  # Fee Provider tries to keep the number of utxo in utxo pool as this size using `glueby:fee_provider:manage_utxo_pool` rake task
-  utxo_pool_size: 20
-})
+Glurby.configuration do |c|
+  # Use FeeProvider to supply inputs for fees on each transaction that is created on Glueby.
+  c.fee_provider_bears!
+  c.fee_provider_config = {
+    # The fee that Fee Provider pays on each transaction.
+    fixed_fee: 1000,
+    # Fee Provider tries to keep the number of utxo in utxo pool as this size using `glueby:fee_provider:manage_utxo_pool` rake task
+    utxo_pool_size: 20 
+  }
+end
 ```
 
 2. Deposit TPC into Fee Provider's wallet
