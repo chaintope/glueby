@@ -7,8 +7,10 @@ module Glueby
         # @param [String] color_id
         # @return [Tapyrus::Script]
         def self.script_pubkey(color_id)
-          script_pubkey_hex = Glueby::Contract::AR::ReissuableToken.where(color_id: color_id).pluck(:script_pubkey).first
-          Tapyrus::Script.parse_from_payload(script_pubkey_hex.htb)
+          script_pubkey = Glueby::Contract::AR::ReissuableToken.where(color_id: color_id).pluck(:script_pubkey).first
+          if script_pubkey
+            Tapyrus::Script.parse_from_payload(script_pubkey.htb)
+          end
         end
 
         # Check if the color_id is already stored

@@ -69,13 +69,26 @@ RSpec.describe 'Glueby::Contract::Token' do
     let(:token_type) { Tapyrus::Color::TokenTypes::REISSUABLE }
     let(:amount) { 1_000 }
     
-    it {
-      expect {subject}.not_to raise_error
-      expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE
-      expect(subject[0].color_id.valid?).to be true
-      expect(subject[1][1].valid?).to be true
-      expect(Glueby::Contract::AR::ReissuableToken.count).to eq 1 
-    }
+    context 'reissuable token' do
+      it do
+        expect {subject}.not_to raise_error
+        expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE
+        expect(subject[0].color_id.valid?).to be true
+        expect(subject[1][1].valid?).to be true
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq 1 
+      end
+    end
+
+    context 'non reissuable token' do 
+      let(:token_type) { Tapyrus::Color::TokenTypes::NON_REISSUABLE }
+      it do
+        expect {subject}.not_to raise_error
+        expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::NON_REISSUABLE
+        expect(subject[0].color_id.valid?).to be true
+        expect(subject[1][0].valid?).to be true
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
+      end
+    end
 
     context 'invalid amount' do
       let(:amount) { 0 }
@@ -280,14 +293,20 @@ RSpec.describe 'Glueby::Contract::Token' do
   describe '#to_payload' do
     subject { token.to_payload.bth }
 
-    let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
+    let!(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
 
-    it { is_expected.to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac' }
+    it do
+      expect(subject).to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'
+      expect(Glueby::Contract::AR::ReissuableToken.count).to eq 1
+    end
 
     context 'with no script pubkey' do
-      let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
+      let!(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
 
-      it { is_expected.to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' }
+      it do
+        expect(subject).to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' 
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
+      end
     end
   end
 end
