@@ -245,7 +245,7 @@ Configuration:
 
 If you want to get the status information, you can use the `status` task.
 
-```s
+```
 $ bundle exec rake glueby:fee_provider:status
 Status: Ready
 TPC amount: 999_000
