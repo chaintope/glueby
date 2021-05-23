@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Glueby::Contract::Token' do
+RSpec.describe 'Glueby::Contract::Token', active_record: true do
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
   let(:unspents) do
@@ -293,7 +293,7 @@ RSpec.describe 'Glueby::Contract::Token' do
   describe '#to_payload' do
     subject { token.to_payload.bth }
 
-    let!(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
+    let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
 
     it do
       expect(subject).to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'
@@ -301,7 +301,7 @@ RSpec.describe 'Glueby::Contract::Token' do
     end
 
     context 'with no script pubkey' do
-      let!(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
+      let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
 
       it do
         expect(subject).to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' 
