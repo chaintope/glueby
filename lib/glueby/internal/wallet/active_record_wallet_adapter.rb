@@ -54,8 +54,7 @@ module Glueby
       # alice_wallet.balances
       # ```
       class ActiveRecordWalletAdapter < AbstractWalletAdapter
-        def create_wallet(wallet_id = nil)
-          wallet_id = SecureRandom.hex(16) unless wallet_id
+        def create_wallet(wallet_id = SecureRandom.hex(16))
           begin
             AR::Wallet.create!(wallet_id: wallet_id)
           rescue ActiveRecord::RecordInvalid => _

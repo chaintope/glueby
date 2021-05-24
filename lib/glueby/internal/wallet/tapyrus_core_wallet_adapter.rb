@@ -28,8 +28,7 @@ module Glueby
         RPC_WALLET_ERROR_ERROR_CODE = -4 # Unspecified problem with wallet (key not found etc.)
         RPC_WALLET_NOT_FOUND_ERROR_CODE = -18 # Invalid wallet specified
 
-        def create_wallet(wallet_id = nil)
-          wallet_id = SecureRandom.hex(16) unless wallet_id
+        def create_wallet(wallet_id = SecureRandom.hex(16))
           begin
             RPC.client.createwallet(wallet_name(wallet_id))
           rescue Tapyrus::RPC::Error => ex
