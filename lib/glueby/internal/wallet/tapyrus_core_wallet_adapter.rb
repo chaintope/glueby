@@ -28,9 +28,17 @@ module Glueby
         RPC_WALLET_ERROR_ERROR_CODE = -4 # Unspecified problem with wallet (key not found etc.)
         RPC_WALLET_NOT_FOUND_ERROR_CODE = -18 # Invalid wallet specified
 
-        def create_wallet
-          wallet_id = SecureRandom.hex(16)
-          RPC.client.createwallet(wallet_name(wallet_id))
+        def create_wallet(wallet_id = SecureRandom.hex(16))
+          begin
+            RPC.client.createwallet(wallet_name(wallet_id))
+          rescue Tapyrus::RPC::Error => ex
+            if ex.rpc_error['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Wallet wallet-wallet already exists\./ =~ ex.rpc_error['message']
+              raise Errors::WalletAlreadyCreated, "Wallet #{wallet_id} has been already created."
+            else
+              raise ex
+            end
+          end
+
           wallet_id
         end
 
@@ -42,10 +50,11 @@ module Glueby
 
         def load_wallet(wallet_id)
           RPC.client.loadwallet(wallet_name(wallet_id))
-        rescue RuntimeError => ex
-          json = JSON.parse(ex.message)
-          if json.is_a?(Hash) && json['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Duplicate -wallet filename specified/ =~ ex.message
+        rescue Tapyrus::RPC::Error => ex
+          if ex.rpc_error['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Duplicate -wallet filename specified/ =~ ex.rpc_error['message']
             raise Errors::WalletAlreadyLoaded, "Wallet #{wallet_id} has been already loaded."
+          elsif ex.rpc_error['code'] == RPC_WALLET_NOT_FOUND_ERROR_CODE
+            raise Errors::WalletNotFound, "Wallet #{wallet_id} does not found"
           else
             raise ex
           end
@@ -138,9 +147,8 @@ module Glueby
           RPC.perform_as(wallet_name(wallet_id)) do |client|
             begin
               yield(client)
-            rescue RuntimeError => ex
-              json = JSON.parse(ex.message)
-              if json.is_a?(Hash) && json['code'] == RPC_WALLET_NOT_FOUND_ERROR_CODE
+            rescue Tapyrus::RPC::Error => ex
+              if ex.rpc_error['code'] == RPC_WALLET_NOT_FOUND_ERROR_CODE
                 raise Errors::WalletUnloaded, "The wallet #{wallet_id} is unloaded. You should load before use it."
               else
                 raise ex

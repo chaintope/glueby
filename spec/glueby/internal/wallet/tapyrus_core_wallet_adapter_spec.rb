@@ -1,8 +1,14 @@
 RSpec.shared_examples 'If the wallet is unloaded, it should raise WalletUnloaded error.' do
   let(:rpc_name) { :listunspent }
+  let(:error) do
+    Tapyrus::RPC::Error.new(
+      '500',
+      'Internal Server Error',
+      { 'code' => -18, 'message' => 'Requested wallet does not exist or is not loaded' }
+    )
+  end
   it 'should raise WalletUnloaded error.' do
-    expect(rpc).to receive(rpc_name)
-                     .and_raise(RuntimeError.new('{"code": -18, "message": "Requested wallet does not exist or is not loaded"}'))
+    expect(rpc).to receive(rpc_name).and_raise(error)
     expect { subject }
       .to raise_error(
         Glueby::Internal::Wallet::Errors::WalletUnloaded,
@@ -36,6 +42,37 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       expect(rpc).to receive(:createwallet).and_return(response)
       subject
     end
+
+    context 'specify wallet_id' do
+      subject { adapter.create_wallet('wallet') }
+
+      let(:response) do
+        {
+          'name' => 'wallet-wallet',
+          'warning'=> ''
+        }
+      end
+
+      it 'create a new wallet with the wallet_id' do
+        expect(rpc).to receive(:createwallet).and_return(response)
+        subject
+      end
+
+      context 'wallet_id is already exist' do
+        let(:error) do
+          Tapyrus::RPC::Error.new(
+            '500',
+            'Internal Server Error',
+            { 'code' => -4, 'message' => 'Wallet wallet-wallet already exists.'}
+          )
+        end
+
+        it 'raise an error' do
+          expect(rpc).to receive(:createwallet).and_raise(error)
+          expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::WalletAlreadyCreated, message="Wallet wallet has been already created.")
+        end
+      end
+    end
   end
 
   describe 'load_wallet' do
@@ -55,11 +92,32 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     end
 
     context 'if already loaded' do
-      let(:error) { RuntimeError.new('{"code": -4, "message": "Wallet file verification failed: Error loading wallet wallet-0828d0ce8ff358cd0d7b19ac5c43c3bb. Duplicate -wallet filename specified."}') }
+      let(:error) do
+        Tapyrus::RPC::Error.new(
+          '500',
+          'Internal Server Error',
+          { 'code' => -4, 'message' => 'Wallet file verification failed: Error loading wallet wallet-0828d0ce8ff358cd0d7b19ac5c43c3bb. Duplicate -wallet filename specified.'}
+        )
+      end
 
       it do
         allow(rpc).to receive(:loadwallet).and_raise(error)
         expect { subject }.to raise_error Glueby::Internal::Wallet::Errors::WalletAlreadyLoaded
+      end
+    end
+
+    context 'if not exists' do
+      let(:error) do
+        Tapyrus::RPC::Error.new(
+          '500',
+          'Internal Server Error',
+          { 'code' => -18, 'message' => "Wallet wallet-#{wallet_id} not found." }
+        )
+      end
+
+      it do
+        allow(rpc).to receive(:loadwallet).and_raise(error)
+        expect { subject }.to raise_error(Glueby::Internal::Wallet::Errors::WalletNotFound, "Wallet #{wallet_id} does not found")
       end
     end
   end

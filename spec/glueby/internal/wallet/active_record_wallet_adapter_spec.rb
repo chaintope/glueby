@@ -10,6 +10,47 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     subject { adapter.create_wallet }
 
     it { expect { subject }.to change { Glueby::Internal::Wallet::AR::Wallet.count }.from(0).to(1) }
+
+    context 'specify wallet_id' do
+      subject { adapter.create_wallet('wallet') }
+
+      it 'create a new wallet with the wallet_id' do
+        expect { subject }.to change { Glueby::Internal::Wallet::AR::Wallet.count }.from(0).to(1)
+        expect(Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: 'wallet')).not_to be_nil
+      end
+
+      context 'wallet_id is already exist' do
+        before do
+          adapter.create_wallet('wallet')
+        end
+
+        it 'raise an error' do
+          expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::WalletAlreadyCreated, message="wallet_id 'wallet' is already exists")
+        end
+      end
+    end
+  end
+
+  describe '#load_wallet' do
+    subject { adapter.load_wallet(wallet_id) }
+
+    let(:wallet_id) { '0828d0ce8ff358cd0d7b19ac5c43c3bb' }
+
+    context 'wallet is exists' do
+      before do
+        adapter.create_wallet(wallet_id)
+      end
+
+      it 'never raise errors' do
+        expect { subject }.not_to raise_error
+      end
+    end
+
+    context 'wallet is not exists' do
+      it 'raise an error' do
+        expect { subject }.to raise_error(Glueby::Internal::Wallet::Errors::WalletNotFound, "Wallet #{wallet_id} does not found")
+      end
+    end
   end
 
   describe '#delete_wallet' do

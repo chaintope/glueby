@@ -5,6 +5,8 @@ module Glueby
         class ShouldInitializeWalletAdapter < StandardError; end
         class WalletUnloaded < StandardError; end
         class WalletAlreadyLoaded < StandardError; end
+        class WalletAlreadyCreated < StandardError; end
+        class WalletNotFound < StandardError; end
         class InvalidSighashType < StandardError; end
       end
     end
