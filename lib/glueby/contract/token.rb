@@ -74,7 +74,7 @@ module Glueby
                          end
           txs.each { |tx| issuer.internal_wallet.broadcast(tx) }
           if token_type == Tapyrus::Color::TokenTypes::REISSUABLE
-            Glueby::Contract::AR::ReissuableToken.create(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
+            Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
           end
           [new(color_id: color_id), txs]
         end
@@ -120,14 +120,14 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
 
-        if script_pubkey.present?
+        if script_pubkey
           estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
-          funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: script_pubkey)
+          funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
           tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
           [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }
           [color_id, tx]
         else
-          raise Glueby::Contract::Errors::UnknownScriptPubkey unless script_pubkey
+          raise Glueby::Contract::Errors::UnknownScriptPubkey
         end
       end
 
@@ -182,7 +182,7 @@ module Glueby
       # Return the script_pubkey of the token from ActiveRecord
       # @return [String] script_pubkey
       def script_pubkey
-        Glueby::Contract::AR::ReissuableToken.script_pubkey(@color_id.to_hex)
+        @script_pubkey ||= Glueby::Contract::AR::ReissuableToken.script_pubkey(@color_id.to_hex)
       end
 
       # Return serialized payload
@@ -190,7 +190,7 @@ module Glueby
       def to_payload
         payload = +''
         payload << @color_id.to_payload
-        payload << script_pubkey.to_payload if script_pubkey.present?
+        payload << @script_pubkey.to_payload if script_pubkey
         payload
       end
 
@@ -202,7 +202,7 @@ module Glueby
         color_id = Tapyrus::Color::ColorIdentifier.parse_from_payload(color_id)
         script_pubkey = Tapyrus::Script.parse_from_payload(script_pubkey) if script_pubkey
         if !Glueby::Contract::AR::ReissuableToken.saved?(color_id.to_hex) && script_pubkey.present?
-          Glueby::Contract::AR::ReissuableToken.create(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
+          Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
         end
         new(color_id: color_id)
       end

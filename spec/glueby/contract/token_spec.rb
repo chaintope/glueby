@@ -76,6 +76,8 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(subject[0].color_id.valid?).to be true
         expect(subject[1][1].valid?).to be true
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq 1 
+        expect(subject[0].color_id.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find(1).color_id
+        expect(subject[1][0].outputs.first.script_pubkey.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find_by(color_id: subject[0].color_id.to_hex).script_pubkey
       end
     end
 
