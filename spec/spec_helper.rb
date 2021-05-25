@@ -86,8 +86,8 @@ def setup_database
   Glueby::AR::SystemInformation.create(info_key: 'synced_block_number', info_value: '0')
 
   connection.create_table :reissuable_tokens, force: true do |t|
-    t.string :color_id
-    t.string :script_pubkey
+    t.string :color_id, null: false
+    t.string :script_pubkey, null: false
     t.timestamps
   end
   connection.add_index :reissuable_tokens, [:color_id], unique: true
