@@ -28,6 +28,15 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
           expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::WalletAlreadyCreated, message="wallet_id 'wallet' is already exists")
         end
       end
+
+      context 'as nil' do
+        subject { adapter.create_wallet(nil) }
+
+        it 'create a new wallet with random wallet_id' do
+          expect { subject }.to change { Glueby::Internal::Wallet::AR::Wallet.count }.from(0).to(1)
+          expect(Glueby::Internal::Wallet::AR::Wallet.first.wallet_id).to match(/[0-9a-f]{32}/)
+        end
+      end
     end
   end
 
