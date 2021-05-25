@@ -72,6 +72,17 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
           expect { subject }.to raise_error(error=Glueby::Internal::Wallet::Errors::WalletAlreadyCreated, message="Wallet wallet has been already created.")
         end
       end
+
+      context 'as nil' do
+        subject { adapter.create_wallet(nil) }
+
+        it 'create a new wallet with random wallet_id' do
+          expect(rpc).to receive(:createwallet) {|wallet_name|
+            expect(wallet_name).to match(/wallet-[0-9a-f]{32}/)
+          }.and_return(response)
+          subject
+        end
+      end
     end
   end
 
