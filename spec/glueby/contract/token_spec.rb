@@ -288,7 +288,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
     context 'with no script pubkey' do
       let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
 
-      it { expect { subject }.to raise_error(ArgumentError, 'script_pubkey is not nil.') }
+      it { expect { subject }.to raise_error(ArgumentError, 'script_pubkey should not be empty') }
     end
   end
 
@@ -306,7 +306,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
 
       it do
-        expect{ subject } .to raise_error(ArgumentError, 'script_pubkey is not nil.')
+        expect{ subject } .to raise_error(ArgumentError, 'script_pubkey should not be empty')
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
       end
     end

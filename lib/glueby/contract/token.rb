@@ -201,7 +201,7 @@ module Glueby
         color_id, script_pubkey = payload.unpack('a33a*')
         color_id = Tapyrus::Color::ColorIdentifier.parse_from_payload(color_id)
         if color_id.type == Tapyrus::Color::TokenTypes::REISSUABLE
-          raise ArgumentError, 'script_pubkey is not nil.' unless !script_pubkey.empty?
+          raise ArgumentError, 'script_pubkey should not be empty' if script_pubkey.empty?
           script_pubkey = Tapyrus::Script.parse_from_payload(script_pubkey)
           Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
         end
