@@ -200,8 +200,8 @@ module Glueby
       def self.parse_from_payload(payload)
         color_id, script_pubkey = payload.unpack('a33a*')
         color_id = Tapyrus::Color::ColorIdentifier.parse_from_payload(color_id)
-        script_pubkey = Tapyrus::Script.parse_from_payload(script_pubkey) if script_pubkey
-        if !Glueby::Contract::AR::ReissuableToken.saved?(color_id.to_hex) && script_pubkey.present?
+        if color_id.type == Tapyrus::Color::TokenTypes::REISSUABLE && !script_pubkey.empty?
+          script_pubkey = Tapyrus::Script.parse_from_payload(script_pubkey)
           Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
         end
         new(color_id: color_id)
