@@ -14,7 +14,7 @@ RSpec.describe 'Glueby::FeeProvider' do
     subject { Glueby::FeeProvider.instance.provide(tx) }
 
     before do
-      allow(wallet_adapter).to receive(:list_unspent).and_return([utxo_for_paying_fee])
+      allow(wallet_adapter).to receive(:list_unspent).and_return([dummy_utxos, utxo_for_paying_fee].flatten)
     end
 
     let(:utxo_for_paying_fee) do
@@ -25,6 +25,23 @@ RSpec.describe 'Glueby::FeeProvider' do
         amount: 1000,
         finalized: true
       }
+    end
+
+    let(:dummy_utxos) do
+      [{
+        txid: '3c1619e82b2d796caddea61dd2d740792323bc0082a69da77227c773cd9d21e8',
+        script_pubkey: '21c156f3482615d7ff1908de037f68dd5c0c4d80479799c3ad1926cdcdf2ae9f7e60bc76a9147b93e3b9fd211d1408ea855f22cb17124e51408988ac',
+        vout: 0,
+        amount: 1000,
+        color_id: 'c156f3482615d7ff1908de037f68dd5c0c4d80479799c3ad1926cdcdf2ae9f7e60',
+        finalized: true
+      }, {
+        txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
+        script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+        vout: 0,
+        amount: 2000,
+        finalized: true
+      }]
     end
     # The tx that would be added an input for paying fee by FeeProvider
     # Initially it has one input and two outputs which is for transfer and change.
@@ -39,6 +56,13 @@ RSpec.describe 'Glueby::FeeProvider' do
         sighashtype: Tapyrus::SIGHASH_TYPE[:all]
       )
       subject
+    end
+
+    context 'There are no suitable UTXO for paying fee' do
+      let(:utxo_for_paying_fee) { [] }
+      it do
+        expect { subject }.to raise_error(Glueby::FeeProvider::NoUtxosInUtxoPool, 'No UTXOs in Fee Provider UTXO pool. UTXOs should be created with "glueby:fee_provider:manage_utxo_pool" rake task')
+      end
     end
 
     context 'Signatures in tx don\'t have ANYONECNAPAY flag' do
