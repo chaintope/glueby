@@ -40,6 +40,7 @@ module Glueby
     # @param [Tapyrus::Tx] tx - The tx that is provided fee as a input. It should be signed with ANYONECANPAY flag.
     # @return [Tapyrus::Tx]
     # @raise [ArgumentError] If the signatures that the tx inputs has don't have ANYONECANPAY flag.
+    # @raise [Glueby::FeeProvider::NoUtxosInUtxoPool] If there are no UTXOs for paying fee in FeeProvider's UTXO pool
     def provide(tx)
       tx.inputs.each do |txin|
         sig = get_signature(txin.script_sig)
