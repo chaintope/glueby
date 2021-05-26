@@ -58,7 +58,7 @@ module Glueby
     private
 
     def utxo_for_fee
-      utxo = wallet.list_unspent.find { |o| !o[:color_id] && o[:amount] == fixed_fee }
+      utxo = wallet.list_unspent.select { |o| !o[:color_id] && o[:amount] == fixed_fee }.sample
       raise NoUtxosInUtxoPool, 'No UTXOs in Fee Provider UTXO pool. UTXOs should be created with "glueby:fee_provider:manage_utxo_pool" rake task' unless utxo
       utxo
     end
