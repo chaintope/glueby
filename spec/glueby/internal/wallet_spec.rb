@@ -1,11 +1,13 @@
 RSpec.describe 'Glueby::Internal::Wallet' do
-  class TestWalletAdapter < Glueby::Internal::Wallet::AbstractWalletAdapter
-    def create_wallet; end
+  class self::TestWalletAdapter < Glueby::Internal::Wallet::AbstractWalletAdapter
+    def create_wallet(wallet_id = nil)
+      wallet_id || 'created_wallet_id'
+    end
     def load_wallet(wallet_id); end
   end
 
   before do
-    Glueby::Internal::Wallet.wallet_adapter = TestWalletAdapter.new
+    Glueby::Internal::Wallet.wallet_adapter = self.class::TestWalletAdapter.new
   end
 
   after do
@@ -15,6 +17,17 @@ RSpec.describe 'Glueby::Internal::Wallet' do
   describe 'create' do
     subject { Glueby::Internal::Wallet.create }
     it { should be_a Glueby::Internal::Wallet }
+    it 'has wallet id' do
+      expect(subject.id).to eq 'created_wallet_id'
+    end
+
+    context 'wallet_id is specified' do
+      subject { Glueby::Internal::Wallet.create('specified_wallet_id') }
+      it { should be_a Glueby::Internal::Wallet }
+      it 'has wallet id' do
+        expect(subject.id).to eq 'specified_wallet_id'
+      end
+    end
   end
 
   describe 'load' do

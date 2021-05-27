@@ -38,7 +38,7 @@ module Glueby
 
         def create(wallet_id = nil)
           begin
-            wallet_adapter.create_wallet(wallet_id)
+            wallet_id = wallet_adapter.create_wallet(wallet_id)
           rescue Errors::WalletAlreadyCreated => _
             # Ignore when wallet is already created.
           end
