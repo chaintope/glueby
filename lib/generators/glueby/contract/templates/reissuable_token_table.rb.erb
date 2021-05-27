@@ -1,0 +1,10 @@
+class CreateReissuableToken < ActiveRecord::Migration<%= migration_version %>
+  def change
+    create_table :reissuable_tokens<%= table_options %> do |t|
+      t.string  :color_id, null: false
+      t.string  :script_pubkey, null: false
+      t.timestamps
+    end
+    add_index  :reissuable_tokens, [:color_id], unique: true
+  end
+end

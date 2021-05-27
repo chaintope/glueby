@@ -73,7 +73,10 @@ module Glueby
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
           txs.each { |tx| issuer.internal_wallet.broadcast(tx) }
-          [new(color_id: color_id, script_pubkey: script_pubkey), txs]
+          if token_type == Tapyrus::Color::TokenTypes::REISSUABLE
+            Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
+          end
+          [new(color_id: color_id), txs]
         end
 
         private
@@ -116,13 +119,16 @@ module Glueby
       def reissue!(issuer:, amount:)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
-        raise Glueby::Contract::Errors::UnknownScriptPubkey unless @script_pubkey
 
-        estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
-        funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
-        tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
-        [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }
-        [color_id, tx]
+        if script_pubkey
+          estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
+          funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
+          tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
+          [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }
+          [color_id, tx]
+        else
+          raise Glueby::Contract::Errors::UnknownScriptPubkey
+        end
       end
 
       # Send the token to other wallet
@@ -173,12 +179,19 @@ module Glueby
         color_id.type
       end
 
+      # Return the script_pubkey of the token from ActiveRecord
+      # @return [String] script_pubkey
+      def script_pubkey
+        @script_pubkey ||= Glueby::Contract::AR::ReissuableToken.script_pubkey(@color_id.to_hex)
+      end
+
       # Return serialized payload
       # @return [String] payload
       def to_payload
         payload = +''
         payload << @color_id.to_payload
-        payload << @script_pubkey.to_payload if @script_pubkey
+        payload << @script_pubkey.to_payload if script_pubkey
+        payload
       end
 
       # Restore token from payload
@@ -187,13 +200,18 @@ module Glueby
       def self.parse_from_payload(payload)
         color_id, script_pubkey = payload.unpack('a33a*')
         color_id = Tapyrus::Color::ColorIdentifier.parse_from_payload(color_id)
-        script_pubkey = Tapyrus::Script.parse_from_payload(script_pubkey) if script_pubkey
-        new(color_id: color_id, script_pubkey: script_pubkey)
+        if color_id.type == Tapyrus::Color::TokenTypes::REISSUABLE
+          raise ArgumentError, 'script_pubkey should not be empty' if script_pubkey.empty?
+          script_pubkey = Tapyrus::Script.parse_from_payload(script_pubkey)
+          Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
+        end
+        new(color_id: color_id)
       end
 
-      def initialize(color_id:, script_pubkey:nil)
+      # Generate Token Instance
+      # @param color_id [String]
+      def initialize(color_id:)
         @color_id = color_id
-        @script_pubkey = script_pubkey
       end
     end
   end

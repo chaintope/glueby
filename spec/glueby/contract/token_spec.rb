@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe 'Glueby::Contract::Token' do
+RSpec.describe 'Glueby::Contract::Token', active_record: true do
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
   let(:unspents) do
@@ -69,12 +69,28 @@ RSpec.describe 'Glueby::Contract::Token' do
     let(:token_type) { Tapyrus::Color::TokenTypes::REISSUABLE }
     let(:amount) { 1_000 }
     
-    it {
-      expect {subject}.not_to raise_error
-      expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE
-      expect(subject[0].color_id.valid?).to be true
-      expect(subject[1][1].valid?).to be true
-    }
+    context 'reissuable token' do
+      it do
+        expect {subject}.not_to raise_error
+        expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE
+        expect(subject[0].color_id.valid?).to be true
+        expect(subject[1][1].valid?).to be true
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq 1 
+        expect(subject[0].color_id.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find(1).color_id
+        expect(subject[1][0].outputs.first.script_pubkey.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find_by(color_id: subject[0].color_id.to_hex).script_pubkey
+      end
+    end
+
+    context 'non reissuable token' do 
+      let(:token_type) { Tapyrus::Color::TokenTypes::NON_REISSUABLE }
+      it do
+        expect {subject}.not_to raise_error
+        expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::NON_REISSUABLE
+        expect(subject[0].color_id.valid?).to be true
+        expect(subject[1][0].valid?).to be true
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
+      end
+    end
 
     context 'invalid amount' do
       let(:amount) { 0 }
@@ -272,7 +288,7 @@ RSpec.describe 'Glueby::Contract::Token' do
     context 'with no script pubkey' do
       let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
 
-      it { is_expected.to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' }
+      it { expect { subject }.to raise_error(ArgumentError, 'script_pubkey should not be empty') }
     end
   end
 
@@ -281,12 +297,18 @@ RSpec.describe 'Glueby::Contract::Token' do
 
     let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
 
-    it { is_expected.to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac' }
+    it do
+      expect(subject).to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'
+      expect(Glueby::Contract::AR::ReissuableToken.count).to eq 1
+    end
 
     context 'with no script pubkey' do
       let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
 
-      it { is_expected.to eq 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' }
+      it do
+        expect{ subject } .to raise_error(ArgumentError, 'script_pubkey should not be empty')
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
+      end
     end
   end
 end
