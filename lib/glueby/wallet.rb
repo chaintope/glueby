@@ -13,6 +13,7 @@ module Glueby
         new(Glueby::Internal::Wallet.load(wallet_id))
       end
 
+      # @deprecated - Use Glueby.configure instead
       def configure(config)
         case config[:adapter]
         when 'core'

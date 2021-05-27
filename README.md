@@ -30,9 +30,9 @@ Glueby has below features.
 
 ```ruby
 
-Glurby.configuration do |c|
-  c.wallet_adapter = :core
-  c.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
+Glurby.configure do |config|
+  config.wallet_adapter = :core
+  config.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
 end
 
 wallet = Glueby::Wallet.create
@@ -114,9 +114,9 @@ Install task creates a file `glueby.rb` in `config/initializers` directory like 
 
 ```ruby
 # Edit configuration for connection to tapyrus core
-Glurby.configuration do |c|
-  c.wallet_adapter = :core
-  c.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
+Glueby.configure do |config|
+  config.wallet_adapter = :core
+  config.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
 end
 ```
 
@@ -182,10 +182,10 @@ In the second Fee Provider mode, the Fee Provider module pays a fee instead of t
 1. Set like below
 
 ```ruby
-Glurby.configuration do |c|
+Glurby.configure do |config|
   # Use FeeProvider to supply inputs for fees on each transaction that is created on Glueby.
-  c.fee_provider_bears!
-  c.fee_provider_config = {
+  config.fee_provider_bears!
+  config.fee_provider_config = {
     # The fee that Fee Provider pays on each transaction.
     fixed_fee: 1000,
     # Fee Provider tries to keep the number of utxo in utxo pool as this size using `glueby:fee_provider:manage_utxo_pool` rake task
