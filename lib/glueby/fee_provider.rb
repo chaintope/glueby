@@ -1,5 +1,8 @@
 module Glueby
   class FeeProvider
+
+    autoload :Tasks, 'glueby/fee_provider/tasks'
+
     class NoUtxosInUtxoPool < StandardError; end
 
     WALLET_ID = 'FEE_PROVIDER_WALLET'
@@ -31,7 +34,7 @@ module Glueby
                 end
 
       @fixed_fee = (FeeProvider.config && FeeProvider.config[:fixed_fee]) || DEFAULT_FIXED_FEE
-      @utxo_pool_size = (FeeProvider.config && FeeProvidr.config[:utxo_pool_size]) || DEFAULT_UTXO_POOL_SIZE
+      @utxo_pool_size = (FeeProvider.config && FeeProvider.config[:utxo_pool_size]) || DEFAULT_UTXO_POOL_SIZE
     end
 
     # Provide an input for fee to the tx.
