@@ -31,7 +31,7 @@ Glueby has below features.
 ```ruby
 
 Glurby.configure do |config|
-  config.wallet_adapter = :core
+  config.wallet_adapter = :activerecord
   config.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
 end
 
@@ -115,7 +115,7 @@ Install task creates a file `glueby.rb` in `config/initializers` directory like 
 ```ruby
 # Edit configuration for connection to tapyrus core
 Glueby.configure do |config|
-  config.wallet_adapter = :core
+  config.wallet_adapter = :activerecord
   config.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
 end
 ```

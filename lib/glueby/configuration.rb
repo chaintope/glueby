@@ -5,7 +5,7 @@ module Glueby
   #
   # @example
   #     Glueby.configure do |config|
-  #       config.wallet_adapter = :core
+  #       config.wallet_adapter = :activerecord
   #       config.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
   #     end
   class Configuration
@@ -17,7 +17,7 @@ module Glueby
     end
 
     # Specify wallet adapter.
-    # @param [Symbol] adapter - The adapter type :core or :activerecord is currently supported.
+    # @param [Symbol] adapter - The adapter type :activerecord or :core is currently supported.
     def wallet_adapter=(adapter)
       case adapter
       when :core
