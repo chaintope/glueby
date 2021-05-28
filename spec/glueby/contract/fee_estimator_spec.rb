@@ -12,6 +12,18 @@ RSpec.describe 'Glueby::Contract::FeeEstimator' do
 
         it { is_expected.to eq 100 }
       end
+
+      context 'if fee_provider_bears! is enable' do
+        before do
+          Glueby.configuration.fee_provider_bears!
+        end
+
+        after do
+          Glueby.configuration.disable_fee_provider_bears!
+        end
+
+        it { is_expected.to eq 0 }
+      end
     end
   end
 end
