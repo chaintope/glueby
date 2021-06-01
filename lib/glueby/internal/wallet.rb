@@ -82,12 +82,27 @@ module Glueby
         wallet_adapter.delete_wallet(id)
       end
 
-      def sign_tx(tx, prev_txs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
+      # @param [Tapyrus::Tx] tx The tx that is signed
+      # @param [Array<Hash>] prev_txs An array of hash that represents unbroadcasted transaction outputs used by signing tx
+      #   @option prev_txs [String] :txid
+      #   @option prev_txs [Integer] :vout
+      #   @option prev_txs [String] :scriptPubkey
+      #   @option prev_txs [Integer] :amount
+      # @param [Boolean] for_fee_provider_input The flag to notify whether the caller is FeeProvider and called for signing a input that is by FeeProvider.
+      def sign_tx(tx, prev_txs = [], for_fee_provider_input: false)
+        sighashtype = Tapyrus::SIGHASH_TYPE[:all]
+
+        if !for_fee_provider_input && Glueby.configuration.fee_provider_bears?
+          sighashtype |= Tapyrus::SIGHASH_TYPE[:anyonecanpay]
+        end
+
         wallet_adapter.sign_tx(id, tx, prev_txs, sighashtype: sighashtype)
       end
 
       def broadcast(tx)
+        tx = FeeProvider.provide(tx) if Glueby.configuration.fee_provider_bears?
         wallet_adapter.broadcast(id, tx)
+        tx
       end
 
       def receive_address
