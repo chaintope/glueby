@@ -11,7 +11,7 @@ RSpec.describe 'Glueby::FeeProvider' do
   after { Glueby::Internal::Wallet.wallet_adapter = nil }
 
   describe '#provide' do
-    subject { Glueby::FeeProvider.instance.provide(tx) }
+    subject { Glueby::FeeProvider.provide(tx) }
 
     before do
       allow(wallet_adapter).to receive(:list_unspent).and_return([dummy_utxos, utxo_for_paying_fee].flatten)
