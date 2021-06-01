@@ -11,6 +11,7 @@ module Glueby
   class Configuration
 
     attr_reader :fee_provider_bears
+    alias_method :fee_provider_bears?, :fee_provider_bears
 
     def initialize
       @fee_provider_bears = false

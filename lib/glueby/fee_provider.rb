@@ -53,7 +53,7 @@ module Glueby
       out_point = Tapyrus::OutPoint.new(utxo[:txid].rhex, utxo[:vout])
       tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
 
-      wallet.sign_tx(tx)
+      wallet.sign_tx(tx, for_fee_provider_input: true)
     end
 
     private
