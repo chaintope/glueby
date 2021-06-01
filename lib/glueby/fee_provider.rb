@@ -1,7 +1,5 @@
 module Glueby
   class FeeProvider
-    include Singleton
-
     class NoUtxosInUtxoPool < StandardError; end
 
     WALLET_ID = 'FEE_PROVIDER_WALLET'
@@ -21,7 +19,7 @@ module Glueby
       end
 
       def provide(tx)
-        instance.provide(tx)
+        new.provide(tx)
       end
     end
 

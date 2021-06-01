@@ -2,6 +2,10 @@ require "bundler/setup"
 require "glueby"
 require "tapyrus"
 require 'rake'
+require 'docker'
+require 'active_record'
+
+TAPYRUSD_CONTAINER_NAME = 'glueby-tapyrusd'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -18,11 +22,23 @@ RSpec.configure do |config|
     if example.metadata[:active_record]
       setup_database
     end
+
+    if example.metadata[:functional]
+      Tapyrus.chain_params = :dev
+      Glueby.configuration.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12382, user: 'user', password: 'pass' }
+      TapyrusCoreContainer.setup
+      TapyrusCoreContainer.start
+    end
   end
 
   config.after(:each) do |example|
     if example.metadata[:active_record]
       teardown_database
+    end
+
+    if example.metadata[:functional]
+      Tapyrus.chain_params = :prod
+      TapyrusCoreContainer.teardown
     end
   end
 
@@ -36,6 +52,8 @@ RSpec.configure do |config|
     end
   end
 end
+
+require_relative 'support/setup_fee_provider'
 
 def setup_database
   config = { adapter: 'sqlite3', database: 'test' }
@@ -101,6 +119,56 @@ def teardown_database
   connection.drop_table :timestamps, if_exists: true
   connection.drop_table :system_informations, if_exists: true
   connection.drop_table :reissuable_tokens, if_exists: true
+end
+
+class TapyrusCoreContainer
+  include Singleton
+
+  class << self
+    extend Forwardable
+    delegate %i[setup start stop teardown] => :instance
+  end
+
+  attr_reader :container
+
+  def setup
+    Docker::Image.get('tapyrus/tapyrusd:edge')
+    @container = Docker::Container.create({
+      name: TAPYRUSD_CONTAINER_NAME,
+      "Image"=>"tapyrus/tapyrusd:edge",
+      "Env"=>[
+        "GENESIS_BLOCK_WITH_SIG=0100000000000000000000000000000000000000000000000000000000000000000000002b5331139c6bc8646bb4e5737c51378133f70b9712b75548cb3c05f9188670e7440d295e7300c5640730c4634402a3e66fb5d921f76b48d8972a484cc0361e66ef74f45e012103af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d40e05f064662d6b9acf65ae416379d82e11a9b78cdeb3a316d1057cd2780e3727f70a61f901d10acbe349cd11e04aa6b4351e782c44670aefbe138e99a5ce75ace01010000000100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a91445d405b9ed450fec89044f9b7a99a4ef6fe2cd3f88ac00000000"
+      ],
+      "HostConfig"=>{
+        "Binds"=>["#{File.expand_path('support/tapyrus.conf', File.dirname(__FILE__))}:/etc/tapyrus/tapyrus.conf"],
+        "PortBindings" => { "12381/tcp" => [{ "HostIp" => "", "HostPort" => "12382" }] },
+      }
+    })
+  end
+
+  def start
+    container.start!
+
+    # wait until core is ready
+    begin
+      Glueby::Internal::RPC.client.getblockchaininfo
+    rescue Errno::ECONNRESET,
+      Errno::EPIPE,
+      EOFError,
+      Tapyrus::RPC::Error
+      retry
+    end
+  end
+
+  def stop
+    container.stop!
+  end
+
+  def teardown
+    container = Docker::Container.get(TAPYRUSD_CONTAINER_NAME)
+    container.stop!
+    container.remove
+  end
 end
 
 class TestWallet
@@ -203,3 +271,7 @@ def setup_responses
   let(:response_getblockhash) { '022890167018b090211fb8ef26970c26a0cac6d29e5352f506dc31bbb84f3ce7' }
 end
 
+def process_block(to_address: Tapyrus::Key.generate.to_p2pkh)
+  Glueby::Internal::RPC.client.generatetoaddress(1, to_address, 'cUJN5RVzYWFoeY8rUztd47jzXCu1p57Ay8V7pqCzsBD3PEXN7Dd4')
+  Rake.application['glueby:contract:block_syncer:start'].execute
+end
