@@ -199,7 +199,7 @@ class TestInternalWallet < Glueby::Internal::Wallet
   end
 
   def broadcast(tx)
-    '0000000000000000000000000000000000000000000000000000000000000000'
+    tx
   end
 end
 

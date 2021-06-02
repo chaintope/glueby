@@ -72,7 +72,7 @@ module Glueby
                          else
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
-          txs.each { |tx| issuer.internal_wallet.broadcast(tx) }
+
           if token_type == Tapyrus::Color::TokenTypes::REISSUABLE
             Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
           end
@@ -82,9 +82,12 @@ module Glueby
         private
 
         def issue_reissuable_token(issuer:, amount:)
-          estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
-          funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee)
+          funding_tx = create_funding_tx(wallet: issuer)
+          funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+
           tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount)
+          tx = issuer.internal_wallet.broadcast(tx)
+
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
           [[funding_tx, tx], color_id, script_pubkey]
@@ -92,6 +95,8 @@ module Glueby
 
         def issue_non_reissuable_token(issuer:, amount:)
           tx = create_issue_tx_for_non_reissuable_token(issuer: issuer, amount: amount)
+          tx = issuer.internal_wallet.broadcast(tx)
+
           out_point = tx.inputs.first.out_point
           color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
           [[tx], color_id, nil]
@@ -99,6 +104,8 @@ module Glueby
 
         def issue_nft_token(issuer:)
           tx = create_issue_tx_for_nft_token(issuer: issuer)
+          tx = issuer.internal_wallet.broadcast(tx)
+
           out_point = tx.inputs.first.out_point
           color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
           [[tx], color_id, nil]
@@ -121,10 +128,11 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
 
         if script_pubkey
-          estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
-          funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
+          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey)
+          funding_tx = issuer.internal_wallet.broadcast(funding_tx)
           tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
-          [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }
+          tx = issuer.internal_wallet.broadcast(tx)
+
           [color_id, tx]
         else
           raise Glueby::Contract::Errors::UnknownScriptPubkey
