@@ -3,22 +3,25 @@
 module Glueby
   module Contract
     module TxBuilder
+      # The amount of output in funding tx for Reissuable token.
+      FUNDING_TX_AMOUNT = 10_000
+
       def receive_address(wallet:)
         wallet.receive_address
       end
 
       # Create new public key, and new transaction that sends TPC to it
-      def create_funding_tx(wallet:, amount:, script: nil, fee_estimator: FixedFeeEstimator.new)
+      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
         fee = fee_estimator.fee(dummy_tx(tx))
 
-        sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + amount)
+        sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + FUNDING_TX_AMOUNT)
         fill_input(tx, outputs)
 
         receiver_script = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
-        tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_script)
+        tx.outputs << Tapyrus::TxOut.new(value: FUNDING_TX_AMOUNT, script_pubkey: receiver_script)
 
-        fill_change_tpc(tx, wallet, sum - fee - amount)
+        fill_change_tpc(tx, wallet, sum - fee - FUNDING_TX_AMOUNT)
         wallet.internal_wallet.sign_tx(tx)
       end
 
