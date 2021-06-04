@@ -22,12 +22,15 @@ RSpec.describe 'Token Contract', functional: true do
       end
 
       it 'reissunable token' do
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq(0)
+
         token, _txs = Glueby::Contract::Token.issue!(
           issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000)
         process_block
 
         expect(sender.balances(false)['']).to eq(before_balance - fee * 2)
         expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq(1)
 
         token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000)
         process_block
@@ -47,6 +50,16 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(sender.balances(false)['']).to eq(before_balance - fee * 6)
         expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+
+        # If the sending to Tapyrus Core is failure, Glueby::Contract::AR::ReissuableToken should not be created.
+        TapyrusCoreContainer.stop
+        begin
+          Glueby::Contract::Token.issue!(
+            issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000)
+        rescue Errno::ECONNREFUSED
+          # Ignored
+        end
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq(1)
       end
 
       it 'non-reissunable token' do
