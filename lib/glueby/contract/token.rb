@@ -62,7 +62,7 @@ module Glueby
         def issue!(issuer:, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 1)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-          txs, color_id, script_pubkey = case token_type
+          txs, color_id = case token_type
                          when Tapyrus::Color::TokenTypes::REISSUABLE
                            issue_reissuable_token(issuer: issuer, amount: amount)
                          when Tapyrus::Color::TokenTypes::NON_REISSUABLE
@@ -73,9 +73,6 @@ module Glueby
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
 
-          if token_type == Tapyrus::Color::TokenTypes::REISSUABLE
-            Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
-          end
           [new(color_id: color_id), txs]
         end
 
@@ -83,14 +80,18 @@ module Glueby
 
         def issue_reissuable_token(issuer:, amount:)
           funding_tx = create_funding_tx(wallet: issuer)
-          funding_tx = issuer.internal_wallet.broadcast(funding_tx)
-
-          tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount)
-          tx = issuer.internal_wallet.broadcast(tx)
-
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
-          [[funding_tx, tx], color_id, script_pubkey]
+
+          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+            # Store the script_pubkey for reissue the token.
+            Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
+
+            funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+            tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount)
+            tx = issuer.internal_wallet.broadcast(tx)
+            [[funding_tx, tx], color_id]
+          end
         end
 
         def issue_non_reissuable_token(issuer:, amount:)
@@ -99,7 +100,7 @@ module Glueby
 
           out_point = tx.inputs.first.out_point
           color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
-          [[tx], color_id, nil]
+          [[tx], color_id]
         end
 
         def issue_nft_token(issuer:)
@@ -108,7 +109,7 @@ module Glueby
 
           out_point = tx.inputs.first.out_point
           color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
-          [[tx], color_id, nil]
+          [[tx], color_id]
         end
       end
 
