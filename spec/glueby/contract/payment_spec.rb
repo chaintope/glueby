@@ -1,5 +1,3 @@
-require 'active_record'
-
 RSpec.describe 'Glueby::Contract::Payment', active_record: true do
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
