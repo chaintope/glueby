@@ -1,5 +1,3 @@
-require 'active_record'
-
 RSpec.shared_context 'Set rpc responses' do
   setup_responses
 end

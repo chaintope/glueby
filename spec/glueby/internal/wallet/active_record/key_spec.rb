@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'active_record'
-
 RSpec.describe 'Glueby::Internal::Wallet::AR::Key', active_record: true  do
   let(:key) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key, purpose: :change) }
   let(:private_key) { '206f3acb5b7ac66dacf87910bb0b04bed78284b9b50c0d061705a44447a947ff' }

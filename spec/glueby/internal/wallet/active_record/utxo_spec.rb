@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'active_record'
-
 RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
   let(:utxo) do
     Glueby::Internal::Wallet::AR::Utxo.create(

@@ -1,6 +1,3 @@
-
-require 'active_record'
-
 RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
 
   describe '#synced_block_number' do

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'active_record'
-
 RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_record: true do
   let(:adapter) { Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new }
   let(:wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: '00000000000000000000000000000000') }

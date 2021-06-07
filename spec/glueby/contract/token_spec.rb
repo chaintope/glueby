@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'active_record'
-
 RSpec.describe 'Glueby::Contract::Token', active_record: true do
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
