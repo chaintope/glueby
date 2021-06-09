@@ -132,6 +132,10 @@ module Glueby
         raise Glueby::Contract::Errors::InsufficientFunds
       end
 
+      def get_addresses
+        wallet_adapter.get_addresses(id)
+      end
+
       private
 
       def wallet_adapter

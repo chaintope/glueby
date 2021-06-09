@@ -130,6 +130,16 @@ module Glueby
         def create_pubkey(wallet_id)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
+
+        # Returns an array of addresses
+        #
+        # This method is expected to return the list of addresses that wallet has.
+        #
+        # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @return [Array<String>] array of P2PKH address
+        def get_addresses(wallet_id)
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
       end
     end
   end

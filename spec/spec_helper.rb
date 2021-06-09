@@ -202,6 +202,10 @@ class TestInternalWallet < Glueby::Internal::Wallet
   def broadcast(tx)
     tx
   end
+
+  def get_addresses
+    ['191arn68nSLRiNJXD8srnmw4bRykBkVv6o', '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT']
+  end
 end
 
 def setup_mock
