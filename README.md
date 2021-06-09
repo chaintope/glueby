@@ -224,7 +224,7 @@ TPC amount: 999_000
 UTXO pool size: 20
 
 Configuration:
-  fixed_fee = 1000
+  fixed_fee = 1_000
   utxo_pool_size = 20
 ```
 
@@ -239,8 +239,13 @@ Status: Insufficient Amount
 TPC amount: 15_000
 UTXO pool size: 15
 
+1. Please replenishment TPC which is for paying fee to FeeProvider. 
+   FeeProvider needs 21000 tapyrus at least for paying 20 transaction fees. 
+   FeeProvider wallet's address is '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
+2. Then create UTXOs for paying in UTXO pool with 'rake glueby:fee_provider:manage_utxo_pool'
+
 Configuration:
-  fixed_fee = 1000
+  fixed_fee = 1_000
   utxo_pool_size = 20
 ```
 
@@ -253,7 +258,7 @@ TPC amount: 999_000
 UTXO pool size: 20
 
 Configuration:
-  fixed_fee = 1000
+  fixed_fee = 1_000
   utxo_pool_size = 20
 ```
 
