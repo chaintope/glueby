@@ -155,7 +155,8 @@ class TapyrusCoreContainer
     rescue Errno::ECONNRESET,
       Errno::EPIPE,
       EOFError,
-      Tapyrus::RPC::Error
+      Tapyrus::RPC::Error,
+      Errno::ECONNREFUSED
       retry
     end
   end
