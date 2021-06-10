@@ -229,4 +229,19 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     it { expect { subject }.to change { wallet.keys.count }.from(0).to(1) }
     it { expect(subject).to be_truthy }
   end
+
+  describe '#get_addresses' do
+    subject do 
+      adapter.get_addresses(wallet.wallet_id)
+    end
+
+    before do
+      adapter.receive_address(wallet.wallet_id)
+      adapter.receive_address(wallet.wallet_id)
+    end
+
+    it { expect(subject.count).to eq 2 }
+    it { expect(Tapyrus.valid_address?(subject[0])).to be_truthy }
+    it { expect(Tapyrus.valid_address?(subject[1])).to be_truthy }
+  end
 end

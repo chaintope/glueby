@@ -132,6 +132,11 @@ module Glueby
           key = wallet.keys.create(purpose: :receive)
           Tapyrus::Key.new(pubkey: key.public_key)
         end
+
+        def get_addresses(wallet_id)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
+          wallet.keys.map(&:address)
+        end
       end
     end
   end
