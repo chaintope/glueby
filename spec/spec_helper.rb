@@ -57,7 +57,7 @@ end
 require_relative 'support/setup_fee_provider'
 
 def setup_database
-  config = { adapter: 'sqlite3', database: 'test' }
+  config = { adapter: 'sqlite3', database: File.join(Dir.tmpdir, 'glueby-test-db') }
   ::ActiveRecord::Base.establish_connection(config)
   connection = ::ActiveRecord::Base.connection
   connection.create_table :wallets do |t|
@@ -233,7 +233,6 @@ end
 
 def setup_responses
   let(:rpc) { double('mock') }
-  let(:config) { { adapter: 'sqlite3', database: 'test' } }
   let(:private_key) { 'ab2e2ba4c0605a3bd4f7734807e3346bae01290ebbaa0289c5c36912f7343650' }
 
   # This block has 2 transaction.
