@@ -54,6 +54,9 @@ module Glueby
       # alice_wallet.balances
       # ```
       class ActiveRecordWalletAdapter < AbstractWalletAdapter
+
+        autoload :Syncer, 'glueby/internal/wallet/active_record_wallet_adapter/syncer'
+
         def create_wallet(wallet_id = nil)
           wallet_id = SecureRandom.hex(16) unless wallet_id
           begin
