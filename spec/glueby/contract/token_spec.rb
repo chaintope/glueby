@@ -154,7 +154,11 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       let(:internal_wallet) do
         class TestInternalWallet < Glueby::Internal::Wallet
           def get_addresses
-            []
+            [
+              '191arn68nSLRiNJXD8srnmw4bRykBkVv6o', 
+              '1QDN1JzVYKRuscrPdWE6AUvTxev6TP1cF4', 
+              '1GKVcitjqJDjs7yEy19FSGZMu81xyey62J'
+            ]
           end
         end
         TestInternalWallet.new
