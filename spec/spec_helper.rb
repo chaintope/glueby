@@ -60,13 +60,13 @@ def setup_database
   config = { adapter: 'sqlite3', database: 'test' }
   ::ActiveRecord::Base.establish_connection(config)
   connection = ::ActiveRecord::Base.connection
-  connection.create_table :wallets do |t|
+  connection.create_table :glueby_wallets do |t|
     t.string :wallet_id
     t.timestamps
   end
-  connection.add_index :wallets, [:wallet_id], unique: true
+  connection.add_index :glueby_wallets, [:wallet_id], unique: true
 
-  connection.create_table :keys do |t|
+  connection.create_table :glueby_keys do |t|
     t.string     :private_key
     t.string     :public_key
     t.string     :script_pubkey
@@ -74,10 +74,10 @@ def setup_database
     t.belongs_to :wallet, null: true
     t.timestamps
   end
-  connection.add_index :keys, [:script_pubkey], unique: true
-  connection.add_index :keys, [:private_key], unique: true
+  connection.add_index :glueby_keys, [:script_pubkey], unique: true
+  connection.add_index :glueby_keys, [:private_key], unique: true
 
-  connection.create_table :utxos do |t|
+  connection.create_table :glueby_utxos do |t|
     t.string     :txid
     t.integer    :index
     t.bigint     :value
@@ -86,9 +86,9 @@ def setup_database
     t.belongs_to :key, null: true
     t.timestamps
   end
-  connection.add_index :utxos, [:txid, :index], unique: true
+  connection.add_index :glueby_utxos, [:txid, :index], unique: true
 
-  connection.create_table :timestamps, force: true do |t|
+  connection.create_table :glueby_timestamps, force: true do |t|
     t.string   :txid
     t.integer  :status
     t.string   :content_hash
@@ -96,30 +96,30 @@ def setup_database
     t.string   :wallet_id
   end
 
-  connection.create_table :system_informations, force: true do |t| 
+  connection.create_table :glueby_system_informations, force: true do |t|
     t.string  :info_key
     t.string  :info_value
     t.timestamps
   end
-  connection.add_index  :system_informations, [:info_key], unique: true
+  connection.add_index  :glueby_system_informations, [:info_key], unique: true
   Glueby::AR::SystemInformation.create(info_key: 'synced_block_number', info_value: '0')
 
-  connection.create_table :reissuable_tokens, force: true do |t|
+  connection.create_table :glueby_reissuable_tokens, force: true do |t|
     t.string :color_id, null: false
     t.string :script_pubkey, null: false
     t.timestamps
   end
-  connection.add_index :reissuable_tokens, [:color_id], unique: true
+  connection.add_index :glueby_reissuable_tokens, [:color_id], unique: true
 end
 
 def teardown_database
   connection = ::ActiveRecord::Base.connection
-  connection.drop_table :utxos, if_exists: true
-  connection.drop_table :wallets, if_exists: true
-  connection.drop_table :keys, if_exists: true
-  connection.drop_table :timestamps, if_exists: true
-  connection.drop_table :system_informations, if_exists: true
-  connection.drop_table :reissuable_tokens, if_exists: true
+  connection.drop_table :glueby_utxos, if_exists: true
+  connection.drop_table :glueby_wallets, if_exists: true
+  connection.drop_table :glueby_keys, if_exists: true
+  connection.drop_table :glueby_timestamps, if_exists: true
+  connection.drop_table :glueby_system_informations, if_exists: true
+  connection.drop_table :glueby_reissuable_tokens, if_exists: true
 end
 
 class TapyrusCoreContainer

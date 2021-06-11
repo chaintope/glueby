@@ -1,10 +1,10 @@
 class CreateWallet < ActiveRecord::Migration<%= migration_version %>
   def change
-    create_table :wallets<%= table_options %> do |t|
+    create_table :glueby_wallets<%= table_options %> do |t|
       t.string :wallet_id
       t.timestamps
     end
 
-    add_index :wallets, [:wallet_id], unique: true
+    add_index :glueby_wallets, [:wallet_id], unique: true
   end
 end

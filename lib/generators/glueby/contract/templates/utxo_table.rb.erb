@@ -1,6 +1,6 @@
 class CreateUtxo < ActiveRecord::Migration<%= migration_version %>
   def change
-    create_table :utxos<%= table_options %> do |t|
+    create_table :glueby_utxos<%= table_options %> do |t|
       t.string     :txid
       t.integer    :index
       t.bigint     :value
@@ -10,6 +10,6 @@ class CreateUtxo < ActiveRecord::Migration<%= migration_version %>
       t.timestamps
     end
 
-    add_index :utxos, [:txid, :index], unique: true
+    add_index :glueby_utxos, [:txid, :index], unique: true
   end
 end
