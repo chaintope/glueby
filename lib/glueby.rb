@@ -9,6 +9,7 @@ module Glueby
   autoload :AR, 'glueby/active_record'
   autoload :FeeProvider, 'glueby/fee_provider'
   autoload :Configuration, 'glueby/configuration'
+  autoload :BlockSyncer, 'glueby/block_syncer'
 
   # Add prefix to activerecord table names
   def self.table_name_prefix
