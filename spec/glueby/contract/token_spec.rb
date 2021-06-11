@@ -147,6 +147,21 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::InsufficientFunds }
     end
+
+    context 'invalid reissuer' do
+      let(:issuer) { wallet }
+      let(:wallet) { TestWallet.new(internal_wallet) }
+      let(:internal_wallet) do
+        class TestInternalWallet < Glueby::Internal::Wallet
+          def get_addresses
+            []
+          end
+        end
+        TestInternalWallet.new
+      end
+
+      it { expect { subject }.to raise_error Glueby::Contract::Errors::UnknownScriptPubkey }
+    end
   end
 
   describe '#transfer!' do
