@@ -34,8 +34,6 @@ module Glueby
       autoload :Errors, 'glueby/internal/wallet/errors'
 
       class << self
-        attr_writer :wallet_adapter
-
         def create(wallet_id = nil)
           begin
             wallet_id = wallet_adapter.create_wallet(wallet_id)
@@ -56,6 +54,16 @@ module Glueby
 
         def wallets
           wallet_adapter.wallets.map { |id| new(id) }
+        end
+
+        def wallet_adapter=(adapter)
+          if adapter.is_a?(ActiveRecordWalletAdapter)
+            BlockSyncer.register_syncer(ActiveRecordWalletAdapter::Syncer)
+          else
+            BlockSyncer.unregister_syncer(ActiveRecordWalletAdapter::Syncer)
+          end
+
+          @wallet_adapter = adapter
         end
 
         def wallet_adapter
