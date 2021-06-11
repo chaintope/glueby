@@ -10,6 +10,11 @@ module Glueby
   autoload :FeeProvider, 'glueby/fee_provider'
   autoload :Configuration, 'glueby/configuration'
 
+  # Add prefix to activerecord table names
+  def self.table_name_prefix
+    'glueby_'
+  end
+
   begin
     class Railtie < ::Rails::Railtie
       rake_tasks do

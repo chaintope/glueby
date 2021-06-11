@@ -1,6 +1,6 @@
 class CreateKey < ActiveRecord::Migration<%= migration_version %>
   def change
-    create_table :keys<%= table_options %> do |t|
+    create_table :glueby_keys<%= table_options %> do |t|
       t.string     :private_key
       t.string     :public_key
       t.string     :script_pubkey
@@ -9,7 +9,7 @@ class CreateKey < ActiveRecord::Migration<%= migration_version %>
       t.timestamps
     end
 
-    add_index :keys, [:script_pubkey], unique: true
-    add_index :keys, [:private_key], unique: true
+    add_index :glueby_keys, [:script_pubkey], unique: true
+    add_index :glueby_keys, [:private_key], unique: true
   end
 end
