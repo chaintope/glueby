@@ -47,7 +47,7 @@ RSpec.configure do |config|
       Rake.application = rake
       Rake.application.rake_require 'tasks/glueby/contract/timestamp'
       Rake.application.rake_require 'tasks/glueby/contract/wallet_adapter'
-      Rake.application.rake_require 'tasks/glueby/contract/block_syncer'
+      Rake.application.rake_require 'tasks/glueby/block_syncer'
       Rake.application.rake_require 'tasks/glueby/fee_provider'
       Rake::Task.define_task(:environment)
     end
@@ -280,5 +280,5 @@ end
 
 def process_block(to_address: Tapyrus::Key.generate.to_p2pkh)
   Glueby::Internal::RPC.client.generatetoaddress(1, to_address, 'cUJN5RVzYWFoeY8rUztd47jzXCu1p57Ay8V7pqCzsBD3PEXN7Dd4')
-  Rake.application['glueby:contract:block_syncer:start'].execute
+  Rake.application['glueby:block_syncer:start'].execute
 end
