@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-require 'activerecord'
+require 'active_record'
 
 module Glueby
   module Contract
