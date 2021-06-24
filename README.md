@@ -21,11 +21,14 @@ Or install it yourself as:
 
     $ gem install glueby
 
-## Usage
+## Features
 
 Glueby has below features.
 
 - [Timestamp](#Timestamp)
+- [BlockSyncer](./lib/glueby/block_syncer.rb)
+  - You can use BlockSyncer when you need to synchronize the state of an application with the state of a blockchain.
+- [Use fee provider mode](#use-fee-provider-mode)
 
 ### Timestamp
 
@@ -162,7 +165,11 @@ bin/rails glueby:contract:timestamp:confirm
 confirmed (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
 ```
 
-## Use fee provider mode
+### BlockSyncer
+
+
+
+### Use fee provider mode
 
 Glueby contracts have two different way of fee provisions.
 
@@ -172,13 +179,13 @@ Glueby contracts have two different way of fee provisions.
 The first one: `:sender_pays_itself`, is the default behavior.
 In the second Fee Provider mode, the Fee Provider module pays a fee instead of the transaction's sender.
 
-### Fee Provider Specification
+#### Fee Provider Specification
 
 * Fee Provider pays fixed amount fee, and it is configurable.
 * Fee Provider needs to have enough funds into their wallet.
 * Fee Provider is managed to keep some number of UTXOs that have fixed fee value by rake tasks.
 
-### Setting up Fee Provider
+#### Setting up Fee Provider
 
 1. Set like below
 
