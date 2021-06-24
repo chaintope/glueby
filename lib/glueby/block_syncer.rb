@@ -1,23 +1,43 @@
 module Glueby
-  # Synchronize a block from blockchain to Glueby modules.
-  # Any synchronous logics can be registered and it is called when new blocks received.
+  # You can use BlockSyncer when you need to synchronize the state of
+  # an application with the state of a blockchain. When BlockSyncer
+  # detects the generation of a new block, it executes the registered
+  # syncer code on a block-by-block or transaction-by-transaction basis.
+  # By using this, an application can detect that the issued transaction
+  # has been captured in  blocks, receive a new remittance, and so on.
+  #
+  # # Syncer logic registration
+  #
+  # For registration, create a class that implements the method that performs
+  # synchronization processing and registers it in BlockSyncer. Implement
+  # methods with the following name in that class.
+  #
+  # Method name        | Arguments             | Call conditions
+  # ------------------ | --------------------- | ------------------------------
+  # block_sync (block) | block: Tapyrus::Block | When a new block is created
+  # block_tx (tx)      | tx: Tapyrus::Tx       | When a new block is created, it is executed for each tx contained in that block.
   #
   # @example Register a synchronous logic
   #   class Syncer
-  #     def block_sync(block)
-  #       # synchronize the block
+  #     def block_sync (block)
+  #       # sync a block
   #     end
   #
-  #     def tx_sync(tx)
-  #       # synchronize the tx
+  #     def tx_sync (tx)
+  #       # sync a tx
   #     end
   #   end
-  #
   #   BlockSyncer.register_syncer(Syncer)
   #
   # @example Unregister the synchronous logic
   #   BlockSyncer.unregister_syncer(Syncer)
   #
+  # # Run BlockSyncer
+  #
+  # Run the `glueby: block_syncer: start` rake task periodically with a program
+  # for periodic execution such as cron. If it detects the generation of a new
+  # block when it is executed, the synchronization process will be executed.
+  # Determine the execution interval according to the requirements of the application.
   class BlockSyncer
     # @!attribute [r] height
     #   @return [Integer] The block height to be synced
