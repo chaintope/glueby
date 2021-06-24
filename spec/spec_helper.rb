@@ -46,7 +46,6 @@ RSpec.configure do |config|
     Rake::Application.new.tap do |rake|
       Rake.application = rake
       Rake.application.rake_require 'tasks/glueby/contract/timestamp'
-      Rake.application.rake_require 'tasks/glueby/contract/wallet_adapter'
       Rake.application.rake_require 'tasks/glueby/block_syncer'
       Rake.application.rake_require 'tasks/glueby/fee_provider'
       Rake::Task.define_task(:environment)

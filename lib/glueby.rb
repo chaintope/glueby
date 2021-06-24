@@ -21,7 +21,6 @@ module Glueby
       rake_tasks do
         load "tasks/glueby/contract.rake"
         load "tasks/glueby/contract/timestamp.rake"
-        load "tasks/glueby/contract/wallet_adapter.rake"
         load "tasks/glueby/block_syncer.rake"
         load "tasks/glueby/fee_provider.rake"
       end
