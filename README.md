@@ -1,9 +1,31 @@
 # Glueby [![Ruby](https://github.com/chaintope/glueby/actions/workflows/ruby.yml/badge.svg)](https://github.com/chaintope/glueby/actions/workflows/ruby.yml) [![Gem Version](https://badge.fury.io/rb/glueby.svg)](https://badge.fury.io/rb/glueby) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
+Glueby is a smart contract library on the [Tapyrus blockchain](https://github.com/chaintope/tapyrus-core). This is 
+designed as you can use without any deep blockchain understanding.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/glueby`. To experiment with that code, run `bin/console` for an interactive prompt.
+## Features
 
-TODO: Delete this and the text above, and describe your gem
+Glueby has below features.
+
+1. Wallet
+   You can manage wallets for application users. This wallet feature is a foundation of Contracts below to specify tx
+   sender and so on.  
+   You can choose two sorts of wallet implementation :activerecord and :core. :activerecord is implemented using
+   ActiveRecord on RDB. :core uses the wallet that bundled with Tapyrus Core.
+   
+2. Contracts  
+   You can use some smart contracts easily  
+   - [Timestamp](#Timestamp): Record any data as a timestamp to a tapyrus blockchain.
+   - [Payment](./lib/glueby/contract/payment.rb): Transfer TPC.
+   - [Token](./lib/glueby/contract/token.rb): Issue, transfer and burn colored coin.
+
+3. Sync blocks with your application   
+   You can use BlockSyncer when you need to synchronize the state of an application with the state of a blockchain.  
+   See more details at [BlockSyncer](./lib/glueby/block_syncer.rb).
+
+4. Take over tx sender's fees  
+   FeeProvider module can bear payments of sender's fees. You should provide funds for fees to FeeProvider before use.  
+   See how to set up at [Use fee provider mode](#use-fee-provider-mode)
 
 ## Installation
 
@@ -21,16 +43,95 @@ Or install it yourself as:
 
     $ gem install glueby
 
-## Features
+### Setup for Ruby on Rails application development
 
-Glueby has below features.
+1. Add this line to your application's Gemfile
 
-- [Timestamp](#Timestamp)
-- [BlockSyncer](./lib/glueby/block_syncer.rb)
-  - You can use BlockSyncer when you need to synchronize the state of an application with the state of a blockchain.
-- [Use fee provider mode](#use-fee-provider-mode)
+    ```ruby
+    gem 'glueby'
+    ```
 
-### Timestamp
+    and then execute 
+    
+        $ bundle install
+
+2. Run installation rake task
+
+        $ rails glueby:contract:install
+
+3. Run Tapyrus Core as dev mode
+
+    We recommend to run as a Docker container. 
+    Docker image is here.
+
+    * [tapyus/tapyrusd](https://hub.docker.com/repository/docker/tapyrus/tapyrusd)
+
+    Starts tapryusd container
+
+        $ docker run -d --name 'tapyrus_node_dev' -p 12381:12381 -e GENESIS_BLOCK_WITH_SIG='0100000000000000000000000000000000000000000000000000000000000000000000002b5331139c6bc8646bb4e5737c51378133f70b9712b75548cb3c05f9188670e7440d295e7300c5640730c4634402a3e66fb5d921f76b48d8972a484cc0361e66ef74f45e012103af80b90d25145da28c583359beb47b21796b2fe1a23c1511e443e7a64dfdb27d40e05f064662d6b9acf65ae416379d82e11a9b78cdeb3a316d1057cd2780e3727f70a61f901d10acbe349cd11e04aa6b4351e782c44670aefbe138e99a5ce75ace01010000000100000000000000000000000000000000000000000000000000000000000000000000000000ffffffff0100f2052a010000001976a91445d405b9ed450fec89044f9b7a99a4ef6fe2cd3f88ac00000000' tapyrus/tapyrusd:edge
+
+4. Modify the glueby configuration
+
+    ```ruby
+    # Use tapyrus dev network
+    Tapyrus.chain_params = :dev
+    Glueby.configure do |config|
+      config.wallet_adapter = :activerecord
+      # Modify rpc connection info in config/initializers/glueby.rb that is created in step 3.
+      config.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'rpcuser', password: 'rpcpassword' }
+    end
+    ```
+
+5. Generate db migration files for wallet feature
+
+    These are essential if you use `config.wallet_adapter = :activerecord` configuration. 
+
+        $ rails g glueby:contract:block_syncer
+        $ rails g glueby:contract:wallet_adapter
+
+    If you want to use reissuable token or timestamp, you need to do below generators.
+
+        $ rails g glueby:contract:reissuable_token
+        $ rails g glueby:contract:timestamp
+
+    Then, run the migrations.
+
+        $ rails db:migrate
+
+### Provide initial TPC (Tapyrus Coin) to wallets
+
+To use contracts, wallets need to have TPC and it can be provided from coinbase tx.
+
+1. Create a wallet and get receive address 
+
+    ```ruby
+    wallet = Glueby::Wallet.create
+    wallet.balances # => {}
+    address = wallet.internal_wallet.receive_address
+    puts address
+    ```
+
+2. Generate a block
+
+    Set an address you got in previous step to `[Your address]`
+
+        $ docker exec tapyrus_node_dev tapyrus-cli -conf=/etc/tapyrus/tapyrus.conf generatetoaddress 1 "[Your address]" "cUJN5RVzYWFoeY8rUztd47jzXCu1p57Ay8V7pqCzsBD3PEXN7Dd4"
+
+3. Sync blocks if you use `:activerecord` wallet adapter
+
+    You don't need to do this if you are using `:core` wallet_adapter.
+
+        $ rails glueby:contract:block_syncer:start
+
+   Here the wallet created in step 1 have 50 TPC and you can see like this:
+
+    ```ruby
+    wallet.balances # =>  {""=>5000000000}
+    ```
+
+    TPC amount is shown as tapyrus unit. 1 TPC = 100000000 tapyrus.
+
+## Timestamp
 
 ```ruby
 
@@ -102,7 +203,7 @@ We can see the timestamp transaction using getrawblockchain command
 }
 ```
 
-#### Rails support
+### Rails support
 
 Glueby supports ruby on rails integration.
 
@@ -165,11 +266,7 @@ bin/rails glueby:contract:timestamp:confirm
 confirmed (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
 ```
 
-### BlockSyncer
-
-
-
-### Use fee provider mode
+## Use fee provider mode
 
 Glueby contracts have two different way of fee provisions.
 
@@ -179,13 +276,13 @@ Glueby contracts have two different way of fee provisions.
 The first one: `:sender_pays_itself`, is the default behavior.
 In the second Fee Provider mode, the Fee Provider module pays a fee instead of the transaction's sender.
 
-#### Fee Provider Specification
+### Fee Provider Specification
 
 * Fee Provider pays fixed amount fee, and it is configurable.
 * Fee Provider needs to have enough funds into their wallet.
 * Fee Provider is managed to keep some number of UTXOs that have fixed fee value by rake tasks.
 
-#### Setting up Fee Provider
+### Setting up Fee Provider
 
 1. Set like below
 
