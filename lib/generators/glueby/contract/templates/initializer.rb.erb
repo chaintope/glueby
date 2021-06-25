@@ -1,3 +1,5 @@
 # Edit configuration for connection to tapyrus core
-config = {adapter: 'core', schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass'}
-Glueby::Wallet.configure(config)
+Glueby.configure do |config|
+  config.wallet_adapter = :activerecord
+  config.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
+end
