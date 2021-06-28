@@ -2,10 +2,12 @@ RSpec.describe 'Timestamp Contract', functional: true do
   context 'use activerecord wallet adapter', active_record: true do
     before do
       Glueby.configuration.wallet_adapter = :activerecord
+      Glueby::BlockSyncer.register_syncer(Glueby::Contract::Timestamp::Syncer)
     end
 
     after do
       Glueby::Internal::Wallet.wallet_adapter = nil
+      Glueby::BlockSyncer.unregister_syncer(Glueby::Contract::Timestamp::Syncer)
     end
 
     context 'bear fees by sender' do
@@ -32,10 +34,29 @@ RSpec.describe 'Timestamp Contract', functional: true do
       end
 
       it 'use rake task' do
-        Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app')
-        Rake.application['glueby:contract:timestamp:create'].execute
+        # Add timestamp job to timestamps table
+        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app')
+        expect(ar.status).to eq('init')
+        expect(ar.txid).to be_nil
 
+        # Broadcast tx for the timestamp job
+        Rake.application['glueby:contract:timestamp:create'].execute
+        ar.reload
         expect(sender.balances(false)['']).to eq(before_balance - fee)
+        expect(ar.status).to eq('unconfirmed')
+        expect(ar.txid).not_to be_nil
+
+        # Sync blocks, but the status is still unconfirmed because a new block is not created.
+        Rake.application['glueby:block_syncer:start'].execute
+        ar.reload
+        expect(ar.status).to eq('unconfirmed')
+
+        process_block
+
+        # Sync blocks, then the status is changed to confirmed because of generating a block.
+        Rake.application['glueby:block_syncer:start'].execute
+        ar.reload
+        expect(ar.status).to eq('confirmed')
       end
     end
 
@@ -65,10 +86,29 @@ RSpec.describe 'Timestamp Contract', functional: true do
       end
 
       it 'use rake task' do
-        Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app')
-        Rake.application['glueby:contract:timestamp:create'].execute
+           # Add timestamp job to timestamps table
+        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app')
+        expect(ar.status).to eq('init')
+        expect(ar.txid).to be_nil
 
+        # Broadcast tx for the timestamp job
+        Rake.application['glueby:contract:timestamp:create'].execute
+        ar.reload
         expect(sender.balances(false)['']).to eq(before_balance)
+        expect(ar.status).to eq('unconfirmed')
+        expect(ar.txid).not_to be_nil
+
+        # Sync blocks, but the status is still unconfirmed because a new block is not created.
+        Rake.application['glueby:block_syncer:start'].execute
+        ar.reload
+        expect(ar.status).to eq('unconfirmed')
+
+        process_block
+
+        # Sync blocks, then the status is changed to confirmed because of generating a block.
+        Rake.application['glueby:block_syncer:start'].execute
+        ar.reload
+        expect(ar.status).to eq('confirmed')
       end
     end
   end

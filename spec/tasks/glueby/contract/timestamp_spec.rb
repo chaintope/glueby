@@ -66,7 +66,6 @@ RSpec.describe 'Glueby::Contract::Task::Timestamp', active_record: true do
     ]
   end
 
-  
   before(:each) do
     allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
     allow(rpc).to receive(:sendrawtransaction).and_return('a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c')
@@ -81,13 +80,5 @@ RSpec.describe 'Glueby::Contract::Task::Timestamp', active_record: true do
     subject { Rake.application['glueby:contract:timestamp:create'].execute }
 
     it { expect { subject }.to change { Glueby::Contract::AR::Timestamp.first.status }.from("init").to("unconfirmed") }
-  end
-
-  describe '#confirm' do
-    subject { Rake.application['glueby:contract:timestamp:confirm'].execute }
-    
-    before { Glueby::Contract::AR::Timestamp.first.update(txid: 'a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c', status: :unconfirmed) }
-
-    it { expect { subject }.to change { Glueby::Contract::AR::Timestamp.first.status }.from("unconfirmed").to("confirmed") }
   end
 end

@@ -1,6 +1,12 @@
 require "glueby/version"
 require 'tapyrus'
 
+begin
+  require 'rails'
+rescue LoadError
+  # do nothing
+end
+
 module Glueby
   autoload :Contract, 'glueby/contract'
   autoload :Generator, 'glueby/generator'
@@ -11,23 +17,13 @@ module Glueby
   autoload :Configuration, 'glueby/configuration'
   autoload :BlockSyncer, 'glueby/block_syncer'
 
+  if defined? ::Rails::Railtie
+    require 'glueby/railtie'
+  end
+
   # Add prefix to activerecord table names
   def self.table_name_prefix
     'glueby_'
-  end
-
-  begin
-    class Railtie < ::Rails::Railtie
-      rake_tasks do
-        load "tasks/glueby/contract.rake"
-        load "tasks/glueby/contract/timestamp.rake"
-        load "tasks/glueby/block_syncer.rake"
-        load "tasks/glueby/fee_provider.rake"
-      end
-    end
-  rescue
-    # Rake task is unavailable
-    puts "Rake task is unavailable"
   end
 
   # Returns the global [Configuration](RSpec/Core/Configuration) object.
