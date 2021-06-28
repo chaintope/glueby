@@ -10,6 +10,8 @@ module Glueby
     class Timestamp
       include Glueby::Contract::TxBuilder
 
+      autoload :Syncer, 'glueby/contract/timestamp/syncer'
+
       module Util
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
         module_function

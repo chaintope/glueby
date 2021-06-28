@@ -259,11 +259,10 @@ bin/rails glueby:contract:timestamp:create
 broadcasted (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
 ```
 
-Run `glueby:contract:timestamp:confirm` task to confirm the transaction and update status(unconfirmed -> confirmded).
+Run `glueby:block_syncer:start` task to confirm the transaction and update status(unconfirmed -> confirmded).
 
 ```
-bin/rails glueby:contract:timestamp:confirm
-confirmed (id=1, txid=8d602ca8ebdd50fa70b5ee6bc6351965b614d0a4843adacf9f43fedd7112fbf4)
+bin/rails glueby:block_syncer:start
 ```
 
 ## Use fee provider mode
