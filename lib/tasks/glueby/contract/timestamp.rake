@@ -13,9 +13,9 @@ module Glueby
               ::ActiveRecord::Base.transaction do
                 wallet = Glueby::Wallet.load(t.wallet_id)
                 tx = create_tx(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeEstimator.new)
-                t.update(txid: tx.txid, status: :unconfirmed)
-
-                wallet.internal_wallet.broadcast(tx)
+                wallet.internal_wallet.broadcast(tx) do |tx|
+                  t.update(txid: tx.txid, status: :unconfirmed)
+                end
                 puts "broadcasted (id=#{t.id}, txid=#{tx.txid})"
               end
             rescue => e

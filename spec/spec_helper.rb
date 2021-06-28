@@ -201,7 +201,8 @@ class TestInternalWallet < Glueby::Internal::Wallet
     tx
   end
 
-  def broadcast(tx)
+  def broadcast(tx, &block)
+    block.call(tx) if block
     tx
   end
 
