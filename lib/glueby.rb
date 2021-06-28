@@ -1,12 +1,6 @@
 require "glueby/version"
 require 'tapyrus'
 
-begin
-  require 'rails'
-rescue LoadError
-  # do nothing
-end
-
 module Glueby
   autoload :Contract, 'glueby/contract'
   autoload :Generator, 'glueby/generator'
