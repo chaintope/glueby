@@ -83,11 +83,13 @@ module Glueby
           end
         end
 
-        def list_unspent(wallet_id, only_finalized = true)
+        def list_unspent(wallet_id, only_finalized = true, label = nil)
           perform_as(wallet_id) do |client|
             min_conf = only_finalized ? 1 : 0
             res = client.listunspent(min_conf)
 
+            res = res.filter { |i| i['label'] == label } if label
+ 
             res.map do |i|
               script = Tapyrus::Script.parse_from_payload(i['scriptPubKey'].htb)
               color_id = if script.cp2pkh? || script.cp2sh?
@@ -122,9 +124,9 @@ module Glueby
           end
         end
 
-        def receive_address(wallet_id)
+        def receive_address(wallet_id, label = nil)
           perform_as(wallet_id) do |client|
-            client.getnewaddress('', ADDRESS_TYPE)
+            client.getnewaddress(label || '', ADDRESS_TYPE)
           end
         end
 

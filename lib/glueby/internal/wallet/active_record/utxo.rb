@@ -36,6 +36,7 @@ module Glueby
 
               utxo = Utxo.find_or_initialize_by(txid: tx.txid, index: index)
               utxo.update!(
+                label: key.label,
                 script_pubkey: output.script_pubkey.to_hex,
                 value: output.value,
                 status: status,

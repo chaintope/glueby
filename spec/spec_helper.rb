@@ -70,6 +70,7 @@ def setup_database
     t.string     :private_key
     t.string     :public_key
     t.string     :script_pubkey
+    t.string     :label, index: true
     t.integer    :purpose
     t.belongs_to :wallet, null: true
     t.timestamps
@@ -82,6 +83,7 @@ def setup_database
     t.integer    :index
     t.bigint     :value
     t.string     :script_pubkey
+    t.string     :label, index: true
     t.integer    :status
     t.belongs_to :key, null: true
     t.timestamps
@@ -188,7 +190,7 @@ class TestInternalWallet < Glueby::Internal::Wallet
     '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
   end
 
-  def list_unspent
+  def list_unspent(only_finalized = true, label = nil)
     []
   end
 
