@@ -139,8 +139,9 @@ module Glueby
         # This method is expected to return the list of addresses that wallet has.
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [String] label The label to filter the addresses.
         # @return [Array<String>] array of P2PKH address
-        def get_addresses(wallet_id)
+        def get_addresses(wallet_id, label = nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
       end

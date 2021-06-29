@@ -134,9 +134,11 @@ module Glueby
           Tapyrus::Key.new(pubkey: key.public_key)
         end
 
-        def get_addresses(wallet_id)
+        def get_addresses(wallet_id, label = nil)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
-          wallet.keys.map(&:address)
+          keys = wallet.keys
+          keys = keys.where(label: label) if label
+          keys.map(&:address)
         end
       end
     end

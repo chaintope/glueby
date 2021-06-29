@@ -132,8 +132,8 @@ module Glueby
         raise Glueby::Contract::Errors::InsufficientFunds
       end
 
-      def get_addresses
-        wallet_adapter.get_addresses(id)
+      def get_addresses(label = nil)
+        wallet_adapter.get_addresses(id, label)
       end
 
       private

@@ -186,7 +186,7 @@ end
 class TestInternalWallet < Glueby::Internal::Wallet
   def initialize; end
 
-  def receive_address
+  def receive_address(label = nil)
     '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
   end
 
@@ -206,7 +206,7 @@ class TestInternalWallet < Glueby::Internal::Wallet
     tx
   end
 
-  def get_addresses
+  def get_addresses(label = nil)
     ['191arn68nSLRiNJXD8srnmw4bRykBkVv6o', '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT']
   end
 end

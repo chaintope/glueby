@@ -210,6 +210,12 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     it { expect { subject }.to change { wallet.keys.where(purpose: :receive).count }.from(0).to(1) }
     it { expect { subject }.not_to change { wallet.keys.where(purpose: :change).count } }
     it { expect { Tapyrus.decode_base58_address(subject) }.not_to raise_error }
+
+    context 'with label' do
+      subject { adapter.receive_address(wallet.wallet_id, 'tracking') }
+
+      it { expect { subject }.to change { wallet.keys.where(purpose: :receive, label: 'tracking').count }.from(0).to(1) }
+    end
   end
 
   describe '#change_address' do
@@ -231,17 +237,21 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
   end
 
   describe '#get_addresses' do
-    subject do 
-      adapter.get_addresses(wallet.wallet_id)
-    end
+    subject { adapter.get_addresses(wallet.wallet_id) }
 
     before do
-      adapter.receive_address(wallet.wallet_id)
-      adapter.receive_address(wallet.wallet_id)
+      adapter.receive_address(wallet.wallet_id, '')
+      adapter.receive_address(wallet.wallet_id, 'tracking')
     end
 
     it { expect(subject.count).to eq 2 }
     it { expect(Tapyrus.valid_address?(subject[0])).to be_truthy }
     it { expect(Tapyrus.valid_address?(subject[1])).to be_truthy }
+
+    context 'with label' do
+      subject { adapter.get_addresses(wallet.wallet_id, 'tracking') }
+
+      it { expect(subject.count).to eq 1 }
+    end
   end
 end
