@@ -99,8 +99,11 @@ module Glueby
         wallet_adapter.sign_tx(id, tx, prev_txs, sighashtype: sighashtype)
       end
 
-      def broadcast(tx)
-        tx = FeeProvider.provide(tx) if Glueby.configuration.fee_provider_bears?
+      # Broadcast a transaction via Tapyrus Core RPC
+      # @param [Tapyrus::Tx] tx The tx that would be broadcasted
+      # @option [Boolean] without_fee_provider The flag to avoid to use FeeProvider temporary.
+      def broadcast(tx, without_fee_provider: false)
+        tx = FeeProvider.provide(tx) if !without_fee_provider && Glueby.configuration.fee_provider_bears?
         wallet_adapter.broadcast(id, tx)
         tx
       end
