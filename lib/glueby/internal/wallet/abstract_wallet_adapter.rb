@@ -65,11 +65,13 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
-        # Returns all the UTXOs that the wallet has.
+        # Returns the UTXOs that the wallet has.
+        # If label is specified, return UTXOs filtered with label
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @param [Boolean] only_finalized - The UTXOs includes only finalized UTXO value if it
         #                                   is true. Default is true.
+        # @param [String] label - Label for filtering UTXOs
         # @return [Array of UTXO]
         #
         # ## The UTXO structure
@@ -78,7 +80,7 @@ module Glueby
         # - vout: [Integer] Output index
         # - amount: [Integer] Amount of the UTXO as tapyrus unit
         # - finalized: [Boolean] Whether the UTXO is finalized
-        def list_unspent(wallet_id, only_finalized = true)
+        def list_unspent(wallet_id, only_finalized = true, label = nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
@@ -107,8 +109,9 @@ module Glueby
         # Returns an address to receive coin.
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [String] label The label associated with this address.
         # @return [String] P2PKH address
-        def receive_address(wallet_id)
+        def receive_address(wallet_id, label = nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
@@ -136,8 +139,9 @@ module Glueby
         # This method is expected to return the list of addresses that wallet has.
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [String] label The label to filter the addresses.
         # @return [Array<String>] array of P2PKH address
-        def get_addresses(wallet_id)
+        def get_addresses(wallet_id, label = nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
       end

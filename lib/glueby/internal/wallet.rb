@@ -74,8 +74,8 @@ module Glueby
         wallet_adapter.balance(id, only_finalized)
       end
 
-      def list_unspent(only_finalized = true)
-        wallet_adapter.list_unspent(id, only_finalized)
+      def list_unspent(only_finalized = true, label = nil)
+        wallet_adapter.list_unspent(id, only_finalized, label)
       end
 
       def delete
@@ -105,8 +105,8 @@ module Glueby
         tx
       end
 
-      def receive_address
-        wallet_adapter.receive_address(id)
+      def receive_address(label = nil)
+        wallet_adapter.receive_address(id, label)
       end
 
       def change_address
@@ -117,8 +117,8 @@ module Glueby
         wallet_adapter.create_pubkey(id)
       end
 
-      def collect_uncolored_outputs(amount)
-        utxos = list_unspent
+      def collect_uncolored_outputs(amount, label = nil)
+        utxos = list_unspent(true, label)
 
         utxos.inject([0, []]) do |sum, output|
           next sum if output[:color_id]
@@ -132,8 +132,8 @@ module Glueby
         raise Glueby::Contract::Errors::InsufficientFunds
       end
 
-      def get_addresses
-        wallet_adapter.get_addresses(id)
+      def get_addresses(label = nil)
+        wallet_adapter.get_addresses(id, label)
       end
 
       private

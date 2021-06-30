@@ -215,7 +215,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
             "txid": "864247cd4cae4b1f5bd3901be9f7a4ccba5bdea7db1d8bbd78b944da9cf39ef5",
             "vout": 0,
             "address": "w25MP2mrNU4oFqouSdwmSJHd8YntErqMwYk3vHr6RRjwZYWV6NfNZhgMfVWABRadn3RutmxAogoQCG",
-            "label": "",
+            "label": "for tracking",
             "scriptPubKey": "21c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893bc76a914bfeca7aed62174a7c60ebc63c7bd797bad46157a88ac",
             "amount": "0.00000001",
             "confirmations": 1,
@@ -275,6 +275,23 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
     it_behaves_like 'If the wallet is unloaded, it should raise WalletUnloaded error.' do
       let(:rpc_name) { :listunspent }
+    end
+
+    context 'with label' do
+      subject { adapter.list_unspent(wallet_id, true, "for tracking") }
+      it 'should call listunspent RPC with label and parse the results.' do
+        expect(rpc).to receive(:listunspent).and_return(response)
+        expect(subject).to eq([
+          {
+            txid: '864247cd4cae4b1f5bd3901be9f7a4ccba5bdea7db1d8bbd78b944da9cf39ef5',
+            vout: 0,
+            script_pubkey: '21c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893bc76a914bfeca7aed62174a7c60ebc63c7bd797bad46157a88ac',
+            color_id: 'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893',
+            amount: 1,
+            finalized: true
+          }
+        ])
+      end
     end
   end
 
@@ -360,6 +377,15 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
     it_behaves_like 'If the wallet is unloaded, it should raise WalletUnloaded error.' do
       let(:rpc_name) { :getnewaddress }
+    end
+
+    context 'with label' do
+      subject { adapter.receive_address(wallet_id, 'for tracking') }
+
+      it 'should call getnewaddress RPC with label' do
+        expect(rpc).to receive(:getnewaddress).with('for tracking', 'legacy').and_return(response)
+        subject
+      end
     end
   end
 

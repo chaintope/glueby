@@ -70,6 +70,7 @@ def setup_database
     t.string     :private_key
     t.string     :public_key
     t.string     :script_pubkey
+    t.string     :label, index: true
     t.integer    :purpose
     t.belongs_to :wallet, null: true
     t.timestamps
@@ -82,6 +83,7 @@ def setup_database
     t.integer    :index
     t.bigint     :value
     t.string     :script_pubkey
+    t.string     :label, index: true
     t.integer    :status
     t.belongs_to :key, null: true
     t.timestamps
@@ -184,11 +186,11 @@ end
 class TestInternalWallet < Glueby::Internal::Wallet
   def initialize; end
 
-  def receive_address
+  def receive_address(label = nil)
     '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
   end
 
-  def list_unspent
+  def list_unspent(only_finalized = true, label = nil)
     []
   end
 
@@ -204,7 +206,7 @@ class TestInternalWallet < Glueby::Internal::Wallet
     tx
   end
 
-  def get_addresses
+  def get_addresses(label = nil)
     ['191arn68nSLRiNJXD8srnmw4bRykBkVv6o', '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT']
   end
 end
