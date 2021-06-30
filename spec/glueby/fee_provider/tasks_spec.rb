@@ -522,4 +522,12 @@ RSpec.describe Glueby::FeeProvider::Tasks, active_record: true do
       end
     end
   end
+
+  describe 'address' do
+    context "Show Fee Provider's address" do
+      subject { tasks.address }
+
+      it { expect(subject).to eq '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT' }
+    end
+  end
 end

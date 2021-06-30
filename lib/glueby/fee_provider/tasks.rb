@@ -80,6 +80,11 @@ module Glueby
         EOS
       end
 
+      # Show the address of Fee Provider 
+      def address
+        wallet.receive_address
+      end
+
       private
 
       def check_wallet_amount!
