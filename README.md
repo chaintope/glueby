@@ -108,7 +108,7 @@ To use in rails, Add dependency to Gemfile.
 Then invoke install task.
 
 ```
-bin/rails glueby:contract:install
+bin/rails glueby:contract:initializer
 ```
 
 Install task creates a file `glueby.rb` in `config/initializers` directory like this.
