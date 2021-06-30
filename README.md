@@ -183,7 +183,7 @@ In the second Fee Provider mode, the Fee Provider module pays a fee instead of t
 1. Set like below
 
 ```ruby
-Glurby.configure do |config|
+Glueby.configure do |config|
   # Use FeeProvider to supply inputs for fees on each transaction that is created on Glueby.
   config.fee_provider_bears!
   config.fee_provider_config = {
