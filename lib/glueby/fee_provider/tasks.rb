@@ -44,7 +44,7 @@ module Glueby
                 .fee(fee_provider.fixed_fee)
                 .build
         tx = wallet.sign_tx(tx)
-        wallet.broadcast(tx)
+        wallet.broadcast(tx, without_fee_provider: true)
       ensure
         status
       end
