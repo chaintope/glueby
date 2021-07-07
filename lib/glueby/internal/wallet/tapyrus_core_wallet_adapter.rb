@@ -33,7 +33,7 @@ module Glueby
           begin
             RPC.client.createwallet(wallet_name(wallet_id))
           rescue Tapyrus::RPC::Error => ex
-            if ex.rpc_error['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Wallet wallet-wallet already exists\./ =~ ex.rpc_error['message']
+            if ex.rpc_error && ex.rpc_error['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Wallet wallet-#{wallet_id} already exists\./ =~ ex.rpc_error['message']
               raise Errors::WalletAlreadyCreated, "Wallet #{wallet_id} has been already created."
             else
               raise ex
@@ -52,9 +52,9 @@ module Glueby
         def load_wallet(wallet_id)
           RPC.client.loadwallet(wallet_name(wallet_id))
         rescue Tapyrus::RPC::Error => ex
-          if ex.rpc_error['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Duplicate -wallet filename specified/ =~ ex.rpc_error['message']
+          if ex.rpc_error && ex.rpc_error['code'] == RPC_WALLET_ERROR_ERROR_CODE && /Duplicate -wallet filename specified/ =~ ex.rpc_error['message']
             raise Errors::WalletAlreadyLoaded, "Wallet #{wallet_id} has been already loaded."
-          elsif ex.rpc_error['code'] == RPC_WALLET_NOT_FOUND_ERROR_CODE
+          elsif ex.rpc_error && ex.rpc_error['code'] == RPC_WALLET_NOT_FOUND_ERROR_CODE
             raise Errors::WalletNotFound, "Wallet #{wallet_id} does not found"
           else
             raise ex
@@ -151,7 +151,7 @@ module Glueby
             begin
               yield(client)
             rescue Tapyrus::RPC::Error => ex
-              if ex.rpc_error['code'] == RPC_WALLET_NOT_FOUND_ERROR_CODE
+              if ex.rpc_error && ex.rpc_error['code'] == RPC_WALLET_NOT_FOUND_ERROR_CODE
                 raise Errors::WalletUnloaded, "The wallet #{wallet_id} is unloaded. You should load before use it."
               else
                 raise ex

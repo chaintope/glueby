@@ -73,6 +73,15 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
         end
       end
 
+      context 'unauthenticated error' do
+        let(:error) { Tapyrus::RPC::Error.new('401', 'Unauthorized', nil) }
+
+        it 'raise an error' do
+          expect(rpc).to receive(:createwallet).and_raise(error)
+          expect { subject }.to raise_error(Tapyrus::RPC::Error, { response_code: '401', response_msg: 'Unauthorized' }.to_s)
+        end
+      end
+
       context 'as nil' do
         subject { adapter.create_wallet(nil) }
 
@@ -114,6 +123,15 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       it do
         allow(rpc).to receive(:loadwallet).and_raise(error)
         expect { subject }.to raise_error Glueby::Internal::Wallet::Errors::WalletAlreadyLoaded
+      end
+    end
+
+    context 'unauthenticated error' do
+      let(:error) { Tapyrus::RPC::Error.new('401', 'Unauthorized', nil) }
+
+      it 'raise an error' do
+        expect(rpc).to receive(:loadwallet).and_raise(error)
+        expect { subject }.to raise_error(Tapyrus::RPC::Error, { response_code: '401', response_msg: 'Unauthorized' }.to_s)
       end
     end
 
