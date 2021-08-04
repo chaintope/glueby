@@ -93,7 +93,8 @@ module Glueby
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.utxos
           utxos = utxos.where(status: :finalized) if only_finalized
-          utxos = utxos.where(label: label) if label
+          utxos = utxos.where(label: label) if label && (label != :unlabeled)
+          utxos = utxos.where(label: nil) if label == :unlabeled
           utxos.map do |utxo|
             {
               txid: utxo.txid,
@@ -121,7 +122,7 @@ module Glueby
 
         def receive_address(wallet_id, label = nil)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
-          key = wallet.keys.create(purpose: :receive, label: label || '')
+          key = wallet.keys.create(purpose: :receive, label: label || nil)
           key.address
         end
 
