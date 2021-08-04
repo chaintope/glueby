@@ -122,7 +122,7 @@ module Glueby
 
         def receive_address(wallet_id, label = nil)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
-          key = wallet.keys.create(purpose: :receive, label: label || nil)
+          key = wallet.keys.create(purpose: :receive, label: label)
           key.address
         end
 
