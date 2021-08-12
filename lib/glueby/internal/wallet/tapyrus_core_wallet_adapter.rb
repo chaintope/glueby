@@ -88,7 +88,8 @@ module Glueby
             min_conf = only_finalized ? 1 : 0
             res = client.listunspent(min_conf)
 
-            res = res.filter { |i| i['label'] == label } if label
+            res = res.filter { |i| i['label'] == label } if label && (label != :unlabeled)
+            res = res.filter { |i| i['label'] == "" } if label == :unlabeled
  
             res.map do |i|
               script = Tapyrus::Script.parse_from_payload(i['scriptPubKey'].htb)

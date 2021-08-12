@@ -137,16 +137,19 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
   end
 
   describe '#list_unspent' do
-    subject { adapter.list_unspent(wallet.wallet_id, only_finalized) }
+    subject { adapter.list_unspent(wallet.wallet_id, only_finalized, label) }
 
     let(:other_wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: adapter.create_wallet) }
     let(:only_finalized) { true }
+    let(:label) { nil }
     let(:key1) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key1, purpose: :receive, wallet: wallet) }
     let(:private_key1) { '1000000000000000000000000000000000000000000000000000000000000000' }
     let(:key2) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key2, purpose: :receive, wallet: wallet) }
     let(:private_key2) { '2000000000000000000000000000000000000000000000000000000000000000' }
     let(:key3) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key3, purpose: :receive, wallet: other_wallet) }
     let(:private_key3) { '3000000000000000000000000000000000000000000000000000000000000000' }
+    let(:key4) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key4, purpose: :receive, wallet: wallet) }
+    let(:private_key4) { '4000000000000000000000000000000000000000000000000000000000000000' }
 
     before do
       Glueby::Internal::Wallet::AR::Utxo.create(
@@ -181,18 +184,30 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
         status: :init,
         key: key3
       )
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '0000000000000000000000000000000000000000000000000000000000000004',
+        index: 4,
+        script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
+        value: 5,
+        status: :finalized,
+        key: key4,
+        label: 'tracking'
+      )
     end
 
     context 'finalized only' do
-      it { expect(subject.count).to eq 2 }
+      it { expect(subject.count).to eq 3 }
       it { expect(subject[0][:vout]).to eq 1 }
       it { expect(subject[0][:finalized]).to be_truthy }
       it { expect(subject[1][:vout]).to eq 2 }
       it { expect(subject[1][:finalized]).to be_truthy }
+      it { expect(subject[2][:vout]).to eq 4 }
+      it { expect(subject[2][:finalized]).to be_truthy }
     end
 
     context 'with unconfirmed' do
       let(:only_finalized) { false }
+      let(:label) { :unlabeled }
 
       it { expect(subject.count).to eq 3 }
       it { expect(subject[0][:vout]).to eq 0 }
@@ -201,6 +216,16 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       it { expect(subject[1][:finalized]).to be_truthy }
       it { expect(subject[2][:vout]).to eq 2 }
       it { expect(subject[2][:finalized]).to be_truthy }
+    end
+
+    context 'with unlabeled' do
+      let (:label) { :unlabeled }
+
+      it { expect(subject.count).to eq 2 }
+      it { expect(subject[0][:vout]).to eq 1 }
+      it { expect(subject[0][:label]).to eq nil }
+      it { expect(subject[1][:vout]).to eq 2 }
+      it { expect(subject[1][:label]).to eq nil }
     end
   end
 
@@ -240,7 +265,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     subject { adapter.get_addresses(wallet.wallet_id) }
 
     before do
-      adapter.receive_address(wallet.wallet_id, '')
+      adapter.receive_address(wallet.wallet_id)
       adapter.receive_address(wallet.wallet_id, 'tracking')
     end
 
