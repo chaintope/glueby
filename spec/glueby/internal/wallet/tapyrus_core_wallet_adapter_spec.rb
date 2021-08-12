@@ -311,6 +311,29 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
         ])
       end
     end
+
+    context 'with unlabeled' do
+      subject { adapter.list_unspent(wallet_id, true, :unlabeled) }
+      it 'should call listunspent RPC with label and parse the results.' do
+        expect(rpc).to receive(:listunspent).and_return(response)
+        expect(subject).to eq([{
+                                txid: "5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5",
+                                vout: 0,
+                                script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
+                                color_id: nil,
+                                amount: 100000000,
+                                finalized: false
+                              },
+                               {
+                                 txid: "1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db",
+                                 vout: 1,
+                                 script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
+                                 color_id: nil,
+                                 amount: 100000000,
+                                 finalized: true
+                               }])
+      end
+    end
   end
 
   describe 'sign_tx' do
