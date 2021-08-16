@@ -1,7 +1,7 @@
 module Glueby
   class Railtie < ::Rails::Railtie
     initializer "glueby.register_syncers" do
-      BlockSyncer.register_syncer(Contract::Timestamp::Syncer)
+      BlockSyncer.register_syncer(Contract::Timestamp::Syncer) if Contract::Timestamp::Syncer.enabled?
     end
 
     rake_tasks do
