@@ -7,10 +7,6 @@ module Glueby
             .where(txid: block.transactions.map(&:txid), status: :unconfirmed)
             .update_all(status: :confirmed)
         end
-
-        def self.enabled?
-          Glueby::Contract::AR::Timestamp.table_exists?
-        end
       end
     end
   end
