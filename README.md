@@ -223,6 +223,8 @@ Glueby.configure do |config|
   config.wallet_adapter = :activerecord
   config.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' }
 end
+
+Glueby::BlockSyncer.register_syncer(Contract::Timestamp::Syncer)
 ```
 
 If you use timestamp feature, use `glueby:contract:timestamp` generator.
