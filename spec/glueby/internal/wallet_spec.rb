@@ -76,7 +76,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
   describe 'collect_uncolored_outputs' do
     before { allow(internal_wallet).to receive(:list_unspent).and_return(unspents) }
 
-    subject { wallet.internal_wallet.collect_uncolored_outputs(amount, only_finalized) }
+    subject { wallet.internal_wallet.collect_uncolored_outputs(amount, nil, only_finalized) }
 
     let(:amount) { 150_000_000 }
     let(:only_finalized) { true }
@@ -141,8 +141,11 @@ RSpec.describe 'Glueby::Internal::Wallet' do
       let(:amount) { 250_000_000 }
       let(:only_finalized) { false }
 
-      it { expect(subject[0]).to eq 250_000_000 }
-      it { expect(subject[1].size).to eq 3 }
+      it do
+        expect(internal_wallet).to receive(:list_unspent).with(false, nil).and_return(unspents)
+        expect(subject[0]).to eq 250_000_000
+        expect(subject[1].size).to eq 3
+      end
     end
 
     context 'does not have enough tpc' do
