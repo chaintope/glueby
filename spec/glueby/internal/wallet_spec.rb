@@ -74,11 +74,12 @@ RSpec.describe 'Glueby::Internal::Wallet' do
   end
 
   describe 'collect_uncolored_outputs' do
-    before { allow(internal_wallet).to receive(:list_unspent).and_return(unspents) }
+    before { allow(internal_wallet).to receive(:list_unspent).and_return(finalized_unspents) }
 
-    subject { wallet.internal_wallet.collect_uncolored_outputs(amount) }
+    subject { wallet.internal_wallet.collect_uncolored_outputs(amount, nil, only_finalized) }
 
     let(:amount) { 150_000_000 }
+    let(:only_finalized) { true }
     let(:wallet) { TestWallet.new(internal_wallet) }
     let(:internal_wallet) { TestInternalWallet.new }
     let(:unspents) do
@@ -89,7 +90,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
           vout: 0,
           amount: 100_000_000,
           finalized: false
-        }, {
+        },{
           txid: '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
           script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
           vout: 1,
@@ -132,9 +133,21 @@ RSpec.describe 'Glueby::Internal::Wallet' do
         }
       ]
     end
+    let(:finalized_unspents) { unspents.select{|i| i[:finalized]} }
 
-    it { expect(subject[0]).to eq 200_000_000 }
+    it { expect(subject[0]).to eq 150_000_000 }
     it { expect(subject[1].size).to eq 2 }
+
+    context 'with unconfirmed' do
+      let(:amount) { 250_000_000 }
+      let(:only_finalized) { false }
+
+      it do
+        expect(internal_wallet).to receive(:list_unspent).with(false, nil).and_return(unspents)
+        expect(subject[0]).to eq 250_000_000
+        expect(subject[1].size).to eq 3
+      end
+    end
 
     context 'does not have enough tpc' do
       let(:amount) { 250_000_001 }
