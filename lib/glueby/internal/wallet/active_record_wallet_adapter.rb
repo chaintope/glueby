@@ -112,10 +112,11 @@ module Glueby
           wallet.sign(tx, prevtxs, sighashtype: sighashtype)
         end
 
-        def broadcast(wallet_id, tx)
+        def broadcast(wallet_id, tx, &block)
           ::ActiveRecord::Base.transaction do
             AR::Utxo.destroy_for_inputs(tx)
             AR::Utxo.create_or_update_for_outputs(tx, status: :broadcasted)
+            block.call(tx) if block
             Glueby::Internal::RPC.client.sendrawtransaction(tx.to_hex)
           end
         end

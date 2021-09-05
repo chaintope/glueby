@@ -73,6 +73,33 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
   end
 
+  describe 'broadcast' do
+    let(:tx) { Tapyrus::Tx.new }
+    let(:wallet) { Glueby::Internal::Wallet.create }
+
+    context 'A block argument is given' do
+      let(:block) { Proc.new {} }
+
+      it 'pass the block to a wallet adapter' do
+        expect(Glueby::Internal::Wallet.wallet_adapter)
+          .to receive(:broadcast).with('created_wallet_id', tx) do |*args, &proc|
+          expect(proc).to eq(block)
+        end
+        wallet.broadcast(tx, &block)
+      end
+    end
+
+    context 'A block argument is given' do
+      it 'doesnt pass the block to a wallet adapter' do
+        expect(Glueby::Internal::Wallet.wallet_adapter)
+          .to receive(:broadcast).with('created_wallet_id', tx) do |*args, &proc|
+          expect(proc).to be_nil
+        end
+        wallet.broadcast(tx)
+      end
+    end
+  end
+
   describe 'collect_uncolored_outputs' do
     before { allow(internal_wallet).to receive(:list_unspent).and_return(finalized_unspents) }
 
