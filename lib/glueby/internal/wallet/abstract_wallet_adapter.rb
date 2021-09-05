@@ -101,8 +101,10 @@ module Glueby
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @param [Tapyrus::Tx] tx - The transaction to be broadcasterd.
+        # @yield Option. If a block given, the block is called before actual broadcasting.
+        #   @yieldparam [Tapyrus::Tx] tx - The tx that is going to be broadcasted as is.
         # @return [String] txid
-        def broadcast(wallet_id, tx)
+        def broadcast(wallet_id, tx, &block)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 

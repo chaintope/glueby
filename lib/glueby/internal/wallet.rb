@@ -117,10 +117,7 @@ module Glueby
       # @param [Proc] block The block that is called before broadcasting. It can be used to handle tx that is modified by FeeProvider.
       def broadcast(tx, without_fee_provider: false, &block)
         tx = FeeProvider.provide(tx) if !without_fee_provider && Glueby.configuration.fee_provider_bears?
-
-        block.call(tx) if block
-
-        wallet_adapter.broadcast(id, tx)
+        wallet_adapter.broadcast(id, tx, &block)
         tx
       end
 

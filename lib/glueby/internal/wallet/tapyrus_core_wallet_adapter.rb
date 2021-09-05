@@ -119,8 +119,9 @@ module Glueby
           end
         end
 
-        def broadcast(wallet_id, tx)
+        def broadcast(wallet_id, tx, &block)
           perform_as(wallet_id) do |client|
+            block.call(tx) if block
             client.sendrawtransaction(tx.to_hex)
           end
         end
