@@ -23,7 +23,6 @@ module Glueby
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
 
         WALLET_PREFIX = 'wallet-'
-        ADDRESS_TYPE = 'legacy'
 
         RPC_WALLET_ERROR_ERROR_CODE = -4 # Unspecified problem with wallet (key not found etc.)
         RPC_WALLET_NOT_FOUND_ERROR_CODE = -18 # Invalid wallet specified
@@ -127,19 +126,19 @@ module Glueby
 
         def receive_address(wallet_id, label = nil)
           perform_as(wallet_id) do |client|
-            client.getnewaddress(label || '', ADDRESS_TYPE)
+            client.getnewaddress(label || '')
           end
         end
 
         def change_address(wallet_id)
           perform_as(wallet_id) do |client|
-            client.getrawchangeaddress(ADDRESS_TYPE)
+            client.getrawchangeaddress
           end
         end
 
         def create_pubkey(wallet_id)
           perform_as(wallet_id) do |client|
-            address = client.getnewaddress('', ADDRESS_TYPE)
+            address = client.getnewaddress('')
             info = client.getaddressinfo(address)
             Tapyrus::Key.new(pubkey: info['pubkey'])
           end

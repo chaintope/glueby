@@ -412,7 +412,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     let(:response) { 'mjRTJ97nY3zVuvspVQcCoKf3Q8zanVGF8g' }
 
     it 'should call getnewaddress RPC' do
-      expect(rpc).to receive(:getnewaddress).with('', 'legacy').and_return(response)
+      expect(rpc).to receive(:getnewaddress).with('').and_return(response)
       subject
     end
 
@@ -424,7 +424,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       subject { adapter.receive_address(wallet_id, 'for tracking') }
 
       it 'should call getnewaddress RPC with label' do
-        expect(rpc).to receive(:getnewaddress).with('for tracking', 'legacy').and_return(response)
+        expect(rpc).to receive(:getnewaddress).with('for tracking').and_return(response)
         subject
       end
     end
@@ -437,7 +437,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     let(:response) { 'mjRTJ97nY3zVuvspVQcCoKf3Q8zanVGF8g' }
 
     it 'should call getrawchangeaddress RPC' do
-      expect(rpc).to receive(:getrawchangeaddress).with('legacy').and_return(response)
+      expect(rpc).to receive(:getrawchangeaddress).and_return(response)
       subject
     end
 
@@ -479,7 +479,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
     it 'should call getnewaddress and getaddressinfo RPC and returns compressed pubkey.' do
       expect(rpc).to receive(:getnewaddress)
-                       .with('', 'legacy')
+                       .with('')
                        .and_return(getnewaddress_response)
       expect(rpc).to receive(:getaddressinfo)
                        .with(getnewaddress_response)
