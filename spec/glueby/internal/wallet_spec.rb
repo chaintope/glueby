@@ -89,7 +89,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
       end
     end
 
-    context 'A block argument is given' do
+    context 'A block argument is not given' do
       it 'doesnt pass the block to a wallet adapter' do
         expect(Glueby::Internal::Wallet.wallet_adapter)
           .to receive(:broadcast).with('created_wallet_id', tx) do |*args, &proc|
