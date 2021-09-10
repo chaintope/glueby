@@ -491,4 +491,24 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       let(:rpc_name) { :getnewaddress }
     end
   end
+
+  describe '#broadcast' do
+    subject { adapter.broadcast(wallet_id, tx) }
+    let(:tx) { Tapyrus::Tx.new }
+    let(:wallet_id) { ARBITRARY_WALLET_ID }
+
+    it 'calls sendrawtransaction RPC' do
+      expect(Glueby::Internal::RPC.client).to receive(:sendrawtransaction).with(tx.to_hex)
+      subject
+    end
+
+    context 'given a block' do
+      it 'calls the block with tx that is in arguments' do
+        expect(Glueby::Internal::RPC.client).to receive(:sendrawtransaction).with(tx.to_hex)
+        adapter.broadcast(wallet_id, tx) do |tx_arg|
+          expect(tx).to eq tx_arg
+        end
+      end
+    end
+  end
 end
