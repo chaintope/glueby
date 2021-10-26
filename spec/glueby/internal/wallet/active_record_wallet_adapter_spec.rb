@@ -137,6 +137,14 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
   end
 
   describe '#list_unspent' do
+    shared_examples 'executes the common unlabeled validation' do
+      it { expect(subject.count).to eq 2 }
+      it { expect(subject[0][:vout]).to eq 1 }
+      it { expect(subject[0][:label]).to eq nil }
+      it { expect(subject[1][:vout]).to eq 2 }
+      it { expect(subject[1][:label]).to eq nil }
+    end
+
     subject { adapter.list_unspent(wallet.wallet_id, only_finalized, label) }
 
     let(:other_wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: adapter.create_wallet) }
@@ -191,23 +199,30 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
         value: 5,
         status: :finalized,
         key: key4,
-        label: 'tracking'
+        label: 'Glueby-Contract-Tracking'
+      )
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '0000000000000000000000000000000000000000000000000000000000000004',
+        index: 5,
+        script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
+        value: 6,
+        status: :broadcasted,
+        key: key4,
+        label: 'Glueby-Contract-Tracking'
       )
     end
 
     context 'finalized only' do
-      it { expect(subject.count).to eq 3 }
+      # get only unlabeled utxos because of default
+      it { expect(subject.count).to eq 2 }
       it { expect(subject[0][:vout]).to eq 1 }
       it { expect(subject[0][:finalized]).to be_truthy }
       it { expect(subject[1][:vout]).to eq 2 }
       it { expect(subject[1][:finalized]).to be_truthy }
-      it { expect(subject[2][:vout]).to eq 4 }
-      it { expect(subject[2][:finalized]).to be_truthy }
     end
 
     context 'with unconfirmed' do
       let(:only_finalized) { false }
-      let(:label) { :unlabeled }
 
       it { expect(subject.count).to eq 3 }
       it { expect(subject[0][:vout]).to eq 0 }
@@ -219,13 +234,40 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     end
 
     context 'with unlabeled' do
-      let (:label) { :unlabeled }
+      let(:label) { :unlabeled }
+      it_behaves_like 'executes the common unlabeled validation'
+    end
+
+    context 'with unlabeled by default' do
+      it_behaves_like 'executes the common unlabeled validation'
+    end
+
+    context "with 'Glueby-Contract-Tracking' labeled utxos" do
+      let(:only_finalized) { false }
+      let(:label) { 'Glueby-Contract-Tracking' }
 
       it { expect(subject.count).to eq 2 }
-      it { expect(subject[0][:vout]).to eq 1 }
-      it { expect(subject[0][:label]).to eq nil }
-      it { expect(subject[1][:vout]).to eq 2 }
-      it { expect(subject[1][:label]).to eq nil }
+      it { expect(subject[0][:vout]).to eq 4 }
+      it { expect(subject[0][:label]).to eq 'Glueby-Contract-Tracking' }
+      it { expect(subject[1][:vout]).to eq 5 }
+      it { expect(subject[1][:label]).to eq 'Glueby-Contract-Tracking' }
+    end
+
+    context "with all utxos" do
+      let(:label) { :all }
+      let(:only_finalized) { false }
+
+      it { expect(subject.count).to eq 5 }
+      it { expect(subject[0][:vout]).to eq 0 }
+      it { expect(subject[0][:finalized]).to be_falsy }
+      it { expect(subject[1][:vout]).to eq 1 }
+      it { expect(subject[1][:finalized]).to be_truthy }
+      it { expect(subject[2][:vout]).to eq 2 }
+      it { expect(subject[2][:finalized]).to be_truthy }
+      it { expect(subject[3][:vout]).to eq 4 }
+      it { expect(subject[3][:label]).to eq 'Glueby-Contract-Tracking' }
+      it { expect(subject[4][:vout]).to eq 5 }
+      it { expect(subject[4][:label]).to eq 'Glueby-Contract-Tracking' }
     end
   end
 

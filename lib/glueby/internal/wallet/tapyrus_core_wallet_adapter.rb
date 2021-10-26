@@ -82,14 +82,21 @@ module Glueby
           end
         end
 
+        # If label=nil, it will return unlabeled utxos to protect labeled utxos for specific purpose
+        # If label=:all, it will return all utxos
         def list_unspent(wallet_id, only_finalized = true, label = nil)
           perform_as(wallet_id) do |client|
             min_conf = only_finalized ? 1 : 0
             res = client.listunspent(min_conf)
 
-            res = res.filter { |i| i['label'] == label } if label && (label != :unlabeled)
-            res = res.filter { |i| i['label'] == "" } if label == :unlabeled
- 
+            if [:unlabeled, nil].include?(label)
+              res = res.filter { |i| i['label'] == "" }
+            elsif label && (label != :all)
+              res = res.filter { |i| i['label'] == label }
+            else
+              res
+            end
+
             res.map do |i|
               script = Tapyrus::Script.parse_from_payload(i['scriptPubKey'].htb)
               color_id = if script.cp2pkh? || script.cp2sh?
@@ -101,7 +108,8 @@ module Glueby
                 script_pubkey: i['scriptPubKey'],
                 color_id: color_id,
                 amount: tpc_to_tapyrus(i['amount']),
-                finalized: i['confirmations'] != 0
+                finalized: i['confirmations'] != 0,
+                label: i['label']
               }
             end
           end

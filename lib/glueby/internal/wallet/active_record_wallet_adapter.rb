@@ -89,12 +89,21 @@ module Glueby
           utxos.sum(&:value)
         end
 
+        # If label=nil, it will return unlabeled utxos to protect labeled utxos for specific purpose
+        # If label=:all, it will return all utxos
         def list_unspent(wallet_id, only_finalized = true, label = nil)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.utxos
           utxos = utxos.where(status: :finalized) if only_finalized
-          utxos = utxos.where(label: label) if label && (label != :unlabeled)
-          utxos = utxos.where(label: nil) if label == :unlabeled
+
+          if [:unlabeled, nil].include?(label)
+            utxos = utxos.where(label: nil)
+          elsif label && (label != :all)
+            utxos = utxos.where(label: label)
+          else
+            utxos
+          end
+
           utxos.map do |utxo|
             {
               txid: utxo.txid,
@@ -102,7 +111,8 @@ module Glueby
               script_pubkey: utxo.script_pubkey,
               color_id: utxo.color_id,
               amount: utxo.value,
-              finalized: utxo.status == 'finalized'
+              finalized: utxo.status == 'finalized',
+              label: utxo.label
             }
           end
         end
