@@ -16,6 +16,7 @@ module Glueby
 
     def initialize
       @fee_provider_bears = false
+      @use_utxo_provider = false
     end
 
     # Specify wallet adapter.

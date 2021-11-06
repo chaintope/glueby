@@ -16,22 +16,33 @@ module Glueby
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
         module_function
 
-        def create_tx(wallet, prefix, data, fee_estimator)
+        def create_txs(wallet, prefix, data, fee_estimator, utxo_provider)
           txb = Tapyrus::TxBuilder.new
           txb.data(prefix + data)
           fee = fee_estimator.fee(dummy_tx(txb.build))
-          sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee)
-          outputs.each do |utxo|
+          if utxo_provider
+            script_pubkey = Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
+            funding_tx, index = utxo_provider.get_utxo(script_pubkey, fee)
             txb.add_utxo({
-              script_pubkey: Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb),
-              txid: utxo[:txid],
-              index: utxo[:vout],
-              value: utxo[:amount]
+              script_pubkey: funding_tx.outputs[index].script_pubkey,
+              txid: funding_tx.txid,
+              index: index,
+              value: funding_tx.outputs[index].value
             })
+          else
+            sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee)
+            outputs.each do |utxo|
+              txb.add_utxo({
+                script_pubkey: Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb),
+                txid: utxo[:txid],
+                index: utxo[:vout],
+                value: utxo[:amount]
+              })
+            end
           end
 
           txb.fee(fee).change_address(wallet.internal_wallet.change_address)
-          wallet.internal_wallet.sign_tx(txb.build)
+          [funding_tx, wallet.internal_wallet.sign_tx(txb.build)]
         end
 
         def get_transaction(tx)
@@ -55,13 +66,15 @@ module Glueby
         content:,
         prefix: '',
         fee_estimator: Glueby::Contract::FixedFeeEstimator.new,
-        digest: :sha256
+        digest: :sha256,
+        utxo_provider: nil
       )
         @wallet = wallet
         @content = content
         @prefix = prefix
         @fee_estimator = fee_estimator
         @digest = digest
+        @utxo_provider = utxo_provider
       end
 
       # broadcast to Tapyrus Core
@@ -71,7 +84,8 @@ module Glueby
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        @tx = create_tx(@wallet, @prefix, digest_content, @fee_estimator)
+        funding_tx, @tx = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider)
+        @wallet.internal_wallet.broadcast(funding_tx) if funding_tx
         @txid = @wallet.internal_wallet.broadcast(@tx)
       end
 
