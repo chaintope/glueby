@@ -17,29 +17,21 @@ module Glueby
         module_function
 
         def create_tx(wallet, prefix, data, fee_estimator)
-          tx = Tapyrus::Tx.new
-          tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: create_script(prefix, data))
-  
-          fee = fee_estimator.fee(dummy_tx(tx))
+          txb = Tapyrus::TxBuilder.new
+          txb.data(prefix + data)
+          fee = fee_estimator.fee(dummy_tx(txb.build))
           sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee)
-          fill_input(tx, outputs)
-  
-          fill_change_tpc(tx, wallet, sum - fee)
-          wallet.internal_wallet.sign_tx(tx)
-        end
-  
-        def create_payload(prefix, data)
-          payload = +''
-          payload << prefix
-          payload << data
-          payload
-        end
+          outputs.each do |utxo|
+            txb.add_utxo({
+              script_pubkey: Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb),
+              txid: utxo[:txid],
+              index: utxo[:vout],
+              value: utxo[:amount]
+            })
+          end
 
-        def create_script(prefix, data)
-          script = Tapyrus::Script.new
-          script << Tapyrus::Script::OP_RETURN
-          script << create_payload(prefix, data)
-          script
+          txb.fee(fee).change_address(wallet.internal_wallet.change_address)
+          wallet.internal_wallet.sign_tx(txb.build)
         end
 
         def get_transaction(tx)
