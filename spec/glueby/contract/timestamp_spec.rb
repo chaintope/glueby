@@ -138,5 +138,31 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
 
       it { expect { subject }.to raise_error(Glueby::Contract::Errors::UnsupportedDigestType) }
     end
+
+    context 'if use utxo provider' do
+      let(:contract) do
+        Glueby::Contract::Timestamp.new(
+          wallet: wallet,
+          content: "\01",
+          prefix: '',
+          utxo_provider: utxo_provider
+        )
+      end
+      let(:utxo_provider) { Glueby::UtxoProvider.new }
+      let(:wallet_adapter) { double(:wallet_adapter) }
+
+      before do
+        Glueby::Internal::Wallet.wallet_adapter = wallet_adapter
+        allow(wallet_adapter).to receive(:load_wallet)
+        allow(utxo_provider).to receive(:wallet).and_return(internal_wallet)
+      end
+
+      after { Glueby::Internal::Wallet.wallet_adapter = nil }
+
+      it 'broadcast 2 transactions' do
+        expect(internal_wallet).to receive(:broadcast).twice
+        subject
+      end
+    end
   end
 end

@@ -8,11 +8,15 @@ module Glueby
 
         def create
           timestamps = Glueby::Contract::AR::Timestamp.where(status: :init)
+          utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
           timestamps.each do |t|
             begin
+              wallet = Glueby::Wallet.load(t.wallet_id)
+              funding_tx, tx = create_txs(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeEstimator.new, utxo_provider)
+              if funding_tx
+                ::ActiveRecord::Base.transaction { wallet.internal_wallet.broadcast(funding_tx) }
+              end
               ::ActiveRecord::Base.transaction do
-                wallet = Glueby::Wallet.load(t.wallet_id)
-                tx = create_tx(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeEstimator.new)
                 wallet.internal_wallet.broadcast(tx) do |tx|
                   t.update(txid: tx.txid, status: :unconfirmed)
                 end
