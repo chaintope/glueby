@@ -10,8 +10,9 @@ module Glueby
   #     end
   class Configuration
 
-    attr_reader :fee_provider_bears
+    attr_reader :fee_provider_bears, :use_utxo_provider
     alias_method :fee_provider_bears?, :fee_provider_bears
+    alias_method :use_utxo_provider?, :use_utxo_provider
 
     def initialize
       @fee_provider_bears = false
@@ -57,6 +58,14 @@ module Glueby
     # @option config [Integer] :utxo_pool_size - Fee Provider tries to keep the number of utxo in utxo pool as this size using `glueby:fee_provider:manage_utxo_pool` rake task
     def fee_provider_config=(config)
       FeeProvider.configure(config)
+    end
+
+    def enable_utxo_provider!
+      @use_utxo_provider = true
+    end
+
+    def disable_utxo_provider!
+      @use_utxo_provider = false
     end
   end
 end

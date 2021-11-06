@@ -10,6 +10,7 @@ module Glueby
   autoload :FeeProvider, 'glueby/fee_provider'
   autoload :Configuration, 'glueby/configuration'
   autoload :BlockSyncer, 'glueby/block_syncer'
+  autoload :UtxoProvider, 'glueby/utxo_provider'
 
   if defined? ::Rails::Railtie
     require 'glueby/railtie'
