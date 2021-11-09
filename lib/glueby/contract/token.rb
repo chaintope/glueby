@@ -97,21 +97,37 @@ module Glueby
         end
 
         def issue_non_reissuable_token(issuer:, amount:)
-          tx = create_issue_tx_for_non_reissuable_token(issuer: issuer, amount: amount)
+          utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
+          funding_tx = create_funding_tx(wallet: issuer, utxo_provider: utxo_provider) if utxo_provider
+          funding_tx = issuer.internal_wallet.broadcast(funding_tx) if funding_tx
+
+          tx = create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount)
           tx = issuer.internal_wallet.broadcast(tx)
 
           out_point = tx.inputs.first.out_point
           color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
-          [[tx], color_id]
+          if funding_tx
+            [[funding_tx, tx], color_id]
+          else
+            [[tx], color_id]
+          end
         end
 
         def issue_nft_token(issuer:)
-          tx = create_issue_tx_for_nft_token(issuer: issuer)
+          utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
+          funding_tx = create_funding_tx(wallet: issuer, utxo_provider: utxo_provider) if utxo_provider
+          funding_tx = issuer.internal_wallet.broadcast(funding_tx) if funding_tx
+
+          tx = create_issue_tx_for_nft_token(funding_tx: funding_tx, issuer: issuer)
           tx = issuer.internal_wallet.broadcast(tx)
 
           out_point = tx.inputs.first.out_point
           color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
-          [[tx], color_id]
+          if funding_tx
+            [[funding_tx, tx], color_id]
+          else
+            [[tx], color_id]
+          end
         end
       end
 

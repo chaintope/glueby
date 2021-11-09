@@ -62,21 +62,27 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_issue_tx_for_non_reissuable_token(issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
-        create_issue_tx_from_out_point(token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, fee_estimator: fee_estimator)
+      def create_issue_tx_for_non_reissuable_token(funding_tx: nil, issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
+        create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, fee_estimator: fee_estimator)
       end
 
-      def create_issue_tx_for_nft_token(issuer:, fee_estimator: FixedFeeEstimator.new)
-        create_issue_tx_from_out_point(token_type: Tapyrus::Color::TokenTypes::NFT, issuer: issuer, amount: 1, fee_estimator: fee_estimator)
+      def create_issue_tx_for_nft_token(funding_tx: nil, issuer:, fee_estimator: FixedFeeEstimator.new)
+        create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NFT, issuer: issuer, amount: 1, fee_estimator: fee_estimator)
       end
 
-      def create_issue_tx_from_out_point(token_type:, issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
+      def create_issue_tx_from_out_point(funding_tx: nil, token_type:, issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
-        sum, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee)
-        fill_input(tx, outputs)
-
+        sum = if funding_tx
+          out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
+          tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
+          funding_tx.outputs.first.value
+        else
+          sum, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee)
+          fill_input(tx, outputs)
+          sum
+        end
         out_point = tx.inputs.first.out_point
         color_id = case token_type
         when Tapyrus::Color::TokenTypes::NON_REISSUABLE
@@ -92,7 +98,18 @@ module Glueby
         tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
 
         fill_change_tpc(tx, issuer, sum - fee)
-        issuer.internal_wallet.sign_tx(tx)
+        prev_txs = if funding_tx
+          output = funding_tx.outputs.first
+          [{
+            txid: funding_tx.txid,
+            vout: 0,
+            scriptPubKey: output.script_pubkey.to_hex,
+            amount: output.value
+          }]
+        else 
+          []
+        end
+        issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
       def create_reissue_tx(funding_tx:, issuer:, amount:, color_id:, fee_estimator: FixedFeeEstimator.new)

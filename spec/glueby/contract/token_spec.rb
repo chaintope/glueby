@@ -79,6 +79,44 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(subject[0].color_id.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find(1).color_id
         expect(subject[1][0].outputs.first.script_pubkey.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find_by(color_id: subject[0].color_id.to_hex).script_pubkey
       end
+
+      context 'use utxo provider', active_record: true do
+        let(:key) do
+          wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
+          wallet.keys.create(purpose: :receive)
+        end
+
+        before do
+          Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+          Glueby.configuration.enable_utxo_provider!
+          privider = Glueby::UtxoProvider.new
+
+          # 2 Utxos is pooled.
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: 0,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 10_000,
+            status: :finalized
+          )
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: 1,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 10_000,
+            status: :finalized
+          )
+        end
+        after { Glueby.configuration.disable_utxo_provider! }
+
+        it 'create funding tx and issuance tx' do
+          expect(subject[1].size).to eq 2
+          expect(subject[1][0].outputs.first.value).to eq 10_000 # FUNDING_TX_AMOUNT
+          expect(subject[1][1].outputs.first.value).to eq 1_000 # Colored coin
+        end
+      end
     end
 
     context 'non reissuable token' do 
@@ -87,8 +125,98 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect {subject}.not_to raise_error
         expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::NON_REISSUABLE
         expect(subject[0].color_id.valid?).to be true
+        expect(subject[1].size).to eq 1 # Create issuance tx only.
         expect(subject[1][0].valid?).to be true
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
+      end
+
+      context 'use utxo provider', active_record: true do
+        let(:key) do
+          wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
+          wallet.keys.create(purpose: :receive)
+        end
+
+        before do
+          Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+          Glueby.configuration.enable_utxo_provider!
+          privider = Glueby::UtxoProvider.new
+
+          # 2 Utxos is pooled.
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: 0,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 10_000,
+            status: :finalized
+          )
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: 1,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 10_000,
+            status: :finalized
+          )
+        end
+        after { Glueby.configuration.disable_utxo_provider! }
+
+        it 'create funding tx and issuance tx' do
+          expect(subject[1].size).to eq 2
+          expect(subject[1][0].outputs.first.value).to eq 10_000 # FUNDING_TX_AMOUNT
+          expect(subject[1][1].outputs.first.value).to eq 1_000 # Colored coin
+        end
+      end
+    end
+
+    context 'nft' do
+      let(:token_type) { Tapyrus::Color::TokenTypes::NFT }
+      it do
+        expect {subject}.not_to raise_error
+        expect(subject[0].color_id.type).to eq Tapyrus::Color::TokenTypes::NFT
+        expect(subject[0].color_id.valid?).to be true
+        expect(subject[1].size).to eq 1 # Create issuance tx only.
+        expect(subject[1][0].valid?).to be true
+        expect(subject[1][0].outputs.first.value).to be 1
+        expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
+      end
+
+      context 'use utxo provider', active_record: true do
+        let(:key) do
+          wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
+          wallet.keys.create(purpose: :receive)
+        end
+
+        before do
+          Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+          Glueby.configuration.enable_utxo_provider!
+          privider = Glueby::UtxoProvider.new
+
+          # 2 Utxos is pooled.
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: 0,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 10_000,
+            status: :finalized
+          )
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: 1,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 10_000,
+            status: :finalized
+          )
+        end
+        after { Glueby.configuration.disable_utxo_provider! }
+
+        it 'create funding tx and issuance tx' do
+          expect(subject[1].size).to eq 2
+          expect(subject[1][0].outputs.first.value).to eq 10_000 # FUNDING_TX_AMOUNT
+          expect(subject[1][1].outputs.first.value).to eq 1 # Colored coin
+        end
       end
     end
 
