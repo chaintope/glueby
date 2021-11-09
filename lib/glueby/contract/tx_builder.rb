@@ -11,27 +11,32 @@ module Glueby
       end
 
       # Create new public key, and new transaction that sends TPC to it
-      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new)
-        txb = Tapyrus::TxBuilder.new
-        fee = fee_estimator.fee(dummy_tx(txb.build))
+      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new, utxo_provider: nil)
+        if utxo_provider
+          script_pubkey = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
+          funding_tx, _index = utxo_provider.get_utxo(script_pubkey, FUNDING_TX_AMOUNT)
+          utxo_provider.wallet.sign_tx(funding_tx)
+        else
+          txb = Tapyrus::TxBuilder.new
+          fee = fee_estimator.fee(dummy_tx(txb.build))
 
-        sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + FUNDING_TX_AMOUNT)
-        outputs.each do |utxo|
-          txb.add_utxo({
-            script_pubkey: Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb),
-            txid: utxo[:txid],
-            index: utxo[:vout],
-            value: utxo[:amount]
-          })
+          sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + FUNDING_TX_AMOUNT)
+          outputs.each do |utxo|
+            txb.add_utxo({
+              script_pubkey: Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb),
+              txid: utxo[:txid],
+              index: utxo[:vout],
+              value: utxo[:amount]
+            })
+          end
+  
+          receiver_address = script ? script.addresses.first : wallet.internal_wallet.receive_address
+          tx = txb.pay(receiver_address, FUNDING_TX_AMOUNT)
+            .change_address(wallet.internal_wallet.change_address)
+            .fee(fee)
+            .build
+          wallet.internal_wallet.sign_tx(tx)
         end
-
-        receiver_address = script ? script.addresses.first : wallet.internal_wallet.receive_address
-        tx = txb.pay(receiver_address, FUNDING_TX_AMOUNT)
-          .change_address(wallet.internal_wallet.change_address)
-          .fee(fee)
-          .build
-
-        wallet.internal_wallet.sign_tx(tx)
       end
 
       def create_issue_tx_for_reissuable_token(funding_tx:, issuer:, amount:, fee_estimator: FixedFeeEstimator.new)

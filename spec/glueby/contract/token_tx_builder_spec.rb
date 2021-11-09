@@ -63,7 +63,9 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   before { allow(internal_wallet).to receive(:list_unspent).and_return(unspents) }
 
   describe '#create_funding_tx' do
-    subject { mock.create_funding_tx(wallet: wallet) }
+    subject { mock.create_funding_tx(wallet: wallet, utxo_provider: utxo_provider) }
+
+    let(:utxo_provider) { nil }
 
     it { expect(subject.inputs.size).to eq 1 }
     it { expect(subject.inputs[0].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5' }
@@ -71,6 +73,44 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.outputs.size).to eq 2 }
     it { expect(subject.outputs[0].value).to eq 10_000 }
     it { expect(subject.outputs[1].value).to eq 99_980_000 }
+
+    context 'use utxo provider' do
+      let(:utxo_provider) { Glueby::UtxoProvider.new }
+      let(:wallet_adapter) { double(:wallet_adapter) }
+      let(:utxo_provider_wallet) { TestInternalWallet.new }
+      let(:pool_outputs) do
+        [
+          {
+            txid: '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
+            script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+            vout: 4,
+            amount: 10_000,
+            finalized: true
+          }, {
+            txid: '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
+            script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+            vout: 5,
+            amount: 10_000,
+            finalized: true
+          }
+        ]
+      end
+
+      before do
+        Glueby::Internal::Wallet.wallet_adapter = wallet_adapter
+        allow(wallet_adapter).to receive(:load_wallet)
+        allow(utxo_provider).to receive(:wallet).and_return(utxo_provider_wallet)
+        allow(utxo_provider_wallet).to receive(:list_unspent).and_return(pool_outputs)
+      end
+
+      it { expect(subject.inputs.size).to eq 2 }
+      it { expect(subject.inputs[0].out_point.txid).to eq '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db' }
+      it { expect(subject.inputs[0].out_point.index).to eq 4 }
+      it { expect(subject.inputs[1].out_point.txid).to eq '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db' }
+      it { expect(subject.inputs[1].out_point.index).to eq 5 }
+      it { expect(subject.outputs.size).to eq 1 }
+      it { expect(subject.outputs[0].value).to eq 10_000 }
+    end
   end
 
   describe '#create_issue_tx_for_reissuable_token' do
