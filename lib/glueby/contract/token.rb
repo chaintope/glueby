@@ -171,7 +171,11 @@ module Glueby
       def transfer!(sender:, receiver_address:, amount: 1)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-        tx = create_transfer_tx(color_id: color_id, sender: sender, receiver_address: receiver_address, amount: amount)
+        utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
+        funding_tx = create_funding_tx(wallet: sender, utxo_provider: utxo_provider) if utxo_provider
+        funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
+
+        tx = create_transfer_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, receiver_address: receiver_address, amount: amount)
         sender.internal_wallet.broadcast(tx)
         [color_id, tx]
       end
@@ -187,7 +191,11 @@ module Glueby
       def burn!(sender:, amount: 0)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-        tx = create_burn_tx(color_id: color_id, sender: sender, amount: amount)
+        utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
+        funding_tx = create_funding_tx(wallet: sender, utxo_provider: utxo_provider) if utxo_provider
+        funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
+
+        tx = create_burn_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, amount: amount)
         sender.internal_wallet.broadcast(tx)
       end
 

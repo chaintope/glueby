@@ -252,6 +252,44 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       expect(subject[1].valid?).to be true
     }
 
+    context 'use utxo provider', active_record: true do
+      let(:key) do
+        wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
+        wallet.keys.create(purpose: :receive)
+      end
+
+      before do
+        Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+        Glueby.configuration.enable_utxo_provider!
+        privider = Glueby::UtxoProvider.new
+
+        # 2 Utxos is pooled.
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          index: 0,
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          key: key,
+          value: 10_000,
+          status: :finalized
+        )
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          index: 1,
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          key: key,
+          value: 10_000,
+          status: :finalized
+        )
+      end
+      after { Glueby.configuration.disable_utxo_provider! }
+
+      it do
+        expect { subject }.not_to raise_error
+        expect(subject[0].valid?).to be true
+        expect(subject[1].valid?).to be true
+      end
+    end
+
     context 'invalid amount' do
       let(:amount) { 0 }
 
@@ -310,6 +348,43 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       expect(subject[1].valid?).to be true
     }
 
+    context 'use utxo provider', active_record: true do
+      let(:key) do
+        wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
+        wallet.keys.create(purpose: :receive)
+      end
+
+      before do
+        Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+        Glueby.configuration.enable_utxo_provider!
+        privider = Glueby::UtxoProvider.new
+
+        # 2 Utxos is pooled.
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          index: 0,
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          key: key,
+          value: 10_000,
+          status: :finalized
+        )
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          index: 1,
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          key: key,
+          value: 10_000,
+          status: :finalized
+        )
+      end
+      after { Glueby.configuration.disable_utxo_provider! }
+
+      it do
+        expect(internal_wallet).to receive(:broadcast).twice
+        subject
+      end
+    end
+
     context 'invalid amount' do
       let(:amount) { 0 }
 
@@ -367,6 +442,43 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
     let(:amount) { 200_000 }
 
     it { expect { subject }.not_to raise_error }
+
+    context 'use utxo provider', active_record: true do
+      let(:key) do
+        wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
+        wallet.keys.create(purpose: :receive)
+      end
+
+      before do
+        Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+        Glueby.configuration.enable_utxo_provider!
+        privider = Glueby::UtxoProvider.new
+
+        # 2 Utxos is pooled.
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          index: 0,
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          key: key,
+          value: 10_000,
+          status: :finalized
+        )
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          index: 1,
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          key: key,
+          value: 10_000,
+          status: :finalized
+        )
+      end
+      after { Glueby.configuration.disable_utxo_provider! }
+
+      it do
+        expect(internal_wallet).to receive(:broadcast).twice
+        subject
+      end
+    end
 
     context 'invalid amount' do
       let(:amount) { 0 }
