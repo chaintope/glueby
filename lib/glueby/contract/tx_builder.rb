@@ -106,7 +106,7 @@ module Glueby
             scriptPubKey: output.script_pubkey.to_hex,
             amount: output.value
           }]
-        else 
+        else
           []
         end
         issuer.internal_wallet.sign_tx(tx, prev_txs)
@@ -134,7 +134,7 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_transfer_tx(color_id:, sender:, receiver_address:, amount:, fee_estimator: FixedFeeEstimator.new)
+      def create_transfer_tx(funding_tx:nil, color_id:, sender:, receiver_address:, amount:, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         utxos = sender.internal_wallet.list_unspent
@@ -148,14 +148,32 @@ module Glueby
         fill_change_token(tx, sender, sum_token - amount, color_id)
 
         fee = fee_estimator.fee(dummy_tx(tx))
-        sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee)
-        fill_input(tx, outputs)
+        sum_tpc = if funding_tx
+          out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
+          tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
+          funding_tx.outputs.first.value
+        else
+          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee)
+          fill_input(tx, outputs)
+          sum_tpc
+        end
 
         fill_change_tpc(tx, sender, sum_tpc - fee)
-        sender.internal_wallet.sign_tx(tx)
+        prev_txs = if funding_tx
+          output = funding_tx.outputs.first
+          [{
+            txid: funding_tx.txid,
+            vout: 0,
+            scriptPubKey: output.script_pubkey.to_hex,
+            amount: output.value
+          }]
+        else
+          []
+        end
+        sender.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_burn_tx(color_id:, sender:, amount: 0, fee_estimator: FixedFeeEstimator.new)
+      def create_burn_tx(funding_tx:nil, color_id:, sender:, amount: 0, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         utxos = sender.internal_wallet.list_unspent
@@ -166,12 +184,30 @@ module Glueby
 
         fee = fee_estimator.fee(dummy_tx(tx))
 
-        dust = 600 # in case that the wallet has output which has just fee amount.
-        sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + dust)
-        fill_input(tx, outputs)
+        sum_tpc = if funding_tx
+          out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
+          tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
+          funding_tx.outputs.first.value
+        else
+          dust = 600 # in case that the wallet has output which has just fee amount.
+          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + dust)
+          fill_input(tx, outputs)
+          sum_tpc
+        end
 
         fill_change_tpc(tx, sender, sum_tpc - fee)
-        sender.internal_wallet.sign_tx(tx)
+        prev_txs = if funding_tx
+          output = funding_tx.outputs.first
+          [{
+            txid: funding_tx.txid,
+            vout: 0,
+            scriptPubKey: output.script_pubkey.to_hex,
+            amount: output.value
+          }]
+        else
+          []
+        end
+        sender.internal_wallet.sign_tx(tx, prev_txs)
       end
 
       def fill_input(tx, outputs)
