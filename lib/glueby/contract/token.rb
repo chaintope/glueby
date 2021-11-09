@@ -80,7 +80,8 @@ module Glueby
         private
 
         def issue_reissuable_token(issuer:, amount:)
-          funding_tx = create_funding_tx(wallet: issuer)
+          utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
+          funding_tx = create_funding_tx(wallet: issuer, utxo_provider: utxo_provider)
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
 
@@ -128,9 +129,10 @@ module Glueby
       def reissue!(issuer:, amount:)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
+        utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
 
         if validate_reissuer(wallet: issuer)
-          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey)
+          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, utxo_provider: utxo_provider)
           funding_tx = issuer.internal_wallet.broadcast(funding_tx)
           tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
           tx = issuer.internal_wallet.broadcast(tx)
