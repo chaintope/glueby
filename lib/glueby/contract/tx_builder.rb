@@ -12,16 +12,25 @@ module Glueby
 
       # Create new public key, and new transaction that sends TPC to it
       def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new)
-        tx = Tapyrus::Tx.new
-        fee = fee_estimator.fee(dummy_tx(tx))
+        txb = Tapyrus::TxBuilder.new
+        fee = fee_estimator.fee(dummy_tx(txb.build))
 
         sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + FUNDING_TX_AMOUNT)
-        fill_input(tx, outputs)
+        outputs.each do |utxo|
+          txb.add_utxo({
+            script_pubkey: Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb),
+            txid: utxo[:txid],
+            index: utxo[:vout],
+            value: utxo[:amount]
+          })
+        end
 
-        receiver_script = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
-        tx.outputs << Tapyrus::TxOut.new(value: FUNDING_TX_AMOUNT, script_pubkey: receiver_script)
+        receiver_address = script ? script.addresses.first : wallet.internal_wallet.receive_address
+        tx = txb.pay(receiver_address, FUNDING_TX_AMOUNT)
+          .change_address(wallet.internal_wallet.change_address)
+          .fee(fee)
+          .build
 
-        fill_change_tpc(tx, wallet, sum - fee - FUNDING_TX_AMOUNT)
         wallet.internal_wallet.sign_tx(tx)
       end
 
