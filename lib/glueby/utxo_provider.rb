@@ -2,15 +2,32 @@ module Glueby
   class UtxoProvider
     include Glueby::Contract::TxBuilder
 
+    autoload :Tasks, 'glueby/utxo_provider/tasks'
+
     WALLET_ID = 'UTXO_PROVIDER_WALLET'
     DEFAULT_VALUE = 1_000
+    DEFAULT_UTXO_POOL_SIZE = 20
 
-    def initialize(fee_estimator: Glueby::Contract::FixedFeeEstimator.new)
-      @wallet = load_wallet
-      @fee_estimator = fee_estimator
+    class << self
+      attr_reader :config
+
+      # @param [Hash] config
+      # @option config [Integer] :default_value 
+      # @option opts [Integer] :utxo_pool_size
+      # @option opts [Glueby::Contract::FeeEstimator] :fee_estimator
+      def configure(config)
+        @config = config
+      end
     end
 
-    attr_reader :wallet, :fee_estimator
+    def initialize
+      @wallet = load_wallet
+      @fee_estimator = (UtxoProvider.config && UtxoProvider.config[:fee_estimator]) || Glueby::Contract::FixedFeeEstimator.new
+      @default_value = (UtxoProvider.config && UtxoProvider.config[:default_value]) || DEFAULT_VALUE
+      @utxo_pool_size = (UtxoProvider.config && UtxoProvider.config[:utxo_pool_size]) || DEFAULT_UTXO_POOL_SIZE
+    end
+
+    attr_reader :wallet, :fee_estimator, :default_value, :utxo_pool_size 
 
     # Provide a UTXO
     # @param [Tapyrus::Script] script_pubkey The script to be provided
