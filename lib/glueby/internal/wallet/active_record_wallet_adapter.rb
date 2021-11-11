@@ -89,8 +89,6 @@ module Glueby
           utxos.sum(&:value)
         end
 
-        # If label=nil, it will return unlabeled utxos to protect labeled utxos for specific purpose
-        # If label=:all, it will return all utxos
         def list_unspent(wallet_id, only_finalized = true, label = nil)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.utxos

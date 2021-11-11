@@ -72,6 +72,8 @@ module Glueby
         # @param [Boolean] only_finalized - The UTXOs includes only finalized UTXO value if it
         #                                   is true. Default is true.
         # @param [String] label - Label for filtering UTXOs
+        #                       - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.
+        #                       - If label=:all, it will return all utxos
         # @return [Array of UTXO]
         #
         # ## The UTXO structure
