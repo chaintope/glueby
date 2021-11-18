@@ -27,13 +27,15 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
       )
     end
 
-    it { expect(subject[0].inputs.size).to eq 1 }
-    it { expect(subject[0].inputs.first.out_point.txid).to eq 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' }
-    it { expect(subject[0].inputs.first.out_point.index).to eq 0 }
-    it { expect(subject[0].outputs.size).to eq 1 }
-    it { expect(subject[0].outputs.first.script_pubkey).to eq script_pubkey }
-    it { expect(subject[0].outputs.first.value).to eq 2_000 }
-    it { expect(subject[1]).to eq  0 }
+    it do
+      expect(subject[0].inputs.size).to eq 1
+      expect(subject[0].inputs.first.out_point.txid).to eq 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+      expect(subject[0].inputs.first.out_point.index).to eq 0
+      expect(subject[0].outputs.size).to eq 1
+      expect(subject[0].outputs.first.script_pubkey).to eq script_pubkey
+      expect(subject[0].outputs.first.value).to eq 2_000
+      expect(subject[1]).to eq  0
+    end
 
     context 'does not have enough funds' do
       let(:value) { 2_001 }
