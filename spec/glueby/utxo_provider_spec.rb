@@ -42,4 +42,24 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
       it { expect { subject }.to raise_error(Glueby::Contract::Errors::InsufficientFunds) }
     end
   end
+
+  describe "#validate_config!" do
+    subject { provider.send(:validate_config!) }
+
+    context 'has no configuration' do
+      it { expect { subject }.not_to raise_error }
+    end
+
+    context 'valid configuration' do
+      before { Glueby::UtxoProvider.configure(utxo_pool_size: 2000) }
+
+      it { expect { subject }.not_to raise_error }
+    end
+
+    context 'invalid configuration' do
+      before { Glueby::UtxoProvider.configure(utxo_pool_size: 2001) }
+
+      it { expect { subject }.to raise_error(Glueby::Configuration::Errors::InvalidConfiguration) }
+    end
+  end
 end
