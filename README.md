@@ -27,6 +27,10 @@ Glueby has below features.
    FeeProvider module can bear payments of sender's fees. You should provide funds for fees to FeeProvider before use.  
    See how to set up at [Use fee provider mode](#use-fee-provider-mode)
 
+5. Utxo Provider
+   The UtxoProvider allows users to create a variety of transactions without having to manage the TPCs they hold in their wallets.
+   See more details at [Use utxo provider](#use-utxo-provider)
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -366,6 +370,27 @@ UTXO pool size: 20
 Configuration:
   fixed_fee = 1_000
   utxo_pool_size = 20
+```
+
+## Use Utxo Provider
+
+UtxoProvider will pay TPC on behalf of the user.
+
+TPCs are required to create transactions in many cases where Glueby is used, such as issuing tokens or recording timestamps.
+However, on the other hand, each user may not want to fund or manage TPCs.
+
+The UtxoProvider allows users to create a variety of transactions without having to manage the TPCs they hold in their wallets.
+
+### Configuration
+
+```ruby
+Glueby.configure do |config|
+  # using Utxo Provider
+  config.enable_utxo_provider!
+
+  # If not using Utxo Provider and each wallet manages TPCs by itself (Default behavior)
+  # config.disable_utxo_provider!
+end
 ```
 
 ## Development
