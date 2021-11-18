@@ -381,7 +381,9 @@ However, on the other hand, each user may not want to fund or manage TPCs.
 
 The UtxoProvider allows users to create a variety of transactions without having to manage the TPCs they hold in their wallets.
 
-### Configuration
+### Set up Utxo Provider
+
+1. Configure using Glueby.configure
 
 ```ruby
 Glueby.configure do |config|
@@ -390,8 +392,56 @@ Glueby.configure do |config|
 
   # If not using Utxo Provider and each wallet manages TPCs by itself (Default behavior)
   # config.disable_utxo_provider!
+
+  config.utxo_provider_config = {
+    # The amount that each utxo in utxo pool posses.
+    default_value: 1_000,
+    # The number of utxos in utxo pool.
+    utxo_pool_size: 20
+  }
 end
 ```
+
+2. Deposit TPC into Utxo Provider's wallet
+
+Get an address from the wallet, and send enough TPCs to the address.
+
+```
+$ bundle exec rake glueby:utxo_provider:address
+mqYTLdLCUCCZkTkcpbVx1GqpvV1gK4euRD
+```
+
+3. Manage UTXO pool
+
+Run the rake task `glueby:utxo_provider:manage_utxo_pool`
+This rake task tries to split UTOXs up to `utxo_pool_size`. If the pool has more than `utxo_pool_size` UTXOs, it does nothing
+
+```
+$ bundle exec rake glueby:utxo_provider:manage_utxo_pool
+
+Status: Ready
+TPC amount: 4_999_990_000
+UTXO pool size: 20
+
+Configuration:
+  default_value = 1_000
+  utxo_pool_size = 20
+```
+
+If you want to get the status information, you can use the `status` task.
+
+```
+$ bundle exec rake glueby:utxo_provider:status
+Status: Ready  q
+TPC amount: 4_999_990_000
+UTXO pool size: 20
+
+Configuration:
+  default_value = 1_000
+  utxo_pool_size = 20
+
+```
+
 
 ## Development
 
