@@ -15,8 +15,9 @@ module Glueby
     # Provide a UTXO
     # @param [Tapyrus::Script] script_pubkey The script to be provided
     # @param [Integer] value The tpc amount to be provided
-    # @return [Tapyrus::Tx] The tx that has a UTXO to be provided in its outputs
-    # @return [Integer] The output index in the tx to indicate the place of a provided UTXO.
+    # @return [Array<(Tapyrus::Tx, Integer)>]
+    #  The tx that has a UTXO to be provided in its outputs.
+    #  The output index in the tx to indicate the place of a provided UTXO.
     # @raise [Glueby::Contract::Errors::InsufficientFunds] if provider does not have any utxo which has specified value.
     def get_utxo(script_pubkey, value = DEFAULT_VALUE)
       txb = Tapyrus::TxBuilder.new
