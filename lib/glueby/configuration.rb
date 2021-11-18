@@ -60,7 +60,7 @@ module Glueby
     # Specify FeeProvider configuration.
     # @param [Hash] config
     # @option config [Integer] :fixed_fee - The fee that Fee Provider pays on each transaction.
-    # @option config [Integer] :utxo_pool_size - Fee Provider tries to keep the number of utxo in utxo pool as this size using `glueby:fee_provider:manage_utxo_pool` rake task
+    # @option config [Integer] :utxo_pool_size - Fee Provider tries to keep the number of utxo in utxo pool as this size using `glueby:fee_provider:manage_utxo_pool` rake task. this size should not be greater than 2000.
     def fee_provider_config=(config)
       FeeProvider.configure(config)
     end
@@ -73,6 +73,14 @@ module Glueby
     # Disable UtxoProvider feature
     def disable_utxo_provider!
       @use_utxo_provider = false
+    end
+
+    # Set UtxoProvider configuration
+    # @param [Hash] config
+    # @option config [Integer] :default_value - The fee that Fee Provider pays on each transaction.
+    # @option config [Integer] :utxo_pool_size - Utxo Provider tries to keep the number of utxo in utxo pool as this size using `glueby:utxo_provider:manage_utxo_pool` rake task. this size should not be greater than 2000.
+    def utxo_provider_config=(config)
+      UtxoProvider.configure(config)
     end
   end
 end
