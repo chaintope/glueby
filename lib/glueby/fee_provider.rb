@@ -8,6 +8,7 @@ module Glueby
     WALLET_ID = 'FEE_PROVIDER_WALLET'
     DEFAULT_FIXED_FEE = 1000
     DEFAULT_UTXO_POOL_SIZE = 20
+    MAX_UTXO_POOL_SIZE = 2_000
 
     attr_reader :fixed_fee, :utxo_pool_size, :wallet,
 
@@ -33,6 +34,7 @@ module Glueby
                   Internal::Wallet.create(WALLET_ID)
                 end
 
+      validate_config!
       @fixed_fee = (FeeProvider.config && FeeProvider.config[:fixed_fee]) || DEFAULT_FIXED_FEE
       @utxo_pool_size = (FeeProvider.config && FeeProvider.config[:utxo_pool_size]) || DEFAULT_UTXO_POOL_SIZE
     end
@@ -68,6 +70,15 @@ module Glueby
     # Get Signature from P2PKH or CP2PKH script sig
     def get_signature(script_sig)
       script_sig.chunks.first.pushed_data
+    end
+
+    def validate_config!
+      if FeeProvider.config
+        utxo_pool_size = FeeProvider.config[:utxo_pool_size]
+        if utxo_pool_size && (!utxo_pool_size.is_a?(Integer) || utxo_pool_size > MAX_UTXO_POOL_SIZE)
+          raise Glueby::Configuration::Errors::InvalidConfiguration, "utxo_pool_size(#{utxo_pool_size}) should be less than #{MAX_UTXO_POOL_SIZE}"
+        end
+      end
     end
   end
 end

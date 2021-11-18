@@ -7,6 +7,7 @@ module Glueby
     WALLET_ID = 'UTXO_PROVIDER_WALLET'
     DEFAULT_VALUE = 1_000
     DEFAULT_UTXO_POOL_SIZE = 20
+    MAX_UTXO_POOL_SIZE = 2_000
 
     class << self
       attr_reader :config
@@ -22,6 +23,7 @@ module Glueby
 
     def initialize
       @wallet = load_wallet
+      validate_config!
       @fee_estimator = (UtxoProvider.config && UtxoProvider.config[:fee_estimator]) || Glueby::Contract::FixedFeeEstimator.new
       @default_value = (UtxoProvider.config && UtxoProvider.config[:default_value]) || DEFAULT_VALUE
       @utxo_pool_size = (UtxoProvider.config && UtxoProvider.config[:utxo_pool_size]) || DEFAULT_UTXO_POOL_SIZE
@@ -68,6 +70,15 @@ module Glueby
         Glueby::Internal::Wallet.load(WALLET_ID)
       rescue Glueby::Internal::Wallet::Errors::WalletNotFound => _
         Glueby::Internal::Wallet.create(WALLET_ID)
+      end
+    end
+
+    def validate_config!
+      if UtxoProvider.config
+        utxo_pool_size = UtxoProvider.config[:utxo_pool_size]
+        if utxo_pool_size && (!utxo_pool_size.is_a?(Integer) || utxo_pool_size > MAX_UTXO_POOL_SIZE)
+          raise Glueby::Configuration::Errors::InvalidConfiguration, "utxo_pool_size(#{utxo_pool_size}) should be less than #{MAX_UTXO_POOL_SIZE}"
+        end
       end
     end
   end

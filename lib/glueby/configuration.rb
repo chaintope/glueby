@@ -14,6 +14,10 @@ module Glueby
     alias_method :fee_provider_bears?, :fee_provider_bears
     alias_method :use_utxo_provider?, :use_utxo_provider
 
+    module Errors
+      class InvalidConfiguration < StandardError; end
+    end
+
     def initialize
       @fee_provider_bears = false
       @use_utxo_provider = false
