@@ -24,7 +24,8 @@ module Glueby
       txb.pay(script_pubkey.addresses.first, value)
 
       fee = fee_estimator.fee(dummy_tx(txb.build))
-      sum, outputs = wallet.collect_uncolored_outputs(fee + value)
+      # The outputs need to be shuffled so that no utxos are spent twice as possible.
+      sum, outputs = wallet.collect_uncolored_outputs(fee + value, nil, true, true)
 
       outputs.each do |utxo|
         txb.add_utxo({

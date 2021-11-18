@@ -133,8 +133,9 @@ module Glueby
         wallet_adapter.create_pubkey(id)
       end
 
-      def collect_uncolored_outputs(amount, label = nil, only_finalized = true)
+      def collect_uncolored_outputs(amount, label = nil, only_finalized = true, shuffle = false)
         utxos = list_unspent(only_finalized, label)
+        utxos.shuffle! if shuffle
 
         utxos.inject([0, []]) do |sum, output|
           next sum if output[:color_id]
