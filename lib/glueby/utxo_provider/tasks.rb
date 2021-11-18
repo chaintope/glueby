@@ -87,7 +87,7 @@ module Glueby
       end
 
       # Show the address of Utxo Provider 
-      def address
+      def print_address
         puts wallet.receive_address
       end
 

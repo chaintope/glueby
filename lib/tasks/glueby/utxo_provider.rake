@@ -12,7 +12,7 @@ namespace :glueby do
 
     desc 'Show the address of the Glueby::UtxoProvider'
     task :address, [] => [:environment] do |_, _|
-      Glueby::UtxoProvider::Tasks.new.address
+      Glueby::UtxoProvider::Tasks.new.print_address
     end
   end
 end

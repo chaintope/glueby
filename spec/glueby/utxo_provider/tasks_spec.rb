@@ -374,8 +374,8 @@ RSpec.describe Glueby::UtxoProvider::Tasks, active_record: true do
     end
   end
    
-  describe 'address' do
-    subject { tasks.address }
+  describe 'print_address' do
+    subject { tasks.print_address }
 
     it do
       expect { subject }.to output("1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT\n").to_stdout

@@ -81,7 +81,7 @@ module Glueby
       end
 
       # Show the address of Fee Provider 
-      def address
+      def print_address
         puts wallet.receive_address
       end
 
