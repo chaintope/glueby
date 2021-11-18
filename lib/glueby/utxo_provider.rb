@@ -77,7 +77,7 @@ module Glueby
       if UtxoProvider.config
         utxo_pool_size = UtxoProvider.config[:utxo_pool_size]
         if utxo_pool_size && (!utxo_pool_size.is_a?(Integer) || utxo_pool_size > MAX_UTXO_POOL_SIZE)
-          raise Glueby::Configuration::Errors::InvalidConfiguration, "utxo_pool_size(#{utxo_pool_size}) should be less than #{MAX_UTXO_POOL_SIZE}"
+          raise Glueby::Configuration::Errors::InvalidConfiguration, "utxo_pool_size(#{utxo_pool_size}) should not be greater than #{MAX_UTXO_POOL_SIZE}"
         end
       end
     end
