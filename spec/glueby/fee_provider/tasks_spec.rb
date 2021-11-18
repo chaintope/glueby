@@ -523,9 +523,9 @@ RSpec.describe Glueby::FeeProvider::Tasks, active_record: true do
     end
   end
 
-  describe 'address' do
+  describe 'print_address' do
     context "Show Fee Provider's address" do
-      subject { tasks.address }
+      subject { tasks.print_address }
 
       it do
         expect { subject }.to output("1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT\n").to_stdout
