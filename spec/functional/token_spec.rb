@@ -11,13 +11,15 @@ RSpec.describe 'Token Contract', functional: true do
     context 'bear fees by sender' do
       let(:fee) { 10_000 }
       let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: fee) }
-      let(:sender) { Glueby::Wallet.create }
-      let(:receiver) { Glueby::Wallet.create }
+      let!(:sender) { Glueby::Wallet.create }
+      let!(:receiver) { Glueby::Wallet.create }
       let(:before_balance) { sender.balances(false)[''] }
 
       before do
         process_block(to_address: sender.internal_wallet.receive_address)
         process_block(to_address: receiver.internal_wallet.receive_address)
+        # create labeled utxo
+        process_block(to_address: receiver.internal_wallet.receive_address('labeled'))
         before_balance
       end
 
@@ -51,6 +53,10 @@ RSpec.describe 'Token Contract', functional: true do
         expect(sender.balances(false)['']).to eq(before_balance - fee * 6)
         expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
 
+        # should not consume 'labeled' utxos
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
+
         # If the sending to Tapyrus Core is failure, Glueby::Contract::AR::ReissuableToken should not be created.
         TapyrusCoreContainer.stop
         begin
@@ -82,6 +88,10 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(sender.balances(false)['']).to eq(before_balance - fee * 3)
         expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+
+        # should not consume 'labeled' utxos
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
 
       it 'NFT token' do
@@ -102,6 +112,10 @@ RSpec.describe 'Token Contract', functional: true do
         process_block
 
         expect(receiver.balances(false)[token.color_id.to_hex]).to be_nil
+
+        # should not consume 'labeled' utxos
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
     end
 
@@ -110,14 +124,16 @@ RSpec.describe 'Token Contract', functional: true do
 
       let(:fee) { 10_000 }
       let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: fee) }
-      let(:sender) { Glueby::Wallet.create }
-      let(:receiver) { Glueby::Wallet.create }
+      let!(:sender) { Glueby::Wallet.create }
+      let!(:receiver) { Glueby::Wallet.create }
       let(:before_balance) { sender.balances(false)[''] }
       let(:receiver_before_balance) { receiver.balances(false)[''] }
 
       before do
         process_block(to_address: sender.internal_wallet.receive_address)
         process_block(to_address: receiver.internal_wallet.receive_address)
+        # create labeled utxo
+        process_block(to_address: receiver.internal_wallet.receive_address('labeled'))
         before_balance
         receiver_before_balance
       end
@@ -148,6 +164,10 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(sender.balances(false)['']).to eq(before_balance)
         expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+
+        # should not consume 'labeled' utxos
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
 
       it 'non-reissunable token' do
@@ -170,6 +190,10 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(sender.balances(false)['']).to eq(before_balance)
         expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+
+        # should not consume 'labeled' utxos
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
 
       it 'NFT token' do
@@ -191,6 +215,10 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(receiver.balances(false)['']).to eq(receiver_before_balance)
         expect(receiver.balances(false)[token.color_id.to_hex]).to be_nil
+
+        # should not consume 'labeled' utxos
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(receiver.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
     end
   end

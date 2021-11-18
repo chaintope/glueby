@@ -13,11 +13,13 @@ RSpec.describe 'Timestamp Contract', functional: true do
     context 'bear fees by sender' do
       let(:fee) { 10_000 }
       let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: fee) }
-      let(:sender) { Glueby::Wallet.create }
+      let!(:sender) { Glueby::Wallet.create }
       let(:before_balance) { sender.balances(false)[''] }
 
       before do
         process_block(to_address: sender.internal_wallet.receive_address)
+        # create labeled utxo
+        process_block(to_address: sender.internal_wallet.receive_address('labeled'))
         before_balance
       end
 
@@ -29,8 +31,11 @@ RSpec.describe 'Timestamp Contract', functional: true do
           fee_estimator: fee_estimator
         )
         timestamp.save!
-
+        
         expect(sender.balances(false)['']).to eq(before_balance - fee)
+        # should not consume 'labeled' utxos
+        expect(sender.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
 
       it 'use rake task' do
@@ -57,6 +62,10 @@ RSpec.describe 'Timestamp Contract', functional: true do
         Rake.application['glueby:block_syncer:start'].execute
         ar.reload
         expect(ar.status).to eq('confirmed')
+
+        # should not consume 'labeled' utxos
+        expect(sender.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
     end
 
@@ -65,11 +74,13 @@ RSpec.describe 'Timestamp Contract', functional: true do
 
       let(:fee) { 10_000 }
       let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: fee) }
-      let(:sender) { Glueby::Wallet.create }
+      let!(:sender) { Glueby::Wallet.create }
       let(:before_balance) { sender.balances(false)[''] }
 
       before do
         process_block(to_address: sender.internal_wallet.receive_address)
+        # create labeled utxo
+        process_block(to_address: sender.internal_wallet.receive_address('labeled'))
         before_balance
       end
 
@@ -83,10 +94,14 @@ RSpec.describe 'Timestamp Contract', functional: true do
         timestamp.save!
 
         expect(sender.balances(false)['']).to eq(before_balance)
+
+        # should not consume 'labeled' utxos
+        expect(sender.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
 
       it 'use rake task' do
-           # Add timestamp job to timestamps table
+        # Add timestamp job to timestamps table
         ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app')
         expect(ar.status).to eq('init')
         expect(ar.txid).to be_nil
@@ -109,6 +124,10 @@ RSpec.describe 'Timestamp Contract', functional: true do
         Rake.application['glueby:block_syncer:start'].execute
         ar.reload
         expect(ar.status).to eq('confirmed')
+
+        # should not consume 'labeled' utxos
+        expect(sender.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
     end
   end
