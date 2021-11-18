@@ -14,13 +14,16 @@ module Glueby
               wallet = Glueby::Wallet.load(t.wallet_id)
               funding_tx, tx = create_txs(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeEstimator.new, utxo_provider)
               if funding_tx
-                ::ActiveRecord::Base.transaction { wallet.internal_wallet.broadcast(funding_tx) }
+                ::ActiveRecord::Base.transaction do
+                  wallet.internal_wallet.broadcast(funding_tx)
+                  puts "funding tx was broadcasted(id=#{t.id}, funding_tx.txid=#{funding_tx.txid})"
+                end
               end
               ::ActiveRecord::Base.transaction do
                 wallet.internal_wallet.broadcast(tx) do |tx|
                   t.update(txid: tx.txid, status: :unconfirmed)
                 end
-                puts "broadcasted (id=#{t.id}, txid=#{tx.txid})"
+                puts "timestamp tx was broadcasted (id=#{t.id}, txid=#{tx.txid})"
               end
             rescue => e
               puts "failed to broadcast (id=#{t.id}, reason=#{e.message})"
