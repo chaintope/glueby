@@ -61,10 +61,12 @@ module Glueby
       FeeProvider.configure(config)
     end
 
+    # Enable UtxoProvider feature
     def enable_utxo_provider!
       @use_utxo_provider = true
     end
 
+    # Disable UtxoProvider feature
     def disable_utxo_provider!
       @use_utxo_provider = false
     end
