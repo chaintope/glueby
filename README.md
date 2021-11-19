@@ -300,6 +300,7 @@ Glueby.configure do |config|
     # The fee that Fee Provider pays on each transaction.
     fixed_fee: 1000,
     # Fee Provider tries to keep the number of utxo in utxo pool as this size using `glueby:fee_provider:manage_utxo_pool` rake task
+    # This size should not be greater than 2000.
     utxo_pool_size: 20 
   }
 end
@@ -396,7 +397,7 @@ Glueby.configure do |config|
   config.utxo_provider_config = {
     # The amount that each utxo in utxo pool posses.
     default_value: 1_000,
-    # The number of utxos in utxo pool.
+    # The number of utxos in utxo pool. This size should not be greater than 2000.
     utxo_pool_size: 20
   }
 end
