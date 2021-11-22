@@ -104,10 +104,12 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
       end
 
       it { expect(subject.inputs.size).to eq 2 }
-      it { expect(subject.inputs[0].out_point.txid).to eq '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db' }
-      it { expect(subject.inputs[0].out_point.index).to eq 4 }
-      it { expect(subject.inputs[1].out_point.txid).to eq '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db' }
-      it { expect(subject.inputs[1].out_point.index).to eq 5 }
+      it do
+        expect(subject.inputs.map(&:out_point)).to contain_exactly(
+          Tapyrus::OutPoint.from_txid('1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db', 4),
+          Tapyrus::OutPoint.from_txid('1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db', 5)
+        )
+      end
       it { expect(subject.outputs.size).to eq 1 }
       it { expect(subject.outputs[0].value).to eq 10_000 }
     end
