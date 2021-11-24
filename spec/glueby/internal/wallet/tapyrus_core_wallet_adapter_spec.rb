@@ -197,6 +197,30 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
   end
 
   describe 'list_unspent' do
+    shared_examples 'executes the common unlabeled validation' do
+      it 'should call listunspent RPC with label and parse the results.' do
+        expect(rpc).to receive(:listunspent).and_return(response)
+        expect(subject).to eq([{
+                                 txid: "5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5",
+                                 vout: 0,
+                                 script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
+                                 color_id: nil,
+                                 amount: 100000000,
+                                 finalized: false,
+                                 label: ""
+                               },
+                               {
+                                 txid: "1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db",
+                                 vout: 1,
+                                 script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
+                                 color_id: nil,
+                                 amount: 100000000,
+                                 finalized: true,
+                                 label: ""
+                               }])
+      end
+    end
+
     subject { adapter.list_unspent(wallet_id, only_finalized) }
 
     let(:wallet_id) { ARBITRARY_WALLET_ID }
@@ -233,7 +257,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
             "txid": "864247cd4cae4b1f5bd3901be9f7a4ccba5bdea7db1d8bbd78b944da9cf39ef5",
             "vout": 0,
             "address": "w25MP2mrNU4oFqouSdwmSJHd8YntErqMwYk3vHr6RRjwZYWV6NfNZhgMfVWABRadn3RutmxAogoQCG",
-            "label": "for tracking",
+            "label": "Glueby-Contract-Tracking",
             "scriptPubKey": "21c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893bc76a914bfeca7aed62174a7c60ebc63c7bd797bad46157a88ac",
             "amount": "0.00000001",
             "confirmations": 1,
@@ -247,6 +271,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
     it 'should call listunspent RPC and parse the results.' do
       expect(rpc).to receive(:listunspent).and_return(response)
+      # get only unlabeled utxos because of default
       expect(subject).to eq([
                               {
                                 txid: "5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5",
@@ -254,7 +279,8 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
                                 vout: 0,
                                 amount: 100000000,
                                 color_id: nil,
-                                finalized: false
+                                finalized: false,
+                                label: ""
                               },
                               {
                                 txid: "1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db",
@@ -262,15 +288,8 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
                                 vout: 1,
                                 amount: 100000000,
                                 color_id: nil,
-                                finalized: true
-                              },
-                              {
-                                txid: '864247cd4cae4b1f5bd3901be9f7a4ccba5bdea7db1d8bbd78b944da9cf39ef5',
-                                vout: 0,
-                                script_pubkey: '21c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893bc76a914bfeca7aed62174a7c60ebc63c7bd797bad46157a88ac',
-                                color_id: 'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893',
-                                amount: 1,
-                                finalized: true
+                                finalized: true,
+                                label: ""
                               }
                             ])
     end
@@ -296,7 +315,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     end
 
     context 'with label' do
-      subject { adapter.list_unspent(wallet_id, true, "for tracking") }
+      subject { adapter.list_unspent(wallet_id, true, "Glueby-Contract-Tracking") }
       it 'should call listunspent RPC with label and parse the results.' do
         expect(rpc).to receive(:listunspent).and_return(response)
         expect(subject).to eq([
@@ -306,32 +325,54 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
             script_pubkey: '21c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893bc76a914bfeca7aed62174a7c60ebc63c7bd797bad46157a88ac',
             color_id: 'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893',
             amount: 1,
-            finalized: true
+            finalized: true,
+            label: "Glueby-Contract-Tracking"
           }
         ])
       end
     end
 
-    context 'with unlabeled' do
+    context 'with unlabeled by assign :unlabeled' do
       subject { adapter.list_unspent(wallet_id, true, :unlabeled) }
-      it 'should call listunspent RPC with label and parse the results.' do
+      it_behaves_like 'executes the common unlabeled validation'
+    end
+    context 'with unlabeled by default' do
+      subject { adapter.list_unspent(wallet_id, true, :unlabeled) }
+      it_behaves_like 'executes the common unlabeled validation'
+    end
+    context 'with all utxos' do
+      subject { adapter.list_unspent(wallet_id, true, :all) }
+      it 'should call listunspent RPC with all utxos and parse the results.' do
         expect(rpc).to receive(:listunspent).and_return(response)
-        expect(subject).to eq([{
-                                txid: "5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5",
-                                vout: 0,
-                                script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
-                                color_id: nil,
-                                amount: 100000000,
-                                finalized: false
-                              },
-                               {
-                                 txid: "1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db",
-                                 vout: 1,
-                                 script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
-                                 color_id: nil,
-                                 amount: 100000000,
-                                 finalized: true
-                               }])
+        expect(subject).to eq([
+                                {
+                                  txid: "5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5",
+                                  script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
+                                  vout: 0,
+                                  amount: 100000000,
+                                  color_id: nil,
+                                  finalized: false,
+                                  label: ""
+                                },
+                                {
+                                  txid: "1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db",
+                                  script_pubkey: "76a914234113b860822e68f9715d1957af28b8f5117ee288ac",
+                                  vout: 1,
+                                  amount: 100000000,
+                                  color_id: nil,
+                                  finalized: true,
+                                  label: ""
+                                },
+                                {
+                                  txid: '864247cd4cae4b1f5bd3901be9f7a4ccba5bdea7db1d8bbd78b944da9cf39ef5',
+                                  vout: 0,
+                                  script_pubkey: '21c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893bc76a914bfeca7aed62174a7c60ebc63c7bd797bad46157a88ac',
+                                  color_id: 'c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893',
+                                  amount: 1,
+                                  finalized: true,
+                                  label: "Glueby-Contract-Tracking"
+                                }
+                              ])
       end
     end
   end

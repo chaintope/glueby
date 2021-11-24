@@ -84,9 +84,10 @@ module Glueby
 
       # @param only_finalized [Boolean] The flag to get a UTXO with status only finalized
       # @param label [String] This label is used to filtered the UTXOs with labeled if a key or Utxo is labeled.
-      #                    - If label is not specified (label=nil), all UTXOs will be returned.
-      #                    - If label=:unlabeled, only unlabeled UTXOs will be returned.
-      def list_unspent(only_finalized = true, label = nil)
+      #                    - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.
+      #                    - If label=:all, all UTXOs will be returned.
+      def list_unspent(only_finalized = true, label = :unlabeled)
+        label = :unlabeled unless label
         wallet_adapter.list_unspent(id, only_finalized, label)
       end
 

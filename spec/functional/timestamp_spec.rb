@@ -86,7 +86,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
       end
 
       it 'use rake task' do
-           # Add timestamp job to timestamps table
+        # Add timestamp job to timestamps table
         ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app')
         expect(ar.status).to eq('init')
         expect(ar.txid).to be_nil
