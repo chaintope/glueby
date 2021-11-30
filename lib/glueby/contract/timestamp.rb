@@ -41,8 +41,20 @@ module Glueby
             end
           end
 
+          prev_txs = if funding_tx
+            output = funding_tx.outputs.first
+            [{
+              txid: funding_tx.txid,
+              vout: 0,
+              scriptPubKey: output.script_pubkey.to_hex,
+              amount: output.value
+            }]
+          else
+            []
+          end
+
           txb.fee(fee).change_address(wallet.internal_wallet.change_address)
-          [funding_tx, wallet.internal_wallet.sign_tx(txb.build)]
+          [funding_tx, wallet.internal_wallet.sign_tx(txb.build, prev_txs)]
         end
 
         def get_transaction(tx)
