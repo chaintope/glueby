@@ -16,9 +16,18 @@ module Glueby
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
         module_function
 
-        def create_txs(wallet, prefix, data, fee_estimator, utxo_provider)
+        def create_bip175_address(wallet, contents: nil)
+          wallet.internal_wallet.receive_address(nil, contents)
+        end
+
+        def create_txs(wallet, prefix, data, fee_estimator, utxo_provider, type: :simple)
           txb = Tapyrus::TxBuilder.new
-          txb.data(prefix + data)
+          if type == :simple
+            txb.data(prefix + data)
+          else
+            bip75address = create_bip175_address(wallet, contents: [prefix, data])
+            txb.pay(bip75address, Glueby::UtxoProvider::DEFAULT_VALUE) 
+          end
           fee = fee_estimator.fee(dummy_tx(txb.build))
           if utxo_provider
             script_pubkey = Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
@@ -72,6 +81,9 @@ module Glueby
       # - :sha256
       # - :double_sha256
       # - :none
+      # @param [Symbol] timestamp_type
+      # - :simple
+      # - :trackable
       # @raise [Glueby::Contract::Errors::UnsupportedDigestType] if digest unsupport
       def initialize(
         wallet:,
@@ -79,7 +91,8 @@ module Glueby
         prefix: '',
         fee_estimator: Glueby::Contract::FixedFeeEstimator.new,
         digest: :sha256,
-        utxo_provider: nil
+        utxo_provider: nil,
+        timestamp_type: :simple
       )
         @wallet = wallet
         @content = content
@@ -87,6 +100,7 @@ module Glueby
         @fee_estimator = fee_estimator
         @digest = digest
         @utxo_provider = utxo_provider
+        @timestamp_type = timestamp_type
       end
 
       # broadcast to Tapyrus Core
@@ -96,7 +110,7 @@ module Glueby
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        funding_tx, @tx = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider)
+        funding_tx, @tx = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider, type: @timestamp_type)
         @wallet.internal_wallet.broadcast(funding_tx) if funding_tx
         @txid = @wallet.internal_wallet.broadcast(@tx)
       end

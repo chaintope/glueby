@@ -122,8 +122,8 @@ module Glueby
         tx
       end
 
-      def receive_address(label = nil)
-        wallet_adapter.receive_address(id, label)
+      def receive_address(label = nil, data = nil)
+        wallet_adapter.receive_address(id, label, data)
       end
 
       def change_address
