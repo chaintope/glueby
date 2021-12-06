@@ -443,6 +443,20 @@ Configuration:
 
 ```
 
+## Other configurations
+
+### Default fixed fee for the FixedFeeEstimator
+
+The architecture of Glueby accepts any fee estimation strategies for paying transactions fee. However, we officially support only one strategy: the fixed fee strategy.
+It just returns a fixed fee value without any estimation.
+Here provides a configuration to modify the default fixed fee value it returns like this:
+
+```ruby
+Glueby.configure do |config|
+   config.default_fixed_fee = 10_000
+end
+```
+
 
 ## Development
 
