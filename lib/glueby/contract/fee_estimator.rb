@@ -22,7 +22,11 @@ module Glueby
     class FixedFeeEstimator
       include FeeEstimator
 
-      def initialize(fixed_fee: 10_000)
+      class << self
+        attr_accessor :default_fixed_fee
+      end
+
+      def initialize(fixed_fee: FixedFeeEstimator.default_fixed_fee || 10_000)
         @fixed_fee = fixed_fee
       end
 

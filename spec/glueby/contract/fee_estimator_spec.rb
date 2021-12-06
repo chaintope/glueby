@@ -13,6 +13,18 @@ RSpec.describe 'Glueby::Contract::FeeEstimator' do
         it { is_expected.to eq 100 }
       end
 
+      context 'default_fixed_fee is specified' do
+        before do
+          Glueby::Contract::FixedFeeEstimator.default_fixed_fee = 600
+        end
+
+        after do
+          Glueby::Contract::FixedFeeEstimator.default_fixed_fee = nil
+        end
+
+        it { is_expected.to eq 600 }
+      end
+
       context 'if fee_provider_bears! is enable' do
         before do
           Glueby.configuration.fee_provider_bears!
