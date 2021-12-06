@@ -61,6 +61,7 @@ def setup_database
   connection = ::ActiveRecord::Base.connection
   connection.create_table :glueby_wallets do |t|
     t.string :wallet_id
+    t.string :seed
     t.timestamps
   end
   connection.add_index :glueby_wallets, [:wallet_id], unique: true
@@ -95,6 +96,7 @@ def setup_database
     t.string   :content_hash
     t.string   :prefix
     t.string   :wallet_id
+    t.integer  :timestamp_type
   end
 
   connection.create_table :glueby_system_informations, force: true do |t|

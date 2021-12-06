@@ -12,7 +12,7 @@ module Glueby
           timestamps.each do |t|
             begin
               wallet = Glueby::Wallet.load(t.wallet_id)
-              funding_tx, tx = create_txs(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeEstimator.new, utxo_provider)
+              funding_tx, tx = create_txs(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeEstimator.new, utxo_provider, type: t.timestamp_type)
               if funding_tx
                 ::ActiveRecord::Base.transaction do
                   wallet.internal_wallet.broadcast(funding_tx)

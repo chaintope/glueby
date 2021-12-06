@@ -139,6 +139,51 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
       it { expect { subject }.to raise_error(Glueby::Contract::Errors::UnsupportedDigestType) }
     end
 
+    context 'if type is trackable', active_record: true do
+      let(:contract) do
+        Glueby::Contract::Timestamp.new(
+          wallet: wallet,
+          content: 'bar',
+          prefix: 'foo',
+          digest: :none,
+          timestamp_type: :trackable
+        )
+      end
+
+      let(:active_record_wallet) { Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet.id) }
+      let(:key) { active_record_wallet.keys.create(purpose: :receive) }
+
+      before do
+        Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: '0000000000000000000000000000000000000000000000000000000000000000',
+          index: 0,
+          value: 100_000_000,
+          script_pubkey: key.to_p2pkh.to_hex,
+          status: :finalized,
+          key: key
+        )
+      end
+
+      let(:wallet) { Glueby::Wallet.create }
+      let(:master) do
+        Tapyrus::ExtKey.from_base58(
+          'xprv9s21ZrQH143K2JF8RafpqtKiTbsbaxEeUaMnNHsm5o6wCW3z8ySyH4UxFVSfZ8n7ESu7fgir8imbZKLYVBxFPND1pniTZ81vKfd45EHKX73'
+        )
+      end
+      it 'create pay-to-contract transaction' do
+        allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:generate_master_key).and_return(master)
+        allow(wallet.internal_wallet).to receive(:broadcast).and_return('a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c')
+        subject
+        expect(contract.tx.inputs.size).to eq 1
+        expect(contract.tx.outputs.size).to eq 2
+        expect(contract.tx.outputs[0].value).to eq 1_000
+        expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_falsy
+        expect(contract.tx.outputs[0].script_pubkey.to_hex).to eq '76a91479eba1158d81c4701b92c3b6d2c07d5c9f605ed288ac'
+        expect(contract.tx.outputs[1].value).to eq 99_989_000
+      end
+    end
+
     context 'if use utxo provider' do
       let(:contract) do
         Glueby::Contract::Timestamp.new(

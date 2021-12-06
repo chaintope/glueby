@@ -129,9 +129,17 @@ module Glueby
           end
         end
 
-        def receive_address(wallet_id, label = nil)
+        def receive_address(wallet_id, label = nil, contents = nil)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
-          key = wallet.keys.create(purpose: :receive, label: label)
+
+          key = if contents
+            master = generate_master_key(wallet)
+            bip175 = Tapyrus::BIP175.from_ext_key(master)
+            contents.each { |content| bip175 << content }
+            wallet.keys.create(purpose: :receive, label: label, private_key: bip175.priv_key.key.priv_key)
+          else
+            wallet.keys.create(purpose: :receive, label: label)
+          end
           key.address
         end
 
@@ -152,6 +160,13 @@ module Glueby
           keys = wallet.keys
           keys = keys.where(label: label) if label
           keys.map(&:address)
+        end
+
+        private
+
+        def generate_master_key(wallet)
+          master = Tapyrus::Wallet::MasterKey.parse_from_payload(wallet.seed.htb)
+          master.key
         end
       end
     end

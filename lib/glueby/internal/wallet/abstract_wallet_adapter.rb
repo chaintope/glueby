@@ -114,8 +114,9 @@ module Glueby
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @param [String] label The label associated with this address.
+        # @param [String] data The data to be used for generating bip175 address
         # @return [String] P2PKH address
-        def receive_address(wallet_id, label = nil)
+        def receive_address(wallet_id, label = nil, data = nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
