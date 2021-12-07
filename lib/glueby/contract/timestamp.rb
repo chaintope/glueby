@@ -29,8 +29,6 @@ module Glueby
           elsif type == :trackable
             p2c_address = create_pay_to_contract_address(wallet, contents: [prefix, data])
             txb.pay(p2c_address, P2C_DEFAULT_VALUE)
-          else
-            raise Glueby::Contract::Errors::InvalidTimestampType, "#{type} is invalid type, supported types are :simple, and :trackable."
           end
 
           fee = fee_estimator.fee(dummy_tx(txb.build))
@@ -89,7 +87,8 @@ module Glueby
       # @param [Symbol] timestamp_type
       # - :simple
       # - :trackable
-      # @raise [Glueby::Contract::Errors::UnsupportedDigestType] if digest unsupport
+      # @raise [Glueby::Contract::Errors::UnsupportedDigestType] if digest is unsupported
+      # @raise [Glueby::Contract::Errors::InvalidTimestampType] if timestamp_type is unsupported
       def initialize(
         wallet:,
         content:,
@@ -103,8 +102,10 @@ module Glueby
         @content = content
         @prefix = prefix
         @fee_estimator = fee_estimator
+        raise Glueby::Contract::Errors::UnsupportedDigestType, "#{digest} is invalid digest, supported digest are :sha256, :double_sha256, and :none."  unless [:sha256, :double_sha256, :none].include?(digest)
         @digest = digest
         @utxo_provider = utxo_provider
+        raise Glueby::Contract::Errors::InvalidTimestampType, "#{timestamp_type} is invalid type, supported types are :simple, and :trackable." unless [:simple, :trackable].include?(timestamp_type)
         @timestamp_type = timestamp_type
       end
 
@@ -115,7 +116,7 @@ module Glueby
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        funding_tx, @tx = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider, type: @timestamp_type.to_sym)
+        funding_tx, @tx = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider, type: @timestamp_type)
         @wallet.internal_wallet.broadcast(funding_tx) if funding_tx
         @txid = @wallet.internal_wallet.broadcast(@tx)
       end

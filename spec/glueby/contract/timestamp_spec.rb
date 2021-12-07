@@ -1,4 +1,36 @@
 RSpec.describe 'Glueby::Contract::Timestamp' do
+  describe '#initialize' do
+    let(:wallet) { TestWallet.new(internal_wallet) }
+    let(:internal_wallet) { TestInternalWallet.new }
+
+    context 'if digest unspport' do
+      subject do
+        Glueby::Contract::Timestamp.new(
+          wallet: wallet,
+          content: "01",
+          prefix: '',
+          digest: nil
+        )
+      end
+
+      it { expect { subject }.to raise_error(Glueby::Contract::Errors::UnsupportedDigestType) }
+    end
+
+    context 'with unsupported timestamp type' do
+      subject do
+        Glueby::Contract::Timestamp.new(
+          wallet: wallet,
+          content: 'bar',
+          prefix: 'foo',
+          digest: :none,
+          timestamp_type: :invalid_type
+        )
+      end
+
+      it { expect { subject }.to raise_error(Glueby::Contract::Errors::InvalidTimestampType) }
+    end
+  end
+
   describe '#save!' do
     subject { contract.save! }
 
@@ -126,19 +158,6 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
       end
     end
 
-    context 'if digest unspport' do
-      let(:contract) do
-        Glueby::Contract::Timestamp.new(
-          wallet: wallet,
-          content: "01",
-          prefix: '',
-          digest: nil
-        )
-      end
-
-      it { expect { subject }.to raise_error(Glueby::Contract::Errors::UnsupportedDigestType) }
-    end
-
     context 'if type is trackable', active_record: true do
       let(:contract) do
         Glueby::Contract::Timestamp.new(
@@ -176,20 +195,6 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
         expect(contract.tx.outputs[0].script_pubkey.p2pkh?).to be_truthy
         expect(contract.tx.outputs[1].value).to eq 99_989_000
       end
-    end
-
-    context 'with unsupported timestamp type' do
-      let(:contract) do
-        Glueby::Contract::Timestamp.new(
-          wallet: wallet,
-          content: 'bar',
-          prefix: 'foo',
-          digest: :none,
-          timestamp_type: :invalid_type
-        )
-      end
-
-      it { expect { subject }.to raise_error(Glueby::Contract::Errors::InvalidTimestampType) }
     end
 
     context 'if use utxo provider' do
