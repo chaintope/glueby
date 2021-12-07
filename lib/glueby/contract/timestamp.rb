@@ -115,7 +115,7 @@ module Glueby
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        funding_tx, @tx = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider, type: @timestamp_type)
+        funding_tx, @tx = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider, type: @timestamp_type.to_sym)
         @wallet.internal_wallet.broadcast(funding_tx) if funding_tx
         @txid = @wallet.internal_wallet.broadcast(@tx)
       end
