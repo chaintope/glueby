@@ -6,7 +6,7 @@ class CreateTimestamp < ActiveRecord::Migration<%= migration_version %>
       t.string   :content_hash
       t.string   :prefix
       t.string   :wallet_id
-      t.integer   :timestamp_type, null: false, default: 0
+      t.integer  :timestamp_type, null: false, default: 0
     end
   end
 end
