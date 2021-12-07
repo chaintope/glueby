@@ -91,11 +91,11 @@ def setup_database
 
   connection.create_table :glueby_timestamps, force: true do |t|
     t.string   :txid
-    t.integer  :status
+    t.integer  :status, null: false, default: 0
     t.string   :content_hash
     t.string   :prefix
     t.string   :wallet_id
-    t.integer  :timestamp_type
+    t.integer  :timestamp_type, null: false, default: 0
   end
 
   connection.create_table :glueby_system_informations, force: true do |t|
