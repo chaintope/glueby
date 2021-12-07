@@ -129,18 +129,24 @@ module Glueby
           end
         end
 
+        def create_pay_to_contract_address(key, contents)
+          # Calculate P + H(P || contents)G
+          group = ECDSA::Group::Secp256k1
+          p = Tapyrus::Key.new(pubkey: key.public_key).to_point # P
+          px = ECDSA::Format::IntegerOctetString.encode(p.x, group.byte_length)
+          commitment = Tapyrus.sha256(px + contents.join).bth.to_i(16) % group.order # H(P || contents)
+          point = p + group.generator.multiply_by_scalar(commitment) # P + H(P || contents)G
+          Tapyrus::Key.new(pubkey: point.to_hex(true)).to_p2pkh
+        end
+
         def receive_address(wallet_id, label = nil, contents = nil)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
-
-          key = if contents
-            master = generate_master_key(wallet)
-            bip175 = Tapyrus::BIP175.from_ext_key(master)
-            contents.each { |content| bip175 << content }
-            wallet.keys.create(purpose: :receive, label: label, private_key: bip175.priv_key.key.priv_key)
+          key = wallet.keys.create(purpose: :receive, label: label)
+          if contents
+            create_pay_to_contract_address(key, contents)
           else
-            wallet.keys.create(purpose: :receive, label: label)
+            key.address
           end
-          key.address
         end
 
         def change_address(wallet_id)
@@ -160,13 +166,6 @@ module Glueby
           keys = wallet.keys
           keys = keys.where(label: label) if label
           keys.map(&:address)
-        end
-
-        private
-
-        def generate_master_key(wallet)
-          master = Tapyrus::Wallet::MasterKey.parse_from_payload(wallet.seed.htb)
-          master.key
         end
       end
     end

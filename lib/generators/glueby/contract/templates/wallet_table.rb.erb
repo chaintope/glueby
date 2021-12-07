@@ -2,7 +2,6 @@ class CreateWallet < ActiveRecord::Migration<%= migration_version %>
   def change
     create_table :glueby_wallets<%= table_options %> do |t|
       t.string :wallet_id
-      t.string :seed
       t.timestamps
     end
 

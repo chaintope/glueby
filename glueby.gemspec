@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency 'tapyrus', '>= 0.2.11'
+  spec.add_runtime_dependency 'tapyrus', '>= 0.2.9'
   spec.add_runtime_dependency 'activerecord', '~> 6.1.3'
   spec.add_development_dependency 'sqlite3'
   spec.add_development_dependency 'rails', '~> 6.1.3'
