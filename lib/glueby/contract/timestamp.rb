@@ -9,6 +9,8 @@ module Glueby
     # Storing timestamp transaction to the blockchain enables everyone to verify that the data existed at that time and a user signed it.
     class Timestamp
       include Glueby::Contract::TxBuilder
+      
+      P2C_DEFAULT_VALUE = 1_000
 
       autoload :Syncer, 'glueby/contract/timestamp/syncer'
 
@@ -16,7 +18,7 @@ module Glueby
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
         module_function
 
-        def create_bip175_address(wallet, contents: nil)
+        def create_pay_to_contract_address(wallet, contents: nil)
           wallet.internal_wallet.receive_address(nil, contents)
         end
 
@@ -24,10 +26,13 @@ module Glueby
           txb = Tapyrus::TxBuilder.new
           if type == :simple
             txb.data(prefix + data)
+          elsif type == :trackable
+            p2c_address = create_pay_to_contract_address(wallet, contents: [prefix, data])
+            txb.pay(p2c_address, P2C_DEFAULT_VALUE)
           else
-            bip75address = create_bip175_address(wallet, contents: [prefix, data])
-            txb.pay(bip75address, Glueby::UtxoProvider::DEFAULT_VALUE) 
+            raise Glueby::Contract::Errors::InvalidTimestampType, "#{type} is invalid type, supported types are :simple, and :trackable."
           end
+
           fee = fee_estimator.fee(dummy_tx(txb.build))
           if utxo_provider
             script_pubkey = Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)

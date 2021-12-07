@@ -9,7 +9,6 @@ module Glueby
         class Wallet < ::ActiveRecord::Base
           has_many :keys
 
-          before_create :generate_seed
           validates :wallet_id, uniqueness: { case_sensitive: false }
 
           # @param [Tapyrus::Tx] tx
@@ -57,11 +56,6 @@ module Glueby
             if hash_type < Tapyrus::SIGHASH_TYPE[:all] || hash_type > Tapyrus::SIGHASH_TYPE[:single]
               raise Errors::InvalidSighashType, "Invalid sighash type '#{sighashtype}'"
             end
-          end
-
-          def generate_seed
-            master = Tapyrus::Wallet::MasterKey.generate
-            self.seed = master.to_hex
           end
         end
       end

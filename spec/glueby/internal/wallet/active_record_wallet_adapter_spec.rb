@@ -2,7 +2,7 @@
 
 RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_record: true do
   let(:adapter) { Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new }
-  let(:wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: '00000000000000000000000000000000', seed: '') }
+  let(:wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: '00000000000000000000000000000000') }
 
   describe '#create_wallet' do
     subject { adapter.create_wallet }
@@ -287,18 +287,17 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     context 'with contents' do
       subject { adapter.receive_address(wallet.wallet_id, nil, ['foo', 'bar']) }
 
-      let(:master) do
-        Tapyrus::ExtKey.from_base58(
-          'xprv9s21ZrQH143K2JF8RafpqtKiTbsbaxEeUaMnNHsm5o6wCW3z8ySyH4UxFVSfZ8n7ESu7fgir8imbZKLYVBxFPND1pniTZ81vKfd45EHKX73'
-        )
-      end
-
       it { expect { subject }.to change { wallet.keys.where(purpose: :receive).count }.from(0).to(1) }
-      it do
-        allow(adapter).to receive(:generate_master_key).and_return(master)
-        expect(subject).to eq '1C7f322izqMqLzZzfzkPAjxBzprxDi47Yf'
-      end
     end
+  end
+
+  describe '#create_pay_to_contract_address' do
+    subject { adapter.create_pay_to_contract_address(key, ['foo', 'bar']) }
+
+    let(:key) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key1, purpose: :receive, wallet: wallet) }
+    let(:private_key1) { '1000000000000000000000000000000000000000000000000000000000000000' }
+
+    it { expect(subject).to eq '1KrvTuFxRAfDs7EWvcdF1Whvxu5XANB3GH' }
   end
 
   describe '#change_address' do
