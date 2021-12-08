@@ -18,8 +18,18 @@ module Glueby
         include Glueby::Internal::Wallet::TapyrusCoreWalletAdapter::Util
         module_function
 
+        # @param [Glueby::Wallet] wallet
+        # @param [Array] data The data to be used for generating pay-to-contract address
+        # @return [Array(String, String)]
+        #    Return (pay-to-contract address, public key used for generating address)
         def create_pay_to_contract_address(wallet, contents: nil)
-          wallet.internal_wallet.receive_address(nil, contents)
+          pubkey = wallet.internal_wallet.create_pubkey.pubkey
+          # Calculate P + H(P || contents)G
+          group = ECDSA::Group::Secp256k1
+          p = Tapyrus::Key.new(pubkey: pubkey).to_point # P
+          commitment = Tapyrus.sha256(p.to_hex(true).htb + contents.join).bth.to_i(16) % group.order # H(P || contents)
+          point = p + group.generator.multiply_by_scalar(commitment) # P + H(P || contents)G
+          [Tapyrus::Key.new(pubkey: point.to_hex(true)).to_p2pkh, pubkey] # [p2c address, P]
         end
 
         def create_txs(wallet, prefix, data, fee_estimator, utxo_provider, type: :simple)
@@ -27,7 +37,7 @@ module Glueby
           if type == :simple
             txb.data(prefix + data)
           elsif type == :trackable
-            p2c_address = create_pay_to_contract_address(wallet, contents: [prefix, data])
+            p2c_address, payment_base = create_pay_to_contract_address(wallet, contents: [prefix, data])
             txb.pay(p2c_address, P2C_DEFAULT_VALUE)
           end
 
@@ -66,7 +76,7 @@ module Glueby
           end
 
           txb.fee(fee).change_address(wallet.internal_wallet.change_address)
-          [funding_tx, wallet.internal_wallet.sign_tx(txb.build, prev_txs)]
+          [funding_tx, wallet.internal_wallet.sign_tx(txb.build, prev_txs), p2c_address, payment_base]
         end
 
         def get_transaction(tx)
@@ -76,6 +86,9 @@ module Glueby
       include Glueby::Contract::Timestamp::Util
 
       attr_reader :tx, :txid
+
+      # p2c_address and payment_base is used in `trackable` type
+      attr_reader :p2c_address, :payment_base
 
       # @param [String] content Data to be hashed and stored in blockchain.
       # @param [String] prefix prefix of op_return data
@@ -116,7 +129,7 @@ module Glueby
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
 
-        funding_tx, @tx = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider, type: @timestamp_type)
+        funding_tx, @tx, @p2c_address, @payment_base = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider, type: @timestamp_type)
         @wallet.internal_wallet.broadcast(funding_tx) if funding_tx
         @txid = @wallet.internal_wallet.broadcast(@tx)
       end

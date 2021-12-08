@@ -133,10 +133,7 @@ module Glueby
           end
         end
 
-        def receive_address(wallet_id, label = nil, data = nil)
-          if data
-            raise NotImplementedError, "The address based on P2C is not supported this wallet adapter. #{self.class}##{__method__}"
-          end
+        def receive_address(wallet_id, label = nil)
           perform_as(wallet_id) do |client|
             client.getnewaddress(label || '')
           end
