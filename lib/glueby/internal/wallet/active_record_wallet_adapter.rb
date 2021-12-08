@@ -133,7 +133,7 @@ module Glueby
           # Calculate P + H(P || contents)G
           group = ECDSA::Group::Secp256k1
           p = Tapyrus::Key.new(pubkey: key.public_key).to_point # P
-          commitment = Tapyrus.sha256(p.to_hex(false).htb + contents.join).bth.to_i(16) % group.order # H(P || contents)
+          commitment = Tapyrus.sha256(p.to_hex(true).htb + contents.join).bth.to_i(16) % group.order # H(P || contents)
           point = p + group.generator.multiply_by_scalar(commitment) # P + H(P || contents)G
           Tapyrus::Key.new(pubkey: point.to_hex(true)).to_p2pkh
         end

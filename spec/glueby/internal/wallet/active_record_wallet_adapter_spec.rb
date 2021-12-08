@@ -297,7 +297,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     let(:key) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key1, purpose: :receive, wallet: wallet) }
     let(:private_key1) { '1000000000000000000000000000000000000000000000000000000000000000' }
 
-    it { expect(subject).to eq '16dJHMvXZDFCk6L4nQ4jpMFwMzMuxR5ufX' }
+    it { expect(subject).to eq '1NAjNvbFkCCWyiSkF9tBRXBNSf3cPntBcm' }
   end
 
   describe '#change_address' do
