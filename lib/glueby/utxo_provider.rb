@@ -44,7 +44,7 @@ module Glueby
 
       fee = fee_estimator.fee(dummy_tx(txb.build))
       # The outputs need to be shuffled so that no utxos are spent twice as possible.
-      sum, outputs = wallet.collect_uncolored_outputs(fee + value, nil, true, true)
+      sum, outputs = collect_uncolored_outputs(wallet, fee + value)
 
       outputs.each do |utxo|
         txb.add_utxo({
@@ -71,6 +71,20 @@ module Glueby
       rescue Glueby::Internal::Wallet::Errors::WalletNotFound => _
         Glueby::Internal::Wallet.create(WALLET_ID)
       end
+    end
+
+    def collect_uncolored_outputs(wallet, amount)
+      utxos = wallet.list_unspent.select { |o| !o[:color_id] && o[:amount] == @default_value }
+      utxos.shuffle!
+
+      utxos.inject([0, []]) do |sum, output|
+        new_sum = sum[0] + output[:amount]
+        new_outputs = sum[1] << output
+        return [new_sum, new_outputs] if new_sum >= amount
+
+        [new_sum, new_outputs]
+      end
+      raise Glueby::Contract::Errors::InsufficientFunds
     end
 
     def validate_config!

@@ -79,21 +79,15 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
       let(:wallet_adapter) { double(:wallet_adapter) }
       let(:utxo_provider_wallet) { TestInternalWallet.new }
       let(:pool_outputs) do
-        [
+        (0...20).map do |i|
           {
             txid: '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
             script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
-            vout: 4,
-            amount: 10_000,
-            finalized: true
-          }, {
-            txid: '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
-            script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
-            vout: 5,
-            amount: 10_000,
+            vout: i,
+            amount: 1_000,
             finalized: true
           }
-        ]
+        end
       end
 
       before do
@@ -103,11 +97,12 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
         allow(utxo_provider_wallet).to receive(:list_unspent).and_return(pool_outputs)
       end
 
-      it { expect(subject.inputs.size).to eq 2 }
+      it { expect(subject.inputs.size).to eq 20 }
       it do
         expect(subject.inputs.map(&:out_point)).to contain_exactly(
-          Tapyrus::OutPoint.from_txid('1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db', 4),
-          Tapyrus::OutPoint.from_txid('1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db', 5)
+          *(0...20).map do |i|
+            Tapyrus::OutPoint.from_txid('1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db', i)
+          end
         )
       end
       it { expect(subject.outputs.size).to eq 1 }

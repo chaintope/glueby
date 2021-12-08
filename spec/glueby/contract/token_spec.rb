@@ -91,23 +91,17 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           Glueby.configuration.enable_utxo_provider!
           privider = Glueby::UtxoProvider.new
 
-          # 2 Utxos is pooled.
-          Glueby::Internal::Wallet::AR::Utxo.create(
-            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-            index: 0,
-            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-            key: key,
-            value: 10_000,
-            status: :finalized
-          )
-          Glueby::Internal::Wallet::AR::Utxo.create(
-            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-            index: 1,
-            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-            key: key,
-            value: 10_000,
-            status: :finalized
-          )
+          # 20 Utxos are pooled.
+          (0...20).each do |i|
+            Glueby::Internal::Wallet::AR::Utxo.create(
+              txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+              index: i,
+              script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+              key: key,
+              value: 1_000,
+              status: :finalized
+            )
+          end
         end
         after { Glueby.configuration.disable_utxo_provider! }
 
@@ -141,23 +135,17 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           Glueby.configuration.enable_utxo_provider!
           privider = Glueby::UtxoProvider.new
 
-          # 2 Utxos is pooled.
-          Glueby::Internal::Wallet::AR::Utxo.create(
-            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-            index: 0,
-            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-            key: key,
-            value: 10_000,
-            status: :finalized
-          )
-          Glueby::Internal::Wallet::AR::Utxo.create(
-            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-            index: 1,
-            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-            key: key,
-            value: 10_000,
-            status: :finalized
-          )
+          # 20 Utxos are pooled.
+          (0...20).each do |i|
+            Glueby::Internal::Wallet::AR::Utxo.create(
+              txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+              index: i,
+              script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+              key: key,
+              value: 1_000,
+              status: :finalized
+            )
+          end
         end
         after { Glueby.configuration.disable_utxo_provider! }
 
@@ -192,23 +180,16 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           Glueby.configuration.enable_utxo_provider!
           privider = Glueby::UtxoProvider.new
 
-          # 2 Utxos is pooled.
-          Glueby::Internal::Wallet::AR::Utxo.create(
-            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-            index: 0,
-            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-            key: key,
-            value: 10_000,
-            status: :finalized
-          )
-          Glueby::Internal::Wallet::AR::Utxo.create(
-            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-            index: 1,
-            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-            key: key,
-            value: 10_000,
-            status: :finalized
-          )
+          (0...20).each do |i|
+            Glueby::Internal::Wallet::AR::Utxo.create(
+              txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+              index: i,
+              script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+              key: key,
+              value: 1_000,
+              status: :finalized
+            )
+          end
         end
         after { Glueby.configuration.disable_utxo_provider! }
 
@@ -263,23 +244,16 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         Glueby.configuration.enable_utxo_provider!
         privider = Glueby::UtxoProvider.new
 
-        # 2 Utxos is pooled.
-        Glueby::Internal::Wallet::AR::Utxo.create(
-          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-          index: 0,
-          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-          key: key,
-          value: 10_000,
-          status: :finalized
-        )
-        Glueby::Internal::Wallet::AR::Utxo.create(
-          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-          index: 1,
-          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-          key: key,
-          value: 10_000,
-          status: :finalized
-        )
+        (0...20).each do |i|
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: i,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 1_000,
+            status: :finalized
+          )
+        end
       end
       after { Glueby.configuration.disable_utxo_provider! }
 
@@ -359,23 +333,16 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         Glueby.configuration.enable_utxo_provider!
         privider = Glueby::UtxoProvider.new
 
-        # 2 Utxos is pooled.
-        Glueby::Internal::Wallet::AR::Utxo.create(
-          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-          index: 0,
-          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-          key: key,
-          value: 10_000,
-          status: :finalized
-        )
-        Glueby::Internal::Wallet::AR::Utxo.create(
-          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-          index: 1,
-          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-          key: key,
-          value: 10_000,
-          status: :finalized
-        )
+        (0...20).each do |i|
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: i,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 1_000,
+            status: :finalized
+          )
+        end
       end
       after { Glueby.configuration.disable_utxo_provider! }
 
@@ -454,23 +421,16 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         Glueby.configuration.enable_utxo_provider!
         privider = Glueby::UtxoProvider.new
 
-        # 2 Utxos is pooled.
-        Glueby::Internal::Wallet::AR::Utxo.create(
-          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-          index: 0,
-          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-          key: key,
-          value: 10_000,
-          status: :finalized
-        )
-        Glueby::Internal::Wallet::AR::Utxo.create(
-          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-          index: 1,
-          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-          key: key,
-          value: 10_000,
-          status: :finalized
-        )
+        (0...20).each do |i|
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: i,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 1_000,
+            status: :finalized
+          )
+        end
       end
       after { Glueby.configuration.disable_utxo_provider! }
 
