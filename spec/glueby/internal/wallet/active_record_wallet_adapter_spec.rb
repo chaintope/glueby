@@ -283,21 +283,6 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
 
       it { expect { subject }.to change { wallet.keys.where(purpose: :receive, label: 'tracking').count }.from(0).to(1) }
     end
-
-    context 'with contents' do
-      subject { adapter.receive_address(wallet.wallet_id, nil, ['foo', 'bar']) }
-
-      it { expect { subject }.to change { wallet.keys.where(purpose: :receive).count }.from(0).to(1) }
-    end
-  end
-
-  describe '#create_pay_to_contract_address' do
-    subject { adapter.create_pay_to_contract_address(key, ['foo', 'bar']) }
-
-    let(:key) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key1, purpose: :receive, wallet: wallet) }
-    let(:private_key1) { '1000000000000000000000000000000000000000000000000000000000000000' }
-
-    it { expect(subject).to eq '1NAjNvbFkCCWyiSkF9tBRXBNSf3cPntBcm' }
   end
 
   describe '#change_address' do

@@ -12,7 +12,7 @@ module Glueby
           timestamps.each do |t|
             begin
               wallet = Glueby::Wallet.load(t.wallet_id)
-              funding_tx, tx = create_txs(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeEstimator.new, utxo_provider, type: t.timestamp_type.to_sym)
+              funding_tx, tx, p2c_address, payment_base = create_txs(wallet, t.prefix, t.content_hash, Glueby::Contract::FixedFeeEstimator.new, utxo_provider, type: t.timestamp_type.to_sym)
               if funding_tx
                 ::ActiveRecord::Base.transaction do
                   wallet.internal_wallet.broadcast(funding_tx)
@@ -21,7 +21,7 @@ module Glueby
               end
               ::ActiveRecord::Base.transaction do
                 wallet.internal_wallet.broadcast(tx) do |tx|
-                  t.update(txid: tx.txid, status: :unconfirmed)
+                  t.update(txid: tx.txid, status: :unconfirmed, p2c_address: p2c_address, payment_base: payment_base)
                 end
                 puts "timestamp tx was broadcasted (id=#{t.id}, txid=#{tx.txid})"
               end

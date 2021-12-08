@@ -129,23 +129,10 @@ module Glueby
           end
         end
 
-        def create_pay_to_contract_address(key, contents)
-          # Calculate P + H(P || contents)G
-          group = ECDSA::Group::Secp256k1
-          p = Tapyrus::Key.new(pubkey: key.public_key).to_point # P
-          commitment = Tapyrus.sha256(p.to_hex(true).htb + contents.join).bth.to_i(16) % group.order # H(P || contents)
-          point = p + group.generator.multiply_by_scalar(commitment) # P + H(P || contents)G
-          Tapyrus::Key.new(pubkey: point.to_hex(true)).to_p2pkh
-        end
-
-        def receive_address(wallet_id, label = nil, contents = nil)
+        def receive_address(wallet_id, label = nil)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           key = wallet.keys.create(purpose: :receive, label: label)
-          if contents
-            create_pay_to_contract_address(key, contents)
-          else
-            key.address
-          end
+          key.address
         end
 
         def change_address(wallet_id)

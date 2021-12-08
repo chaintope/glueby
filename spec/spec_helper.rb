@@ -96,6 +96,8 @@ def setup_database
     t.string   :prefix
     t.string   :wallet_id
     t.integer  :timestamp_type, null: false, default: 0
+    t.string   :p2c_address
+    t.string   :payment_base
   end
 
   connection.create_table :glueby_system_informations, force: true do |t|

@@ -194,6 +194,8 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
         expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_falsy
         expect(contract.tx.outputs[0].script_pubkey.p2pkh?).to be_truthy
         expect(contract.tx.outputs[1].value).to eq 99_989_000
+        expect(contract.p2c_address).not_to be_nil
+        expect(contract.payment_base).not_to be_nil
       end
     end
 
