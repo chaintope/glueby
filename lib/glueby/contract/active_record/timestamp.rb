@@ -16,6 +16,11 @@ module Glueby
           super(wallet_id: attributes[:wallet_id], content_hash: @content_hash,
                 prefix: attributes[:prefix] ? attributes[:prefix] : '', status: :init, timestamp_type: attributes[:timestamp_type] || :simple)
         end
+
+        # Return true if timestamp type is 'trackable' and output in timestamp transaction has not been spent yet, otherwise return false.
+        def latest
+          trackable?
+        end
       end
     end
   end
