@@ -105,7 +105,7 @@ RSpec.describe 'Token Contract', functional: true do
       end
     end
 
-    context 'bear fees by UtxoProvider' do
+    context 'bear fees by FeeProvider' do
       include_context 'setup fee provider'
 
       let(:fee) { 10_000 }
@@ -190,6 +190,85 @@ RSpec.describe 'Token Contract', functional: true do
         process_block
 
         expect(receiver.balances(false)['']).to eq(receiver_before_balance)
+        expect(receiver.balances(false)[token.color_id.to_hex]).to be_nil
+      end
+    end
+
+    context 'UtxoProvider provides UTXOs' do
+      include_context 'setup utxo provider'
+
+      let(:sender) { Glueby::Wallet.create }
+      let(:receiver) { Glueby::Wallet.create }
+
+      it 'reissunable token' do
+        token, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
+
+        token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to eq(5_000)
+        expect(receiver.balances(false)['']).to be_nil
+        expect(receiver.balances(false)[token.color_id.to_hex]).to eq(5_000)
+
+        token.reissue!(issuer: sender, amount: 5_000)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
+
+        token.burn!(sender: sender, amount: 10_000)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+      end
+
+      it 'non-reissunable token' do
+        token, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, amount: 10_000)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
+
+        token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to eq(5_000)
+        expect(receiver.balances(false)[token.color_id.to_hex]).to eq(5_000)
+
+        token.burn!(sender: sender, amount: 5_000)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+      end
+
+      it 'NFT token' do
+        token, _txs = Glueby::Contract::Token.issue!(issuer: sender, token_type: Tapyrus::Color::TokenTypes::NFT)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to eq(1)
+
+        token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+        expect(receiver.balances(false)[token.color_id.to_hex]).to eq 1
+
+        token.burn!(sender: receiver, amount: 1)
+        process_block
+
+        expect(receiver.balances(false)['']).to be_nil
         expect(receiver.balances(false)[token.color_id.to_hex]).to be_nil
       end
     end
