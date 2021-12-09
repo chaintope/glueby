@@ -48,12 +48,14 @@ RSpec.configure do |config|
       Rake.application.rake_require 'tasks/glueby/contract/timestamp'
       Rake.application.rake_require 'tasks/glueby/block_syncer'
       Rake.application.rake_require 'tasks/glueby/fee_provider'
+      Rake.application.rake_require 'tasks/glueby/utxo_provider'
       Rake::Task.define_task(:environment)
     end
   end
 end
 
 require_relative 'support/setup_fee_provider'
+require_relative 'support/setup_utxo_provider'
 
 def setup_database
   config = { adapter: 'sqlite3', database: File.join(Dir.tmpdir, 'glueby-test-db') }
