@@ -19,9 +19,8 @@ module Glueby
         module_function
 
         # @param [Glueby::Wallet] wallet
-        # @param [Array] data The data to be used for generating pay-to-contract address
-        # @return [Array(String, String)]
-        #    Return (pay-to-contract address, public key used for generating address)
+        # @param [Array] contents The data to be used for generating pay-to-contract address
+        # @return [pay-to-contract address, public key used for generating address]
         def create_pay_to_contract_address(wallet, contents: nil)
           pubkey = wallet.internal_wallet.create_pubkey.pubkey
           # Calculate P + H(P || contents)G
