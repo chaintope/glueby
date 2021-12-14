@@ -208,6 +208,19 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
           utxo_provider: utxo_provider
         )
       end
+      # Utxo provider use utxos whose value is UtxoProvider#default_value
+      let(:unspents) do
+        (0...20).map do |i|
+          {
+            txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
+            script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+            vout: i,
+            amount: 1_000,
+            finalized: true
+          }
+        end
+      end
+
       let(:utxo_provider) { Glueby::UtxoProvider.new }
       let(:wallet_adapter) { double(:wallet_adapter) }
 

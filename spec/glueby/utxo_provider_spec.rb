@@ -16,21 +16,18 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
       wallet.keys.create(purpose: :receive)
     end
 
-    before do
-      Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-        index: 0,
-        script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-        key: key,
-        value: 12_000, # need fee(10_000) + value(2_000)
-        status: :finalized
-      )
-    end
-
     it do
-      expect(subject[0].inputs.size).to eq 1
-      expect(subject[0].inputs.first.out_point.txid).to eq 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
-      expect(subject[0].inputs.first.out_point.index).to eq 0
+      12.times do |i|
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          index: i,
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          key: key,
+          value: 1_000,
+          status: :finalized
+        )
+      end
+      expect(subject[0].inputs.size).to eq 12
       expect(subject[0].outputs.size).to eq 1
       expect(subject[0].outputs.first.script_pubkey).to eq script_pubkey
       expect(subject[0].outputs.first.value).to eq 2_000
@@ -39,7 +36,39 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
 
     context 'does not have enough funds' do
       let(:value) { 2_001 }
-      it { expect { subject }.to raise_error(Glueby::Contract::Errors::InsufficientFunds) }
+      it do
+        expect { 
+          12.times do |i|
+            Glueby::Internal::Wallet::AR::Utxo.create(
+              txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+              index: i,
+              script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+              key: key,
+              value: 1_000,
+              status: :finalized
+            )
+          end
+          subject 
+        }.to raise_error(Glueby::Contract::Errors::InsufficientFunds)
+      end
+    end
+
+    context 'contains funds which value is not default value(1_000)' do
+      it 'does not use these funds' do
+        expect { 
+          20.times do |i|
+            Glueby::Internal::Wallet::AR::Utxo.create(
+              txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+              index: i,
+              script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+              key: key,
+              value: 2_000,
+              status: :finalized
+            )
+          end
+          subject 
+        }.to raise_error(Glueby::Contract::Errors::InsufficientFunds)
+      end
     end
   end
 
