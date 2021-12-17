@@ -3,24 +3,21 @@
 module Glueby
   module Contract
     module TxBuilder
-      # The amount of output in funding tx for Reissuable token.
-      FUNDING_TX_AMOUNT = 10_000
-
       def receive_address(wallet:)
         wallet.receive_address
       end
 
       # Create new public key, and new transaction that sends TPC to it
-      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new, utxo_provider: nil)
+      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new, utxo_provider: nil, need_value_for_change_output: false)
         if utxo_provider
           script_pubkey = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
-          funding_tx, _index = utxo_provider.get_utxo(script_pubkey, FUNDING_TX_AMOUNT)
+          funding_tx, _index = utxo_provider.get_utxo(script_pubkey, funding_tx_amount(need_value_for_change_output: need_value_for_change_output))
           utxo_provider.wallet.sign_tx(funding_tx)
         else
           txb = Tapyrus::TxBuilder.new
           fee = fee_estimator.fee(dummy_tx(txb.build))
 
-          sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + FUNDING_TX_AMOUNT)
+          sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + funding_tx_amount(need_value_for_change_output: need_value_for_change_output))
           outputs.each do |utxo|
             txb.add_utxo({
               script_pubkey: Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb),
@@ -31,7 +28,7 @@ module Glueby
           end
   
           receiver_address = script ? script.addresses.first : wallet.internal_wallet.receive_address
-          tx = txb.pay(receiver_address, FUNDING_TX_AMOUNT)
+          tx = txb.pay(receiver_address, funding_tx_amount)
             .change_address(wallet.internal_wallet.change_address)
             .fee(fee)
             .build
@@ -276,6 +273,21 @@ module Glueby
         receiver_colored_script = Tapyrus::Script.parse_from_payload('21c20000000000000000000000000000000000000000000000000000000000000000bc76a914000000000000000000000000000000000000000088ac'.htb)
         tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: receiver_colored_script)
         dummy_tx(tx)
+      end
+
+      private
+
+      # The amount of output in funding tx
+      # It returns same amount with FixedFeeEstimator's fixed fee. Because it is enough for paying fee for consumer
+      # transactions of the funding transactions.
+      #
+      # @option [Boolean] need_value_for_change_output If it is true, adds more value than the fee for producing change output.
+      def funding_tx_amount(need_value_for_change_output: false)
+        if need_value_for_change_output
+          FixedFeeEstimator.new.fixed_fee + Constants::DUST_LIMIT
+        else
+          FixedFeeEstimator.new.fixed_fee
+        end
       end
     end
   end
