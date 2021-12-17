@@ -189,8 +189,7 @@ module Glueby
           tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
           funding_tx.outputs.first.value
         else
-          dust = 600 # in case that the wallet has output which has just fee amount.
-          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + dust)
+          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + Constants::DUST_LIMIT)
           fill_input(tx, outputs)
           sum_tpc
         end

@@ -11,6 +11,7 @@ module Glueby
   autoload :Configuration, 'glueby/configuration'
   autoload :BlockSyncer, 'glueby/block_syncer'
   autoload :UtxoProvider, 'glueby/utxo_provider'
+  autoload :Constants, 'glueby/constants'
 
   if defined? ::Rails::Railtie
     require 'glueby/railtie'
