@@ -22,6 +22,8 @@ module Glueby
     class FixedFeeEstimator
       include FeeEstimator
 
+      attr_reader :fixed_fee
+
       class << self
         attr_accessor :default_fixed_fee
       end

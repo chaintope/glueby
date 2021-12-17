@@ -419,9 +419,10 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       before do
         Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
         Glueby.configuration.enable_utxo_provider!
-        privider = Glueby::UtxoProvider.new
+        # create a wallet for UtxoProvider
+        Glueby::UtxoProvider.new
 
-        (0...20).each do |i|
+        (0...25).each do |i|
           Glueby::Internal::Wallet::AR::Utxo.create(
             txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
             index: i,
@@ -437,6 +438,26 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       it do
         expect(internal_wallet).to receive(:broadcast).twice
         subject
+      end
+
+      context 'burns all the amount the wallet have' do
+        let(:amount) { 200_000 }
+
+        before do
+          allow(sender).to receive(:balances).and_return({ 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000 })
+        end
+
+        it 'has one output for to be a standard tx' do
+          txs = []
+          expect(internal_wallet).to receive(:broadcast).twice do |tx|
+            txs << tx
+            tx
+          end
+          subject
+
+          _, burn_tx = txs
+          expect(burn_tx.outputs.count).to eq(1)
+        end
       end
     end
 
@@ -486,6 +507,21 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       end
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::InsufficientFunds }
+    end
+
+    context 'burns all the amount the wallet have' do
+      let(:amount) { 200_000 }
+
+      it 'has one output' do
+        burn_tx = nil
+        expect(internal_wallet).to receive(:broadcast) do |tx|
+          burn_tx = tx
+          tx
+        end
+        subject
+
+        expect(burn_tx.outputs.count).to eq(1)
+      end
     end
   end
 

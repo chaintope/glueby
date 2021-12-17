@@ -190,9 +190,24 @@ module Glueby
       # @raise [InvalidAmount] if amount is not positive integer.
       def burn!(sender:, amount: 0)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
+        raise Glueby::Contract::Errors::InsufficientTokens unless sender.balances[color_id.to_hex]
+        raise Glueby::Contract::Errors::InsufficientTokens if sender.balances[color_id.to_hex] < amount
+
+        burn_all_amount_flag = true if sender.balances[color_id.to_hex] - amount == 0
 
         utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
-        funding_tx = create_funding_tx(wallet: sender, utxo_provider: utxo_provider) if utxo_provider
+        if utxo_provider
+          funding_tx = create_funding_tx(
+            wallet: sender,
+            utxo_provider: utxo_provider,
+            # When it burns all the amount of the color id, burn tx is not going to be have any output
+            # because change outputs is not necessary. Transactions needs one output at least.
+            # At that time, set true to this option to get more value to be created change output to
+            # the tx.
+            need_value_for_change_output: burn_all_amount_flag
+          )
+        end
+
         funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
 
         tx = create_burn_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, amount: amount)
