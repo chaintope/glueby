@@ -408,6 +408,10 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
     let(:sender) { wallet }
     let(:amount) { 200_000 }
 
+    before do
+      allow(sender).to receive(:balances).and_return({ 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000 })
+    end
+
     it { expect { subject }.not_to raise_error }
 
     context 'use utxo provider', active_record: true do
@@ -442,10 +446,6 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
       context 'burns all the amount the wallet have' do
         let(:amount) { 200_000 }
-
-        before do
-          allow(sender).to receive(:balances).and_return({ 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000 })
-        end
 
         it 'has one output for to be a standard tx' do
           txs = []

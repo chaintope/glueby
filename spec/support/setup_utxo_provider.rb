@@ -20,7 +20,13 @@ RSpec.shared_context 'setup utxo provider' do
   end
 
   after do
-    Glueby.configuration.disable_utxo_provider!
+    Glueby.configure do |config|
+      config.disable_utxo_provider!
+      config.utxo_provider_config = {
+        default_value: 1_000,
+        utxo_pool_size: 20
+      }
+    end
     Glueby::Contract::FixedFeeEstimator.default_fixed_fee = nil
   end
 end
