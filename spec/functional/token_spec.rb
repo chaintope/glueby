@@ -225,8 +225,7 @@ RSpec.describe 'Token Contract', functional: true do
         token.burn!(sender: sender, amount: 10_000)
         process_block
 
-        # TODO: Make the below expectation possible to pass by fixing https://github.com/chaintope/glueby/issues/104
-        # expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)['']).to be_nil
         expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
       end
 
@@ -248,8 +247,7 @@ RSpec.describe 'Token Contract', functional: true do
         token.burn!(sender: sender, amount: 5_000)
         process_block
 
-        # TODO: Make the below expectation possible to pass by fixing https://github.com/chaintope/glueby/issues/104
-        # expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)['']).to be_nil
         expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
       end
 
@@ -270,8 +268,7 @@ RSpec.describe 'Token Contract', functional: true do
         token.burn!(sender: receiver, amount: 1)
         process_block
 
-        # TODO: Make the below expectation possible to pass by fixing https://github.com/chaintope/glueby/issues/104
-        # expect(receiver.balances(false)['']).to be_nil
+        expect(receiver.balances(false)['']).to be_nil
         expect(receiver.balances(false)[token.color_id.to_hex]).to be_nil
       end
     end
