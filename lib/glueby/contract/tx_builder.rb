@@ -186,7 +186,7 @@ module Glueby
           tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
           funding_tx.outputs.first.value
         else
-          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + Constants::DUST_LIMIT)
+          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + DUST_LIMIT)
           fill_input(tx, outputs)
           sum_tpc
         end
@@ -284,7 +284,7 @@ module Glueby
       # @option [Boolean] need_value_for_change_output If it is true, adds more value than the fee for producing change output.
       def funding_tx_amount(need_value_for_change_output: false)
         if need_value_for_change_output
-          FixedFeeEstimator.new.fixed_fee + Constants::DUST_LIMIT
+          FixedFeeEstimator.new.fixed_fee + DUST_LIMIT
         else
           FixedFeeEstimator.new.fixed_fee
         end
