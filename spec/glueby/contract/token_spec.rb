@@ -457,6 +457,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
           _, burn_tx = txs
           expect(burn_tx.outputs.count).to eq(1)
+          expect(burn_tx.outputs[0].value).to eq(Glueby::DUST_LIMIT)
         end
       end
     end
