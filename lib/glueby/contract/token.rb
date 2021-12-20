@@ -190,10 +190,11 @@ module Glueby
       # @raise [InvalidAmount] if amount is not positive integer.
       def burn!(sender:, amount: 0)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
-        raise Glueby::Contract::Errors::InsufficientTokens unless sender.balances[color_id.to_hex]
-        raise Glueby::Contract::Errors::InsufficientTokens if sender.balances[color_id.to_hex] < amount
+        balance = sender.balances[color_id.to_hex]
+        raise Glueby::Contract::Errors::InsufficientTokens unless balance
+        raise Glueby::Contract::Errors::InsufficientTokens if balance < amount
 
-        burn_all_amount_flag = true if sender.balances[color_id.to_hex] - amount == 0
+        burn_all_amount_flag = true if balance - amount == 0
 
         utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
         if utxo_provider
