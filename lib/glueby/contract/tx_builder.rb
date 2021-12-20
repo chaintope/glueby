@@ -216,7 +216,12 @@ module Glueby
       def fill_change_tpc(tx, wallet, change)
         return unless change.positive?
 
-        change_script = Tapyrus::Script.parse_from_addr(wallet.internal_wallet.change_address)
+        if Glueby.configuration.use_utxo_provider?
+          change_script = Tapyrus::Script.parse_from_addr(UtxoProvider.new.wallet.change_address)
+        else
+          change_script = Tapyrus::Script.parse_from_addr(wallet.internal_wallet.change_address)
+        end
+
         tx.outputs << Tapyrus::TxOut.new(value: change, script_pubkey: change_script)
       end
 
