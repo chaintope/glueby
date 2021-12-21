@@ -8,8 +8,9 @@ module Glueby
       end
 
       # Create new public key, and new transaction that sends TPC to it
-      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new, utxo_provider: nil, need_value_for_change_output: false)
-        if utxo_provider
+      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new, need_value_for_change_output: false)
+        if Glueby.configuration.use_utxo_provider?
+          utxo_provider = UtxoProvider.new
           script_pubkey = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
           funding_tx, _index = utxo_provider.get_utxo(script_pubkey, funding_tx_amount(need_value_for_change_output: need_value_for_change_output))
           utxo_provider.wallet.sign_tx(funding_tx)
