@@ -29,7 +29,6 @@ module Glueby
         return if utxos.empty?
 
         utxos.each { |utxo| txb.add_utxo(utxo) }
-        address = wallet.receive_address
 
         shortage = [utxo_provider.utxo_pool_size - current_utxo_pool_size, 0].max
         return if shortage == 0
@@ -65,7 +64,7 @@ module Glueby
             message = <<~MESSAGE
             1. Please replenishment TPC which is for paying tpc to UtxoProvider. 
               UtxoProvider needs #{value_to_fill_utxo_pool} tapyrus in UTXO pool. 
-              UtxoProvider wallet's address is '#{wallet.receive_address}'
+              UtxoProvider wallet's address is '#{address}'
             2. Then create UTXOs for paying in UTXO pool with 'rake glueby:utxo_provider:manage_utxo_pool'
             MESSAGE
           else
@@ -88,7 +87,7 @@ module Glueby
 
       # Show the address of Utxo Provider 
       def print_address
-        puts wallet.receive_address
+        puts address
       end
 
       private
@@ -129,6 +128,10 @@ module Glueby
 
       def delimit(num)
         num.to_s.reverse.scan(/.{1,3}/).join('_').reverse
+      end
+
+      def address
+        @address ||= wallet.get_addresses.first || wallet.receive_address
       end
     end
   end
