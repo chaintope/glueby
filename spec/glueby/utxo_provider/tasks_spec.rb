@@ -42,6 +42,9 @@ RSpec.describe Glueby::UtxoProvider::Tasks, active_record: true do
         let(:balance) { 35_000 }
 
         it 'makes the pool full' do
+          # Never create the new address
+          expect(wallet).not_to receive(:receive_address)
+
           expect(wallet).to receive(:broadcast) do |tx|
             expect(tx.inputs.count).to eq(3)
             expect(tx.inputs[0].out_point).to eq(Tapyrus::OutPoint.from_txid('5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5', 0))
@@ -378,7 +381,7 @@ RSpec.describe Glueby::UtxoProvider::Tasks, active_record: true do
     subject { tasks.print_address }
 
     it do
-      expect { subject }.to output("1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT\n").to_stdout
+      expect { subject }.to output("191arn68nSLRiNJXD8srnmw4bRykBkVv6o\n").to_stdout
     end
   end
 end
