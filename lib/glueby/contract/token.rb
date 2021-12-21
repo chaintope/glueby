@@ -80,8 +80,7 @@ module Glueby
         private
 
         def issue_reissuable_token(issuer:, amount:)
-          utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
-          funding_tx = create_funding_tx(wallet: issuer, utxo_provider: utxo_provider)
+          funding_tx = create_funding_tx(wallet: issuer)
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
 
@@ -97,8 +96,7 @@ module Glueby
         end
 
         def issue_non_reissuable_token(issuer:, amount:)
-          utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
-          funding_tx = create_funding_tx(wallet: issuer, utxo_provider: utxo_provider) if utxo_provider
+          funding_tx = create_funding_tx(wallet: issuer) if Glueby.configuration.use_utxo_provider?
           funding_tx = issuer.internal_wallet.broadcast(funding_tx) if funding_tx
 
           tx = create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount)
@@ -114,8 +112,7 @@ module Glueby
         end
 
         def issue_nft_token(issuer:)
-          utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
-          funding_tx = create_funding_tx(wallet: issuer, utxo_provider: utxo_provider) if utxo_provider
+          funding_tx = create_funding_tx(wallet: issuer) if Glueby.configuration.use_utxo_provider?
           funding_tx = issuer.internal_wallet.broadcast(funding_tx) if funding_tx
 
           tx = create_issue_tx_for_nft_token(funding_tx: funding_tx, issuer: issuer)
@@ -145,10 +142,9 @@ module Glueby
       def reissue!(issuer:, amount:)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
-        utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
 
         if validate_reissuer(wallet: issuer)
-          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, utxo_provider: utxo_provider)
+          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey)
           funding_tx = issuer.internal_wallet.broadcast(funding_tx)
           tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
           tx = issuer.internal_wallet.broadcast(tx)
@@ -171,8 +167,7 @@ module Glueby
       def transfer!(sender:, receiver_address:, amount: 1)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-        utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
-        funding_tx = create_funding_tx(wallet: sender, utxo_provider: utxo_provider) if utxo_provider
+        funding_tx = create_funding_tx(wallet: sender) if Glueby.configuration.use_utxo_provider?
         funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
 
         tx = create_transfer_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, receiver_address: receiver_address, amount: amount)
@@ -200,7 +195,6 @@ module Glueby
         if utxo_provider
           funding_tx = create_funding_tx(
             wallet: sender,
-            utxo_provider: utxo_provider,
             # When it burns all the amount of the color id, burn tx is not going to be have any output
             # because change outputs is not necessary. Transactions needs one output at least.
             # At that time, set true to this option to get more value to be created change output to

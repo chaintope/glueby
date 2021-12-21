@@ -63,9 +63,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   before { allow(internal_wallet).to receive(:list_unspent).and_return(unspents) }
 
   describe '#create_funding_tx' do
-    subject { mock.create_funding_tx(wallet: wallet, utxo_provider: utxo_provider) }
-
-    let(:utxo_provider) { nil }
+    subject { mock.create_funding_tx(wallet: wallet) }
 
     it { expect(subject.inputs.size).to eq 1 }
     it { expect(subject.inputs[0].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5' }
@@ -91,10 +89,15 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
       end
 
       before do
+        Glueby.configuration.enable_utxo_provider!
         Glueby::Internal::Wallet.wallet_adapter = wallet_adapter
         allow(wallet_adapter).to receive(:load_wallet)
-        allow(utxo_provider).to receive(:wallet).and_return(utxo_provider_wallet)
+        allow_any_instance_of(Glueby::UtxoProvider).to receive(:wallet).and_return(utxo_provider_wallet)
         allow(utxo_provider_wallet).to receive(:list_unspent).and_return(pool_outputs)
+      end
+
+      after do
+        Glueby.configuration.disable_utxo_provider!
       end
 
       it { expect(subject.inputs.size).to eq 20 }
