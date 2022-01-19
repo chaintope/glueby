@@ -24,7 +24,7 @@ module Glueby
         end
 
         # Broadcast and save timestamp
-        # @param [Glueby::Contract::FixedFeeEstimator] fee estimator
+        # @param [Glueby::Contract::FixedFeeEstimator] fee_estimator
         # @return true if tapyrus transactions were broadcasted and the timestamp was updated successfully, otherwise false.
         def save_with_broadcast(fee_estimator: Glueby::Contract::FixedFeeEstimator.new)
           utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
