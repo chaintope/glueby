@@ -9,13 +9,7 @@ module Glueby
         def create
           timestamps = Glueby::Contract::AR::Timestamp.where(status: :init)
           fee_estimator = Glueby::Contract::FixedFeeEstimator.new
-          timestamps.each do |t|
-            begin
-              t.save_with_broadcast(fee_estimator: fee_estimator)
-            rescue => e
-              puts "failed to broadcast (id=#{t.id}, reason=#{e.message})"
-            end
-          end
+          timestamps.each { |t| t.save_with_broadcast(fee_estimator: fee_estimator) }
         end
       end
     end

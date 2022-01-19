@@ -81,14 +81,6 @@ module Glueby
         def get_transaction(tx)
           Glueby::Internal::RPC.client.getrawtransaction(tx.txid, 1)
         end
-
-        def logger
-          if defined?(Rails)
-            Rails.logger
-          else
-            Logger.new(STDOUT)
-          end
-        end
       end
       include Glueby::Contract::Timestamp::Util
 
