@@ -2,8 +2,10 @@ module Glueby
   module Contract
     module AR
       class Timestamp < ::ActiveRecord::Base
+        include Glueby::GluebyLogger
         include Glueby::Contract::Timestamp::Util
         include Glueby::Contract::TxBuilder
+
         enum status: { init: 0, unconfirmed: 1, confirmed: 2 }
         enum timestamp_type: { simple: 0, trackable: 1 }
 

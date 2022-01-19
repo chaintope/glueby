@@ -17,6 +17,16 @@ module Glueby
     require 'glueby/railtie'
   end
 
+  module GluebyLogger
+    def logger
+      if defined?(Rails)
+        Rails.logger
+      else
+        Logger.new(STDOUT)
+      end
+    end
+  end
+
   # Add prefix to activerecord table names
   def self.table_name_prefix
     'glueby_'
