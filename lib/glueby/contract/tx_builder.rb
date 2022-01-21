@@ -133,15 +133,23 @@ module Glueby
       end
 
       def create_transfer_tx(funding_tx:nil, color_id:, sender:, receiver_address:, amount:, fee_estimator: FixedFeeEstimator.new)
+        receivers = [{ address: receiver_address, amount: amount }]
+        create_multi_transfer_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, receivers: receivers, fee_estimator: fee_estimator)
+      end
+
+      def create_multi_transfer_tx(funding_tx:nil, color_id:, sender:, receivers:, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
+        amount = receivers.reduce(0) { |sum, r| sum + r[:amount].to_i }
         utxos = sender.internal_wallet.list_unspent
         sum_token, outputs = collect_colored_outputs(utxos, color_id, amount)
         fill_input(tx, outputs)
 
-        receiver_script = Tapyrus::Script.parse_from_addr(receiver_address)
-        receiver_colored_script = receiver_script.add_color(color_id)
-        tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
+        receivers.each do |r|
+          receiver_script = Tapyrus::Script.parse_from_addr(r[:address])
+          receiver_colored_script = receiver_script.add_color(color_id)
+          tx.outputs << Tapyrus::TxOut.new(value: r[:amount].to_i, script_pubkey: receiver_colored_script)
+        end
 
         fill_change_token(tx, sender, sum_token - amount, color_id)
 

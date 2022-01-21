@@ -175,6 +175,18 @@ module Glueby
         [color_id, tx]
       end
 
+      def multi_transfer!(sender:, receivers:)
+        receivers.each do |r|
+          raise Glueby::Contract::Errors::InvalidAmount unless r[:amount].positive?
+        end
+        funding_tx = create_funding_tx(wallet: sender) if Glueby.configuration.use_utxo_provider?
+        funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
+
+        tx = create_multi_transfer_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, receivers: receivers)
+        sender.internal_wallet.broadcast(tx)
+        [color_id, tx]
+      end
+
       # Burn token
       # If amount is not specified or 0, burn all token associated with the wallet.
       #
