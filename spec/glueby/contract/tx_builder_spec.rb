@@ -215,6 +215,42 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.outputs[2].value).to eq 99_990_000 }
   end
 
+  describe '#create_multi_transfer_tx' do
+    subject { mock.create_multi_transfer_tx(color_id: color_id, sender: sender, receivers: receivers) }
+
+    let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
+    let(:sender) { wallet }
+    let(:receivers) do
+      [
+        { address: wallet.internal_wallet.receive_address, amount: 100_001 },
+        { address: wallet.internal_wallet.receive_address, amount: 2 },
+        { address: wallet.internal_wallet.receive_address, amount: 3 }
+      ]
+    end
+
+    it { expect(subject.inputs.size).to eq 3 }
+    it { expect(subject.inputs[0].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2' }
+    it { expect(subject.inputs[0].out_point.index).to eq 0 }
+    it { expect(subject.inputs[1].out_point.txid).to eq 'a3f20bc94c8d77c35ba1770116d2b34375475a4194d15f76442636e9f77d50d9' }
+    it { expect(subject.inputs[1].out_point.index).to eq 2 }
+    it { expect(subject.inputs[2].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5' }
+    it { expect(subject.inputs[2].out_point.index).to eq 0 }
+    it { expect(subject.outputs.size).to eq 5 }
+    it { expect(subject.outputs[0].value).to eq 100_001 }
+    it { expect(subject.outputs[0].colored?).to be_truthy }
+    it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    it { expect(subject.outputs[1].value).to eq 2 }
+    it { expect(subject.outputs[1].colored?).to be_truthy }
+    it { expect(subject.outputs[1].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    it { expect(subject.outputs[2].value).to eq 3 }
+    it { expect(subject.outputs[2].colored?).to be_truthy }
+    it { expect(subject.outputs[2].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    it { expect(subject.outputs[3].value).to eq 99_994 }
+    it { expect(subject.outputs[3].colored?).to be_truthy }
+    it { expect(subject.outputs[3].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    it { expect(subject.outputs[4].value).to eq 99_990_000 }
+  end
+
   describe '#create_burn_tx' do
     subject { mock.create_burn_tx(color_id: color_id, sender: sender, amount: amount, fee_estimator: fee_estimator) }
 
