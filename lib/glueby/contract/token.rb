@@ -175,6 +175,14 @@ module Glueby
         [color_id, tx]
       end
 
+      # Send the tokens to multiple wallets
+      #
+      # @param sender [Glueby::Wallet] wallet to send this token
+      # @param receivers [Array<Hash>] array of hash, which keys are :address and :amount
+      # @return [Array<String, tx>] Tuple of color_id and tx object
+      # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
+      # @raise [InsufficientTokens] if wallet does not have enough token to send.
+      # @raise [InvalidAmount] if amount is not positive integer.
       def multi_transfer!(sender:, receivers:)
         receivers.each do |r|
           raise Glueby::Contract::Errors::InvalidAmount unless r[:amount].positive?
