@@ -114,7 +114,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   end
 
   describe '#create_issue_tx_for_reissuable_token' do
-    subject { mock.create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount) }
+    subject { mock.create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split) }
 
     let(:funding_tx) do
       tx = Tapyrus::Tx.new
@@ -125,6 +125,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     let(:script_pubkey) { Tapyrus::Script.parse_from_payload('76a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
     let(:issuer) { wallet }
     let(:amount) { 1_000 }
+    let(:split) { 1 }
 
     it { expect(subject.inputs.size).to eq 1 }
     it { expect(subject.inputs[0].out_point.txid).to eq funding_tx.txid }
@@ -134,13 +135,29 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.outputs[0].colored?).to be_truthy }
     it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
     it { expect(subject.outputs[1].value).to eq 99_990_000 }
+
+    context 'split outputs' do
+      let(:split) { 3 }
+      it { expect(subject.outputs.size).to eq 4 }
+      it { expect(subject.outputs[0].value).to eq 333 }
+      it { expect(subject.outputs[0].colored?).to be_truthy }
+      it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+      it { expect(subject.outputs[1].value).to eq 333 }
+      it { expect(subject.outputs[1].colored?).to be_truthy }
+      it { expect(subject.outputs[1].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+      it { expect(subject.outputs[2].value).to eq 334 }
+      it { expect(subject.outputs[2].colored?).to be_truthy }
+      it { expect(subject.outputs[2].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+      it { expect(subject.outputs[3].value).to eq 99_990_000 }
+    end
   end
 
   describe '#create_issue_tx_for_non_reissuable_token' do
-    subject { mock.create_issue_tx_for_non_reissuable_token(issuer: issuer, amount: amount) }
+    subject { mock.create_issue_tx_for_non_reissuable_token(issuer: issuer, amount: amount, split: split) }
 
     let(:issuer) { wallet }
     let(:amount) { 1_000 }
+    let(:split) { 1 }
 
     it { expect(subject.inputs.size).to eq 1 }
     it { expect(subject.inputs[0].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5' }
@@ -150,6 +167,22 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.outputs[0].colored?).to be_truthy }
     it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::NON_REISSUABLE }
     it { expect(subject.outputs[1].value).to eq 99_990_000 }
+
+    context 'split outputs' do
+      let(:split) { 3 }
+
+      it { expect(subject.outputs.size).to eq 4 }
+      it { expect(subject.outputs[0].value).to eq 333 }
+      it { expect(subject.outputs[0].colored?).to be_truthy }
+      it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::NON_REISSUABLE }
+      it { expect(subject.outputs[1].value).to eq 333 }
+      it { expect(subject.outputs[1].colored?).to be_truthy }
+      it { expect(subject.outputs[1].color_id.type).to eq Tapyrus::Color::TokenTypes::NON_REISSUABLE }
+      it { expect(subject.outputs[2].value).to eq 334 }
+      it { expect(subject.outputs[2].colored?).to be_truthy }
+      it { expect(subject.outputs[2].color_id.type).to eq Tapyrus::Color::TokenTypes::NON_REISSUABLE }
+      it { expect(subject.outputs[3].value).to eq 99_990_000 }
+    end
   end
 
   describe '#create_issue_tx_for_nft_token' do
@@ -168,7 +201,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   end
 
   describe '#create_reissue_tx' do
-    subject { mock.create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id) }
+    subject { mock.create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id, split: split) }
 
     let(:funding_tx) do
       tx = Tapyrus::Tx.new
@@ -179,6 +212,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     let(:script_pubkey) { Tapyrus::Script.parse_from_payload('76a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
     let(:issuer) { wallet }
     let(:amount) { 1_000 }
+    let(:split) { 1 }
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
 
     it { expect(subject.inputs.size).to eq 1 }
@@ -188,6 +222,22 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.outputs[0].value).to eq 1_000 }
     it { expect(subject.outputs[0].colored?).to be_truthy }
     it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+
+    context 'split outputs' do
+      let(:split) { 3 }
+
+      it { expect(subject.outputs.size).to eq 4 }
+      it { expect(subject.outputs[0].value).to eq 333 }
+      it { expect(subject.outputs[0].colored?).to be_truthy }
+      it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+      it { expect(subject.outputs[1].value).to eq 333 }
+      it { expect(subject.outputs[1].colored?).to be_truthy }
+      it { expect(subject.outputs[1].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+      it { expect(subject.outputs[2].value).to eq 334 }
+      it { expect(subject.outputs[2].colored?).to be_truthy }
+      it { expect(subject.outputs[2].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+      it { expect(subject.outputs[3].value).to eq 99_990_000 }
+    end
   end
   
   describe '#create_transfer_tx' do
@@ -310,6 +360,48 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     end
   end
 
+  describe '#add_split_output' do
+    subject { mock.add_split_output(tx, amount, split, script_pubkey) }
+
+    let(:tx) { Tapyrus::Tx.new }
+    let(:amount) { 10001 }
+    let(:split) { 1 }
+    let(:script_pubkey) { Tapyrus::Script.new }
+
+    it do
+      subject 
+      expect(tx.outputs.size).to eq 1
+      expect(tx.outputs[0].value).to eq 10001
+      expect(tx.outputs[0].script_pubkey.to_hex).to eq script_pubkey.to_hex
+    end
+
+    context 'split 100 outputs' do
+      let(:split) { 100 }
+
+      it do
+        subject 
+        expect(tx.outputs.size).to eq 100
+        expect(tx.outputs[0].value).to eq 100
+        expect(tx.outputs[0].script_pubkey.to_hex).to eq script_pubkey.to_hex
+        expect(tx.outputs[99].value).to eq 101
+        expect(tx.outputs[99].script_pubkey.to_hex).to eq script_pubkey.to_hex
+      end
+    end
+
+    context 'amount is less than split parameter' do
+      let(:amount) { 10 }
+      let(:split) { 100 }
+
+      it do
+        subject 
+        expect(tx.outputs.size).to eq 10
+        expect(tx.outputs[0].value).to eq 1
+        expect(tx.outputs[0].script_pubkey.to_hex).to eq script_pubkey.to_hex
+        expect(tx.outputs[9].value).to eq 1
+        expect(tx.outputs[9].script_pubkey.to_hex).to eq script_pubkey.to_hex
+      end
+    end
+  end
   describe '#fill_input' do
     subject { mock.fill_input(tx, outputs) }
 
