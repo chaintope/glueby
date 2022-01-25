@@ -37,7 +37,7 @@ module Glueby
         end
       end
 
-      def create_issue_tx_for_reissuable_token(funding_tx:, issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
+      def create_issue_tx_for_reissuable_token(funding_tx:, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -47,7 +47,8 @@ module Glueby
         receiver_script = Tapyrus::Script.parse_from_payload(output.script_pubkey.to_payload)
         color_id = Tapyrus::Color::ColorIdentifier.reissuable(receiver_script)
         receiver_colored_script = receiver_script.add_color(color_id)
-        tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
+
+        add_split_output(tx, amount, split, receiver_colored_script)
 
         fee = fee_estimator.fee(dummy_tx(tx))
         fill_change_tpc(tx, issuer, output.value - fee)
@@ -60,15 +61,15 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_issue_tx_for_non_reissuable_token(funding_tx: nil, issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
-        create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, fee_estimator: fee_estimator)
+      def create_issue_tx_for_non_reissuable_token(funding_tx: nil, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new)
+        create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
       end
 
       def create_issue_tx_for_nft_token(funding_tx: nil, issuer:, fee_estimator: FixedFeeEstimator.new)
         create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NFT, issuer: issuer, amount: 1, fee_estimator: fee_estimator)
       end
 
-      def create_issue_tx_from_out_point(funding_tx: nil, token_type:, issuer:, amount:, fee_estimator: FixedFeeEstimator.new)
+      def create_issue_tx_from_out_point(funding_tx: nil, token_type:, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
@@ -93,7 +94,7 @@ module Glueby
 
         receiver_script = Tapyrus::Script.parse_from_addr(issuer.internal_wallet.receive_address)
         receiver_colored_script = receiver_script.add_color(color_id)
-        tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
+        add_split_output(tx, amount, split, receiver_colored_script)
 
         fill_change_tpc(tx, issuer, sum - fee)
         prev_txs = if funding_tx
@@ -110,7 +111,7 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_reissue_tx(funding_tx:, issuer:, amount:, color_id:, fee_estimator: FixedFeeEstimator.new)
+      def create_reissue_tx(funding_tx:, issuer:, amount:, color_id:, split: 1, fee_estimator: FixedFeeEstimator.new)
         tx = Tapyrus::Tx.new
 
         out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -119,7 +120,7 @@ module Glueby
 
         receiver_script = Tapyrus::Script.parse_from_payload(output.script_pubkey.to_payload)
         receiver_colored_script = receiver_script.add_color(color_id)
-        tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_colored_script)
+        add_split_output(tx, amount, split, receiver_colored_script)
 
         fee = fee_estimator.fee(dummy_tx(tx))
         fill_change_tpc(tx, issuer, output.value - fee)
@@ -213,6 +214,17 @@ module Glueby
           []
         end
         sender.internal_wallet.sign_tx(tx, prev_txs)
+      end
+
+      def add_split_output(tx, amount, split, script_pubkey)
+        if amount < split
+          split = amount
+          value = 1
+        else
+          value = (amount/split).to_i
+        end
+        (split - 1).times { tx.outputs << Tapyrus::TxOut.new(value: value, script_pubkey: script_pubkey) }
+        tx.outputs << Tapyrus::TxOut.new(value: amount - value * (split - 1), script_pubkey: script_pubkey)
       end
 
       def fill_input(tx, outputs)
