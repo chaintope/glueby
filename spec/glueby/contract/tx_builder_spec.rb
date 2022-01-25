@@ -196,6 +196,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
     let(:sender) { wallet }
     let(:receiver_address) { wallet.internal_wallet.receive_address }
+    let(:script_pubkey) { Tapyrus::Script.parse_from_addr(receiver_address).add_color(color_id).to_hex }
     let(:amount) { 100_001 }
 
     it { expect(subject.inputs.size).to eq 3 }
@@ -209,6 +210,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.outputs[0].value).to eq 100_001 }
     it { expect(subject.outputs[0].colored?).to be_truthy }
     it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    it { expect(subject.outputs[0].script_pubkey.to_hex).to eq script_pubkey }
     it { expect(subject.outputs[1].value).to eq 99_999 }
     it { expect(subject.outputs[1].colored?).to be_truthy }
     it { expect(subject.outputs[1].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
@@ -220,11 +222,17 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
 
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
     let(:sender) { wallet }
+    let(:address1) { wallet.internal_wallet.receive_address }
+    let(:address2) { wallet.internal_wallet.receive_address }
+    let(:address3) { wallet.internal_wallet.receive_address }
+    let(:script_pubkey1) { Tapyrus::Script.parse_from_addr(address1).add_color(color_id).to_hex }
+    let(:script_pubkey2) { Tapyrus::Script.parse_from_addr(address2).add_color(color_id).to_hex }
+    let(:script_pubkey3) { Tapyrus::Script.parse_from_addr(address3).add_color(color_id).to_hex }
     let(:receivers) do
       [
-        { address: wallet.internal_wallet.receive_address, amount: 100_001 },
-        { address: wallet.internal_wallet.receive_address, amount: 2 },
-        { address: wallet.internal_wallet.receive_address, amount: 3 }
+        { address: address1, amount: 100_001 },
+        { address: address2, amount: 2 },
+        { address: address3, amount: 3 }
       ]
     end
 
@@ -239,12 +247,15 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.outputs[0].value).to eq 100_001 }
     it { expect(subject.outputs[0].colored?).to be_truthy }
     it { expect(subject.outputs[0].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    it { expect(subject.outputs[0].script_pubkey.to_hex).to eq script_pubkey1 }
     it { expect(subject.outputs[1].value).to eq 2 }
     it { expect(subject.outputs[1].colored?).to be_truthy }
     it { expect(subject.outputs[1].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    it { expect(subject.outputs[1].script_pubkey.to_hex).to eq script_pubkey2 }
     it { expect(subject.outputs[2].value).to eq 3 }
     it { expect(subject.outputs[2].colored?).to be_truthy }
     it { expect(subject.outputs[2].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
+    it { expect(subject.outputs[2].script_pubkey.to_hex).to eq script_pubkey3 }
     it { expect(subject.outputs[3].value).to eq 99_994 }
     it { expect(subject.outputs[3].colored?).to be_truthy }
     it { expect(subject.outputs[3].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
