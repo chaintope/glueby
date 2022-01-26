@@ -149,6 +149,8 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
       it { expect(subject.outputs[2].colored?).to be_truthy }
       it { expect(subject.outputs[2].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
       it { expect(subject.outputs[3].value).to eq 99_990_000 }
+      it { expect(subject.outputs[0].script_pubkey).to eq subject.outputs[1].script_pubkey }
+      it { expect(subject.outputs[1].script_pubkey).to eq subject.outputs[2].script_pubkey }
     end
   end
 
@@ -182,6 +184,8 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
       it { expect(subject.outputs[2].colored?).to be_truthy }
       it { expect(subject.outputs[2].color_id.type).to eq Tapyrus::Color::TokenTypes::NON_REISSUABLE }
       it { expect(subject.outputs[3].value).to eq 99_990_000 }
+      it { expect(subject.outputs[0].script_pubkey).to eq subject.outputs[1].script_pubkey }
+      it { expect(subject.outputs[1].script_pubkey).to eq subject.outputs[2].script_pubkey }
     end
   end
 
@@ -237,6 +241,8 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
       it { expect(subject.outputs[2].colored?).to be_truthy }
       it { expect(subject.outputs[2].color_id.type).to eq Tapyrus::Color::TokenTypes::REISSUABLE }
       it { expect(subject.outputs[3].value).to eq 99_990_000 }
+      it { expect(subject.outputs[0].script_pubkey).to eq subject.outputs[1].script_pubkey }
+      it { expect(subject.outputs[1].script_pubkey).to eq subject.outputs[2].script_pubkey }
     end
   end
   
@@ -399,6 +405,22 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
         expect(tx.outputs[0].script_pubkey.to_hex).to eq script_pubkey.to_hex
         expect(tx.outputs[9].value).to eq 1
         expect(tx.outputs[9].script_pubkey.to_hex).to eq script_pubkey.to_hex
+      end
+    end
+
+    context 'The amount is divisible by split.' do
+      let(:amount) { 999 }
+      let(:split) { 3 }
+
+      it do
+        subject 
+        expect(tx.outputs.size).to eq 3
+        expect(tx.outputs[0].value).to eq 333
+        expect(tx.outputs[0].script_pubkey.to_hex).to eq script_pubkey.to_hex
+        expect(tx.outputs[1].value).to eq 333
+        expect(tx.outputs[1].script_pubkey.to_hex).to eq script_pubkey.to_hex
+        expect(tx.outputs[2].value).to eq 333
+        expect(tx.outputs[2].script_pubkey.to_hex).to eq script_pubkey.to_hex
       end
     end
   end

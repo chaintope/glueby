@@ -60,9 +60,11 @@ module Glueby
         # @return [Array<token, Array<tx>>] Tuple of tx array and token object
         # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
         # @raise [InvalidAmount] if amount is not positive integer.
+        # @raise [InvalidSplit] if split is greater than 1 for NFT token.
         # @raise [UnspportedTokenType] if token is not supported.
         def issue!(issuer:, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 1, split: 1)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
+          raise Glueby::Contract::Errors::InvalidSplit if token_type == Tapyrus::Color::TokenTypes::NFT && split > 1
 
           txs, color_id = case token_type
                          when Tapyrus::Color::TokenTypes::REISSUABLE
