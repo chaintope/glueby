@@ -80,10 +80,14 @@ module Glueby
           [new(color_id: color_id), txs]
         end
 
+        def only_finalized?
+          Glueby::AR::SystemInformation.use_only_finalized_utxo?
+        end
+
         private
 
         def issue_reissuable_token(issuer:, amount:, split: 1)
-          funding_tx = create_funding_tx(wallet: issuer)
+          funding_tx = create_funding_tx(wallet: issuer, only_finalized: only_finalized?)
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
 
@@ -99,7 +103,7 @@ module Glueby
         end
 
         def issue_non_reissuable_token(issuer:, amount:, split: 1)
-          funding_tx = create_funding_tx(wallet: issuer) if Glueby.configuration.use_utxo_provider?
+          funding_tx = create_funding_tx(wallet: issuer, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
           funding_tx = issuer.internal_wallet.broadcast(funding_tx) if funding_tx
 
           tx = create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split)
@@ -115,7 +119,7 @@ module Glueby
         end
 
         def issue_nft_token(issuer:)
-          funding_tx = create_funding_tx(wallet: issuer) if Glueby.configuration.use_utxo_provider?
+          funding_tx = create_funding_tx(wallet: issuer, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
           funding_tx = issuer.internal_wallet.broadcast(funding_tx) if funding_tx
 
           tx = create_issue_tx_for_nft_token(funding_tx: funding_tx, issuer: issuer)
@@ -148,7 +152,7 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
 
         if validate_reissuer(wallet: issuer)
-          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey)
+          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, only_finalized: only_finalized?)
           funding_tx = issuer.internal_wallet.broadcast(funding_tx)
           tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id, split: split)
           tx = issuer.internal_wallet.broadcast(tx)
@@ -171,10 +175,17 @@ module Glueby
       def transfer!(sender:, receiver_address:, amount: 1)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-        funding_tx = create_funding_tx(wallet: sender) if Glueby.configuration.use_utxo_provider?
+        funding_tx = create_funding_tx(wallet: sender, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
         funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
 
-        tx = create_transfer_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, receiver_address: receiver_address, amount: amount)
+        tx = create_transfer_tx(
+          funding_tx: funding_tx,
+          color_id: color_id,
+          sender: sender,
+          receiver_address: receiver_address,
+          amount: amount,
+          only_finalized: only_finalized?
+        )
         sender.internal_wallet.broadcast(tx)
         [color_id, tx]
       end
@@ -191,10 +202,16 @@ module Glueby
         receivers.each do |r|
           raise Glueby::Contract::Errors::InvalidAmount unless r[:amount].positive?
         end
-        funding_tx = create_funding_tx(wallet: sender) if Glueby.configuration.use_utxo_provider?
+        funding_tx = create_funding_tx(wallet: sender, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
         funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
 
-        tx = create_multi_transfer_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, receivers: receivers)
+        tx = create_multi_transfer_tx(
+          funding_tx: funding_tx,
+          color_id: color_id,
+          sender: sender,
+          receivers: receivers,
+          only_finalized: only_finalized?
+        )
         sender.internal_wallet.broadcast(tx)
         [color_id, tx]
       end
@@ -209,7 +226,7 @@ module Glueby
       # @raise [InvalidAmount] if amount is not positive integer.
       def burn!(sender:, amount: 0)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
-        balance = sender.balances[color_id.to_hex]
+        balance = sender.balances(only_finalized?)[color_id.to_hex]
         raise Glueby::Contract::Errors::InsufficientTokens unless balance
         raise Glueby::Contract::Errors::InsufficientTokens if balance < amount
 
@@ -223,13 +240,14 @@ module Glueby
             # because change outputs is not necessary. Transactions needs one output at least.
             # At that time, set true to this option to get more value to be created change output to
             # the tx.
-            need_value_for_change_output: burn_all_amount_flag
+            need_value_for_change_output: burn_all_amount_flag,
+            only_finalized: only_finalized?
           )
         end
 
         funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
 
-        tx = create_burn_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, amount: amount)
+        tx = create_burn_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, amount: amount, only_finalized: only_finalized?)
         sender.internal_wallet.broadcast(tx)
       end
 
@@ -238,7 +256,7 @@ module Glueby
       # @return [Integer] amount of utxo value associated with this token.
       def amount(wallet:)
         # collect utxo associated with this address
-        utxos = wallet.internal_wallet.list_unspent
+        utxos = wallet.internal_wallet.list_unspent(only_finalized?)
         _, results = collect_colored_outputs(utxos, color_id)
         results.sum { |result| result[:amount] }
       end
@@ -285,6 +303,10 @@ module Glueby
       end
 
       private
+
+      def only_finalized?
+        @only_finalized ||= Token.only_finalized?
+      end
 
       # Verify that wallet is the issuer of the reissuable token
       #　reutrn [Boolean]

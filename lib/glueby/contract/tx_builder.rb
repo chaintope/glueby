@@ -8,7 +8,7 @@ module Glueby
       end
 
       # Create new public key, and new transaction that sends TPC to it
-      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new, need_value_for_change_output: false)
+      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new, need_value_for_change_output: false, only_finalized: true)
         if Glueby.configuration.use_utxo_provider?
           utxo_provider = UtxoProvider.new
           script_pubkey = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
@@ -17,8 +17,8 @@ module Glueby
         else
           txb = Tapyrus::TxBuilder.new
           fee = fee_estimator.fee(dummy_tx(txb.build))
-
-          sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(fee + funding_tx_amount(need_value_for_change_output: need_value_for_change_output))
+          amount = fee + funding_tx_amount(need_value_for_change_output: need_value_for_change_output)
+          sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(amount, nil, only_finalized)
           outputs.each do |utxo|
             txb.add_utxo({
               script_pubkey: Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb),
@@ -61,15 +61,15 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_issue_tx_for_non_reissuable_token(funding_tx: nil, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new)
-        create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
+      def create_issue_tx_for_non_reissuable_token(funding_tx: nil, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
+        create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator, only_finalized: only_finalized)
       end
 
-      def create_issue_tx_for_nft_token(funding_tx: nil, issuer:, fee_estimator: FixedFeeEstimator.new)
-        create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NFT, issuer: issuer, amount: 1, fee_estimator: fee_estimator)
+      def create_issue_tx_for_nft_token(funding_tx: nil, issuer:, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
+        create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NFT, issuer: issuer, amount: 1, fee_estimator: fee_estimator, only_finalized: only_finalized)
       end
 
-      def create_issue_tx_from_out_point(funding_tx: nil, token_type:, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new)
+      def create_issue_tx_from_out_point(funding_tx: nil, token_type:, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
         tx = Tapyrus::Tx.new
 
         fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
@@ -78,7 +78,7 @@ module Glueby
           tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
           funding_tx.outputs.first.value
         else
-          sum, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee)
+          sum, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee, nil, only_finalized)
           fill_input(tx, outputs)
           sum
         end
@@ -133,16 +133,23 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_transfer_tx(funding_tx:nil, color_id:, sender:, receiver_address:, amount:, fee_estimator: FixedFeeEstimator.new)
+      def create_transfer_tx(funding_tx:nil, color_id:, sender:, receiver_address:, amount:, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
         receivers = [{ address: receiver_address, amount: amount }]
-        create_multi_transfer_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, receivers: receivers, fee_estimator: fee_estimator)
+        create_multi_transfer_tx(
+          funding_tx: funding_tx,
+          color_id: color_id,
+          sender: sender,
+          receivers: receivers,
+          fee_estimator: fee_estimator,
+          only_finalized: only_finalized
+        )
       end
 
-      def create_multi_transfer_tx(funding_tx:nil, color_id:, sender:, receivers:, fee_estimator: FixedFeeEstimator.new)
+      def create_multi_transfer_tx(funding_tx:nil, color_id:, sender:, receivers:, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
         tx = Tapyrus::Tx.new
 
         amount = receivers.reduce(0) { |sum, r| sum + r[:amount].to_i }
-        utxos = sender.internal_wallet.list_unspent
+        utxos = sender.internal_wallet.list_unspent(only_finalized)
         sum_token, outputs = collect_colored_outputs(utxos, color_id, amount)
         fill_input(tx, outputs)
 
@@ -160,7 +167,7 @@ module Glueby
           tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
           funding_tx.outputs.first.value
         else
-          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee)
+          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee, nil, only_finalized)
           fill_input(tx, outputs)
           sum_tpc
         end
@@ -180,10 +187,10 @@ module Glueby
         sender.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_burn_tx(funding_tx:nil, color_id:, sender:, amount: 0, fee_estimator: FixedFeeEstimator.new)
+      def create_burn_tx(funding_tx:nil, color_id:, sender:, amount: 0, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
         tx = Tapyrus::Tx.new
 
-        utxos = sender.internal_wallet.list_unspent
+        utxos = sender.internal_wallet.list_unspent(only_finalized)
         sum_token, outputs = collect_colored_outputs(utxos, color_id, amount)
         fill_input(tx, outputs)
 
@@ -196,7 +203,7 @@ module Glueby
           tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
           funding_tx.outputs.first.value
         else
-          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + DUST_LIMIT)
+          sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + DUST_LIMIT, nil, only_finalized)
           fill_input(tx, outputs)
           sum_tpc
         end

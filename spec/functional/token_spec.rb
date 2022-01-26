@@ -103,6 +103,27 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(receiver.balances(false)[token.color_id.to_hex]).to be_nil
       end
+
+      context 'transfer unconfirmed token' do
+        it do
+          token, _txs = Glueby::Contract::Token.issue!(
+            issuer: sender, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, amount: 10_000)
+
+          expect(sender.balances(false)['']).to eq(before_balance - fee * 1)
+          expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
+
+          token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000, only_finalized: false)
+
+          expect(sender.balances(false)['']).to eq(before_balance - fee * 2)
+          expect(sender.balances(false)[token.color_id.to_hex]).to eq(5_000)
+          expect(receiver.balances(false)[token.color_id.to_hex]).to eq(5_000)
+
+          token.burn!(sender: sender, amount: 5_000, only_finalized: false)
+
+          expect(sender.balances(false)['']).to eq(before_balance - fee * 3)
+          expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+        end
+      end
     end
 
     context 'bear fees by FeeProvider' do
