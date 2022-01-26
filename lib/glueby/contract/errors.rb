@@ -4,6 +4,7 @@ module Glueby
       class InsufficientFunds < StandardError; end
       class InsufficientTokens < StandardError; end
       class InvalidAmount < StandardError; end
+      class InvalidSplit < StandardError; end
       class InvalidTokenType < StandardError; end
       class InvalidTimestampType < StandardError; end
       class TxAlreadyBroadcasted < StandardError; end

@@ -63,11 +63,12 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
   end
 
   describe '.issue!' do
-    subject { Glueby::Contract::Token.issue!(issuer: issuer, token_type: token_type, amount: amount) }
+    subject { Glueby::Contract::Token.issue!(issuer: issuer, token_type: token_type, amount: amount, split: split) }
 
     let(:issuer) { wallet }
     let(:token_type) { Tapyrus::Color::TokenTypes::REISSUABLE }
     let(:amount) { 1_000 }
+    let(:split) { 1 }
     
     context 'reissuable token' do
       it do
@@ -205,6 +206,13 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       let(:amount) { 0 }
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::InvalidAmount }
+    end
+
+    context 'invalid split' do
+      let(:split) { 2 }
+      let(:token_type) { Tapyrus::Color::TokenTypes::NFT }
+
+      it { expect { subject }.to raise_error Glueby::Contract::Errors::InvalidSplit }
     end
 
     context 'unsupported type' do
