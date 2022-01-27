@@ -28,7 +28,7 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
   describe '.use_only_finalized_utxo?' do
     subject { Glueby::AR::SystemInformation.use_only_finalized_utxo? }
 
-    context 'default valueq' do
+    context 'default value' do
       it { expect(subject).to be_truthy }
     end
 
