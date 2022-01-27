@@ -72,6 +72,57 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
     end
   end
 
+  describe "#default_value" do
+    subject { provider.default_value }
+
+    context 'from system_informations table' do
+      before do
+        Glueby::AR::SystemInformation.create(
+          info_key: 'utxo_provider_default_value',
+          info_value: '3000'
+        )
+      end
+      it { expect(subject).to eq 3_000 }
+    end
+
+    context 'from config setting' do
+      before { Glueby::UtxoProvider.configure(default_value: 2_000) }
+      after { Glueby::UtxoProvider.configure(nil) }
+
+      it { expect(subject).to eq 2_000 }
+    end
+
+    context 'from default value' do
+      it { expect(subject).to eq 1_000 }
+    end
+  end
+
+  describe "#utxo_pool_size" do
+    subject { provider.utxo_pool_size }
+
+    context 'from system_informations table' do
+      before do
+        Glueby::AR::SystemInformation.create(
+          info_key: 'utxo_provider_pool_size',
+          info_value: '300'
+        )
+      end
+
+      it { expect(subject).to eq 300 }
+    end
+
+    context 'from config setting' do
+      before { Glueby::UtxoProvider.configure(utxo_pool_size: 200) }
+      after { Glueby::UtxoProvider.configure(nil) }
+
+      it { expect(subject).to eq 200 }
+    end
+
+    context 'from default value' do
+      it { expect(subject).to eq 20 }
+    end
+  end
+
   describe "#validate_config!" do
     subject { provider.send(:validate_config!) }
 

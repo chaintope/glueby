@@ -58,29 +58,70 @@ RSpec.describe Glueby::UtxoProvider::Tasks, active_record: true do
         end
 
         context 'default_value option is specified' do
-          let(:config) { { default_value: 800} }
+          context 'from config setting' do
+            let(:config) { { default_value: 800} }
 
-          it 'creates 800 tapyrus value outputs' do
-            expect(wallet).to receive(:broadcast) do |tx|
-              expect(tx.outputs[0...20].map(&:value).uniq).to eq([800])
-              expect(tx.outputs[20].value).to eq(35_000 - 20 * 800 - 10_000)
+            it 'creates 800 tapyrus value outputs' do
+              expect(wallet).to receive(:broadcast) do |tx|
+                expect(tx.outputs[0...20].map(&:value).uniq).to eq([800])
+                expect(tx.outputs[20].value).to eq(35_000 - 20 * 800 - 10_000)
+              end
+              expect(tasks).to receive(:status)
+              subject
             end
-            expect(tasks).to receive(:status)
-            subject
+          end
+
+          context 'from system_informations table' do
+            before do
+              Glueby::AR::SystemInformation.create(
+                info_key: 'utxo_provider_default_value',
+                info_value: '700'
+              )
+            end
+
+            it 'creates 700 tapyrus value outputs' do
+              expect(wallet).to receive(:broadcast) do |tx|
+                expect(tx.outputs[0...20].map(&:value).uniq).to eq([700])
+                expect(tx.outputs[20].value).to eq(35_000 - 20 * 700 - 10_000)
+              end
+              expect(tasks).to receive(:status)
+              subject
+            end
           end
         end
 
         context 'utxo_pool_size option is specified' do
-          let(:config) { { utxo_pool_size: 10 } }
+          context 'from config setting' do
+            let(:config) { { utxo_pool_size: 10 } }
 
-          it 'creates 10 outputs' do
-            expect(wallet).to receive(:broadcast) do |tx|
-              expect(tx.outputs.count).to eq(11)
-              expect(tx.outputs[0...10].map(&:value).uniq).to eq([1_000])
-              expect(tx.outputs[10].value).to eq(35_000 - 10 * 1_000 - 10_000)
+            it 'creates 10 outputs' do
+              expect(wallet).to receive(:broadcast) do |tx|
+                expect(tx.outputs.count).to eq(11)
+                expect(tx.outputs[0...10].map(&:value).uniq).to eq([1_000])
+                expect(tx.outputs[10].value).to eq(35_000 - 10 * 1_000 - 10_000)
+              end
+              expect(tasks).to receive(:status)
+              subject
             end
-            expect(tasks).to receive(:status)
-            subject
+          end
+
+          context 'from system_informations table' do
+            before do
+              Glueby::AR::SystemInformation.create(
+                info_key: 'utxo_provider_pool_size',
+                info_value: '5'
+              )
+            end
+
+            it 'creates 5 outputs' do
+              expect(wallet).to receive(:broadcast) do |tx|
+                expect(tx.outputs.count).to eq(6)
+                expect(tx.outputs[0...5].map(&:value).uniq).to eq([1_000])
+                expect(tx.outputs[5].value).to eq(35_000 - 5 * 1_000 - 10_000)
+              end
+              expect(tasks).to receive(:status)
+              subject
+            end
           end
         end
 
