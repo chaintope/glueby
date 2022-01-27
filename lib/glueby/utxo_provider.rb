@@ -25,11 +25,9 @@ module Glueby
       @wallet = load_wallet
       validate_config!
       @fee_estimator = (UtxoProvider.config && UtxoProvider.config[:fee_estimator]) || Glueby::Contract::FixedFeeEstimator.new
-      @default_value = (UtxoProvider.config && UtxoProvider.config[:default_value]) || DEFAULT_VALUE
-      @utxo_pool_size = (UtxoProvider.config && UtxoProvider.config[:utxo_pool_size]) || DEFAULT_UTXO_POOL_SIZE
     end
 
-    attr_reader :wallet, :fee_estimator, :default_value, :utxo_pool_size 
+    attr_reader :wallet, :fee_estimator
 
     # Provide a UTXO
     # @param [Tapyrus::Script] script_pubkey The script to be provided
@@ -62,6 +60,24 @@ module Glueby
       [signed_tx, 0]
     end
 
+    def default_value
+      info_value = Glueby::AR::SystemInformation.find_by(info_key: 'utxo_provider_default_value')
+      @default_value = if info_value
+        info_value.int_value
+      else
+        (UtxoProvider.config && UtxoProvider.config[:default_value]) || DEFAULT_VALUE
+      end
+    end
+
+    def utxo_pool_size
+      info_value = Glueby::AR::SystemInformation.find_by(info_key: 'utxo_provider_pool_size')
+      @utxo_pool_size ||= if info_value
+        info_value.int_value
+      else
+        (UtxoProvider.config && UtxoProvider.config[:utxo_pool_size]) || DEFAULT_UTXO_POOL_SIZE
+      end
+    end
+
     private
 
     # Create wallet for provider
@@ -74,7 +90,7 @@ module Glueby
     end
 
     def collect_uncolored_outputs(wallet, amount)
-      utxos = wallet.list_unspent.select { |o| !o[:color_id] && o[:amount] == @default_value }
+      utxos = wallet.list_unspent.select { |o| !o[:color_id] && o[:amount] == default_value }
       utxos.shuffle!
 
       utxos.inject([0, []]) do |sum, output|
@@ -88,11 +104,8 @@ module Glueby
     end
 
     def validate_config!
-      if UtxoProvider.config
-        utxo_pool_size = UtxoProvider.config[:utxo_pool_size]
-        if utxo_pool_size && (!utxo_pool_size.is_a?(Integer) || utxo_pool_size > MAX_UTXO_POOL_SIZE)
-          raise Glueby::Configuration::Errors::InvalidConfiguration, "utxo_pool_size(#{utxo_pool_size}) should not be greater than #{MAX_UTXO_POOL_SIZE}"
-        end
+      if !utxo_pool_size.is_a?(Integer) || utxo_pool_size > MAX_UTXO_POOL_SIZE
+        raise Glueby::Configuration::Errors::InvalidConfiguration, "utxo_pool_size(#{utxo_pool_size}) should not be greater than #{MAX_UTXO_POOL_SIZE}"
       end
     end
   end
