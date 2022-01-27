@@ -105,6 +105,12 @@ RSpec.describe 'Token Contract', functional: true do
       end
 
       context 'transfer unconfirmed token' do
+        before do
+          Glueby::AR::SystemInformation.create(
+            info_key: 'use_only_finalized_utxo',
+            info_value: '0'
+          )
+        end
         it do
           token, _txs = Glueby::Contract::Token.issue!(
             issuer: sender, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, amount: 10_000)
@@ -112,13 +118,13 @@ RSpec.describe 'Token Contract', functional: true do
           expect(sender.balances(false)['']).to eq(before_balance - fee * 1)
           expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
 
-          token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000, only_finalized: false)
+          token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000)
 
           expect(sender.balances(false)['']).to eq(before_balance - fee * 2)
           expect(sender.balances(false)[token.color_id.to_hex]).to eq(5_000)
           expect(receiver.balances(false)[token.color_id.to_hex]).to eq(5_000)
 
-          token.burn!(sender: sender, amount: 5_000, only_finalized: false)
+          token.burn!(sender: sender, amount: 5_000)
 
           expect(sender.balances(false)['']).to eq(before_balance - fee * 3)
           expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
