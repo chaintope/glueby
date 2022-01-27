@@ -199,7 +199,7 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
       end
     end
 
-    context 'if use utxo provider' do
+    context 'if use utxo provider', active_record: true do
       let(:contract) do
         Glueby::Contract::Timestamp.new(
           wallet: wallet,

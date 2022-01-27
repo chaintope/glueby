@@ -72,7 +72,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.outputs[0].value).to eq 10_000 }
     it { expect(subject.outputs[1].value).to eq 99_980_000 }
 
-    context 'use utxo provider' do
+    context 'use utxo provider', active_record: true do
       let(:utxo_provider) { Glueby::UtxoProvider.new }
       let(:wallet_adapter) { double(:wallet_adapter) }
       let(:utxo_provider_wallet) { TestInternalWallet.new }
