@@ -61,21 +61,21 @@ module Glueby
     end
 
     def default_value
-      info_value = Glueby::AR::SystemInformation.find_by(info_key: 'utxo_provider_default_value')
-      @default_value = if info_value
-        info_value.int_value
-      else
-        (UtxoProvider.config && UtxoProvider.config[:default_value]) || DEFAULT_VALUE
-      end
+      @default_value ||=
+        (
+          Glueby::AR::SystemInformation.utxo_provider_default_value ||
+            (UtxoProvider.config && UtxoProvider.config[:default_value]) ||
+            DEFAULT_VALUE
+        )
     end
 
     def utxo_pool_size
-      info_value = Glueby::AR::SystemInformation.find_by(info_key: 'utxo_provider_pool_size')
-      @utxo_pool_size ||= if info_value
-        info_value.int_value
-      else
-        (UtxoProvider.config && UtxoProvider.config[:utxo_pool_size]) || DEFAULT_UTXO_POOL_SIZE
-      end
+      @utxo_pool_size ||=
+        (
+          Glueby::AR::SystemInformation.utxo_provider_pool_size ||
+            (UtxoProvider.config && UtxoProvider.config[:utxo_pool_size]) ||
+            DEFAULT_UTXO_POOL_SIZE
+        )
     end
 
     private

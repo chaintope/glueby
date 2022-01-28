@@ -81,8 +81,16 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
           info_key: 'utxo_provider_default_value',
           info_value: '3000'
         )
+
       end
       it { expect(subject).to eq 3_000 }
+
+      it 'cache value' do
+        allow(Glueby::AR::SystemInformation).to receive(:utxo_provider_default_value).and_return(3_000)
+        expect(subject).to eq 3_000
+        expect(subject).to eq 3_000
+        expect(Glueby::AR::SystemInformation).to have_received(:utxo_provider_default_value).once
+      end
     end
 
     context 'from config setting' do
@@ -109,6 +117,13 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
       end
 
       it { expect(subject).to eq 300 }
+
+      it 'cache value' do
+        allow(Glueby::AR::SystemInformation).to receive(:utxo_provider_pool_size).and_return(300)
+        expect(subject).to eq 300
+        expect(subject).to eq 300
+        expect(Glueby::AR::SystemInformation).to have_received(:utxo_provider_pool_size).once
+      end
     end
 
     context 'from config setting' do
