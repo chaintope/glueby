@@ -42,7 +42,7 @@ module Glueby
 
       fee = fee_estimator.fee(dummy_tx(txb.build))
       # The outputs need to be shuffled so that no utxos are spent twice as possible.
-      sum, outputs = collect_uncolored_outputs(wallet, fee + value)
+      sum, outputs = collect_uncolored_outputs(@wallet, fee + value)
 
       outputs.each do |utxo|
         txb.add_utxo({
@@ -53,10 +53,10 @@ module Glueby
         })
       end
 
-      txb.fee(fee).change_address(wallet.change_address)
+      txb.fee(fee).change_address(@wallet.change_address)
 
       tx = txb.build
-      signed_tx = wallet.sign_tx(tx)
+      signed_tx = @wallet.sign_tx(tx)
       [signed_tx, 0]
     end
 
@@ -76,6 +76,24 @@ module Glueby
             (UtxoProvider.config && UtxoProvider.config[:utxo_pool_size]) ||
             DEFAULT_UTXO_POOL_SIZE
         )
+    end
+
+    def tpc_amount
+      @wallet.balance(false)
+    end
+
+    def current_utxo_pool_size
+      @wallet
+        .list_unspent(false)
+        .count { |o| !o[:color_id] && o[:amount] == default_value }
+    end
+
+    def address
+      @address ||= @wallet.get_addresses.first || @wallet.receive_address
+    end
+
+    def value_to_fill_utxo_pool
+      default_value * utxo_pool_size
     end
 
     private

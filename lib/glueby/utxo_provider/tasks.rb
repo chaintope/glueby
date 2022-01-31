@@ -93,7 +93,7 @@ module Glueby
       private
 
       def tpc_amount
-        wallet.balance(false)
+        utxo_provider.tpc_amount
       end
 
       def collect_outputs
@@ -105,7 +105,7 @@ module Glueby
             txid: output[:txid],
             script_pubkey: output[:script_pubkey],
             value: output[:amount],
-            index: output[:vout] ,
+            index: output[:vout],
             finalized: output[:finalized]
           }
           [new_sum, new_outputs]
@@ -113,13 +113,11 @@ module Glueby
       end
 
       def current_utxo_pool_size
-        wallet
-          .list_unspent(false)
-          .count { |o| !o[:color_id] && o[:amount] == utxo_provider.default_value }
+        utxo_provider.current_utxo_pool_size
       end
 
       def value_to_fill_utxo_pool
-        utxo_provider.default_value * utxo_provider.utxo_pool_size
+        utxo_provider.value_to_fill_utxo_pool
       end
 
       def wallet
@@ -131,7 +129,7 @@ module Glueby
       end
 
       def address
-        @address ||= wallet.get_addresses.first || wallet.receive_address
+        utxo_provider.address
       end
     end
   end
