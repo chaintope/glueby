@@ -30,14 +30,14 @@ module Glueby
 
         utxos.each { |utxo| txb.add_utxo(utxo) }
 
-        shortage = [utxo_provider.utxo_pool_size - current_utxo_pool_size, 0].max
+        shortage = [utxo_provider.utxo_pool_size - utxo_provider.current_utxo_pool_size, 0].max
         return if shortage == 0
 
         added_outputs = 0
         shortage.times do
           fee = utxo_provider.fee_estimator.fee(dummy_tx(txb.build))
           break if (sum - fee) < utxo_provider.default_value
-          txb.pay(address, utxo_provider.default_value)
+          txb.pay(utxo_provider.address, utxo_provider.default_value)
           sum -= utxo_provider.default_value
           added_outputs += 1
         end
@@ -45,11 +45,11 @@ module Glueby
         return if added_outputs == 0
 
         fee = utxo_provider.fee_estimator.fee(dummy_tx(txb.build))
-        tx = txb.change_address(address)
+        tx = txb.change_address(utxo_provider.address)
                 .fee(fee)
                 .build
-        tx = wallet.sign_tx(tx)
-        wallet.broadcast(tx)
+        tx = utxo_provider.wallet.sign_tx(tx)
+        utxo_provider.wallet.broadcast(tx)
       ensure
         status
       end
@@ -58,13 +58,13 @@ module Glueby
       def status
         status = :ready
 
-        if current_utxo_pool_size < utxo_provider.utxo_pool_size
-          if tpc_amount < value_to_fill_utxo_pool
+        if utxo_provider.current_utxo_pool_size < utxo_provider.utxo_pool_size
+          if utxo_provider.tpc_amount < utxo_provider.value_to_fill_utxo_pool
             status = :insufficient_amount
             message = <<~MESSAGE
             1. Please replenishment TPC which is for paying tpc to UtxoProvider. 
-              UtxoProvider needs #{value_to_fill_utxo_pool} tapyrus in UTXO pool. 
-              UtxoProvider wallet's address is '#{address}'
+              UtxoProvider needs #{utxo_provider.value_to_fill_utxo_pool} tapyrus in UTXO pool. 
+              UtxoProvider wallet's address is '#{utxo_provider.address}'
             2. Then create UTXOs for paying in UTXO pool with 'rake glueby:utxo_provider:manage_utxo_pool'
             MESSAGE
           else
@@ -72,12 +72,12 @@ module Glueby
           end
         end
 
-        status = :not_ready if current_utxo_pool_size == 0
+        status = :not_ready if utxo_provider.current_utxo_pool_size == 0
 
         puts <<~EOS
         Status: #{STATUS[status]}
-        TPC amount: #{delimit(tpc_amount)}
-        UTXO pool size: #{delimit(current_utxo_pool_size)}
+        TPC amount: #{delimit(utxo_provider.tpc_amount)}
+        UTXO pool size: #{delimit(utxo_provider.current_utxo_pool_size)}
         #{"\n" if message}#{message}
         Configuration:
           default_value = #{delimit(utxo_provider.default_value)}
@@ -87,17 +87,13 @@ module Glueby
 
       # Show the address of Utxo Provider 
       def print_address
-        puts address
+        puts utxo_provider.address
       end
 
       private
 
-      def tpc_amount
-        utxo_provider.tpc_amount
-      end
-
       def collect_outputs
-        wallet.list_unspent.inject([0, []]) do |sum, output|
+        utxo_provider.wallet.list_unspent.inject([0, []]) do |sum, output|
           next sum if output[:color_id] || output[:amount] == utxo_provider.default_value
 
           new_sum = sum[0] + output[:amount]
@@ -112,24 +108,8 @@ module Glueby
         end
       end
 
-      def current_utxo_pool_size
-        utxo_provider.current_utxo_pool_size
-      end
-
-      def value_to_fill_utxo_pool
-        utxo_provider.value_to_fill_utxo_pool
-      end
-
-      def wallet
-        utxo_provider.wallet
-      end
-
       def delimit(num)
         num.to_s.reverse.scan(/.{1,3}/).join('_').reverse
-      end
-
-      def address
-        utxo_provider.address
       end
     end
   end

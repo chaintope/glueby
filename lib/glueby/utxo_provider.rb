@@ -27,7 +27,7 @@ module Glueby
       @fee_estimator = (UtxoProvider.config && UtxoProvider.config[:fee_estimator]) || Glueby::Contract::FixedFeeEstimator.new
     end
 
-    attr_reader :wallet, :fee_estimator
+    attr_reader :wallet, :fee_estimator, :address
 
     # Provide a UTXO
     # @param [Tapyrus::Script] script_pubkey The script to be provided
@@ -42,7 +42,7 @@ module Glueby
 
       fee = fee_estimator.fee(dummy_tx(txb.build))
       # The outputs need to be shuffled so that no utxos are spent twice as possible.
-      sum, outputs = collect_uncolored_outputs(@wallet, fee + value)
+      sum, outputs = collect_uncolored_outputs(wallet, fee + value)
 
       outputs.each do |utxo|
         txb.add_utxo({
@@ -53,10 +53,10 @@ module Glueby
         })
       end
 
-      txb.fee(fee).change_address(@wallet.change_address)
+      txb.fee(fee).change_address(wallet.change_address)
 
       tx = txb.build
-      signed_tx = @wallet.sign_tx(tx)
+      signed_tx = wallet.sign_tx(tx)
       [signed_tx, 0]
     end
 
