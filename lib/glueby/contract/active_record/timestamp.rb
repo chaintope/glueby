@@ -35,16 +35,16 @@ module Glueby
           if funding_tx
             ::ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
               wallet.internal_wallet.broadcast(funding_tx)
-              logger.info("funding tx was broadcasted(id=#{id}, funding_tx.txid=#{funding_tx.txid})")
             end
+            logger.info("funding tx was broadcasted(id=#{id}, funding_tx.txid=#{funding_tx.txid})")
           end
           ::ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
             wallet.internal_wallet.broadcast(tx) do |tx|
               assign_attributes(txid: tx.txid, status: :unconfirmed, p2c_address: p2c_address, payment_base: payment_base)
               save!
             end
-            logger.info("timestamp tx was broadcasted (id=#{id}, txid=#{tx.txid})")
           end
+          logger.info("timestamp tx was broadcasted (id=#{id}, txid=#{tx.txid})")
           true
         rescue => e
           logger.error("failed to broadcast (id=#{id}, reason=#{e.message})")
