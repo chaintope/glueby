@@ -79,17 +79,17 @@ module Glueby
     end
 
     def tpc_amount
-      @wallet.balance(false)
+      wallet.balance(false)
     end
 
     def current_utxo_pool_size
-      @wallet
+      wallet
         .list_unspent(false)
         .count { |o| !o[:color_id] && o[:amount] == default_value }
     end
 
     def address
-      @address ||= @wallet.get_addresses.first || @wallet.receive_address
+      @address ||= wallet.get_addresses.first || wallet.receive_address
     end
 
     def value_to_fill_utxo_pool
