@@ -37,7 +37,7 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
     context 'does not have enough funds' do
       let(:value) { 2_001 }
       it do
-        expect { 
+        expect {
           12.times do |i|
             Glueby::Internal::Wallet::AR::Utxo.create(
               txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
@@ -48,14 +48,14 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
               status: :finalized
             )
           end
-          subject 
+          subject
         }.to raise_error(Glueby::Contract::Errors::InsufficientFunds)
       end
     end
 
     context 'contains funds which value is not default value(1_000)' do
       it 'does not use these funds' do
-        expect { 
+        expect {
           20.times do |i|
             Glueby::Internal::Wallet::AR::Utxo.create(
               txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
@@ -66,7 +66,7 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
               status: :finalized
             )
           end
-          subject 
+          subject
         }.to raise_error(Glueby::Contract::Errors::InsufficientFunds)
       end
     end
@@ -156,5 +156,72 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
 
       it { expect { subject }.to raise_error(Glueby::Configuration::Errors::InvalidConfiguration) }
     end
+  end
+
+  describe '#tpc_amount' do
+    subject { provider.tpc_amount }
+
+    let(:key) do
+      wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: provider.wallet.id)
+      wallet.keys.create(purpose: :receive)
+    end
+
+    before do
+      Glueby::UtxoProvider.configure(utxo_pool_size: 2000)
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+        index: 0,
+        script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+        key: key,
+        value: 2_000,
+        status: :finalized
+      )
+    end
+
+    it { expect(subject).to eq(2_000) }
+  end
+
+  describe '#current_utxo_pool_size' do
+    subject { provider.current_utxo_pool_size }
+
+    let(:pool_outputs) do
+      10.times.map do |i|
+        {
+          txid: 'f14b29639483da7c8d17b7b7515da4ff78b91b4b89434e7988ab1bc21ab41377',
+          vout: i,
+          script_pubkey: '21c2dbbebb191128de429084246fa3215f7ccc36d6abde62984eb5a42b1f2253a016bc76a914fc688c091d91789ccda7a27bd8d88be9ae4af58e88ac',
+          amount: 1_000,
+          finalized: true
+        }
+      end
+    end
+
+    let(:unspents) do
+      [{
+         txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
+         script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+         vout: 0,
+         amount: 100_000_000,
+         finalized: true
+       }] + pool_outputs
+    end
+
+    before do
+      allow(Glueby::Internal::Wallet).to receive(:load).and_return(wallet)
+      allow(wallet).to receive(:list_unspent).and_return(unspents)
+    end
+
+    it { expect(subject).to eq(10) }
+  end
+
+  describe '#address' do
+    subject { provider.address }
+
+    let(:address) do
+      wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: provider.wallet.id)
+      wallet.keys.map(&:address).first
+    end
+
+    it { expect(subject).to eq(address) }
   end
 end

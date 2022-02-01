@@ -27,7 +27,7 @@ module Glueby
       @fee_estimator = (UtxoProvider.config && UtxoProvider.config[:fee_estimator]) || Glueby::Contract::FixedFeeEstimator.new
     end
 
-    attr_reader :wallet, :fee_estimator
+    attr_reader :wallet, :fee_estimator, :address
 
     # Provide a UTXO
     # @param [Tapyrus::Script] script_pubkey The script to be provided
@@ -76,6 +76,24 @@ module Glueby
             (UtxoProvider.config && UtxoProvider.config[:utxo_pool_size]) ||
             DEFAULT_UTXO_POOL_SIZE
         )
+    end
+
+    def tpc_amount
+      wallet.balance(false)
+    end
+
+    def current_utxo_pool_size
+      wallet
+        .list_unspent(false)
+        .count { |o| !o[:color_id] && o[:amount] == default_value }
+    end
+
+    def address
+      @address ||= wallet.get_addresses.first || wallet.receive_address
+    end
+
+    def value_to_fill_utxo_pool
+      default_value * utxo_pool_size
     end
 
     private
