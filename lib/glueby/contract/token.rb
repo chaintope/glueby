@@ -92,10 +92,13 @@ module Glueby
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+            funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+          end
+
+          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
             # Store the script_pubkey for reissue the token.
             Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
 
-            funding_tx = issuer.internal_wallet.broadcast(funding_tx)
             tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split)
             tx = issuer.internal_wallet.broadcast(tx)
             [[funding_tx, tx], color_id]
