@@ -78,7 +78,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
         it 'raise an error' do
           expect(rpc).to receive(:createwallet).and_raise(error)
-          expect { subject }.to raise_error(Tapyrus::RPC::Error, { response_code: '401', response_msg: 'Unauthorized' }.to_s)
+          expect { subject }.to raise_error(Tapyrus::RPC::Error, { response_code: '401', response_msg: 'Unauthorized' }.to_json)
         end
       end
 
@@ -131,7 +131,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
       it 'raise an error' do
         expect(rpc).to receive(:loadwallet).and_raise(error)
-        expect { subject }.to raise_error(Tapyrus::RPC::Error, { response_code: '401', response_msg: 'Unauthorized' }.to_s)
+        expect { subject }.to raise_error(Tapyrus::RPC::Error, { response_code: '401', response_msg: 'Unauthorized' }.to_json)
       end
     end
 
