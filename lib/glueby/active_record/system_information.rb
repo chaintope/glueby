@@ -25,8 +25,8 @@ module Glueby
       end
 
       def self.set_utxo_provider_pool_size(size)
-        utxo = find_by(info_key: "utxo_provider_pool_size")&.int_value
-        utxo.update(info_value: size)
+        utxo = find_by(info_key: "utxo_provider_pool_size")
+        utxo.update!(info_value: size)
       end
 
       def int_value
