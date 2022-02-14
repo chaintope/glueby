@@ -48,4 +48,9 @@ module Glueby
   def self.configure
     yield configuration if block_given?
   end
+
+  # Base error classes. These error classes must be used as a super class in all error classes that is defined and
+  # raised in glueby library.
+  class Error < StandardError; end
+  class ArgumentError < Error; end
 end

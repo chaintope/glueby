@@ -457,6 +457,11 @@ Glueby.configure do |config|
 end
 ```
 
+## Error handling
+
+Glueby has base error classes like `Glueby::Error` and `Glueby::ArgumentError`.
+`Glueby::Error` is the base class for the all errors that are raises in the glueby.
+`Glueby::ArgumentError` is the error class for argument errors in public contracts. This notifies the arguments is something wrong to glueby library user-side.
 
 ## Development
 
