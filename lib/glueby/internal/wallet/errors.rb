@@ -2,12 +2,12 @@ module Glueby
   module Internal
     class Wallet
       module Errors
-        class ShouldInitializeWalletAdapter < StandardError; end
-        class WalletUnloaded < StandardError; end
-        class WalletAlreadyLoaded < StandardError; end
-        class WalletAlreadyCreated < StandardError; end
-        class WalletNotFound < StandardError; end
-        class InvalidSighashType < StandardError; end
+        class ShouldInitializeWalletAdapter < Error; end
+        class WalletUnloaded < Error; end
+        class WalletAlreadyLoaded < Error; end
+        class WalletAlreadyCreated < Error; end
+        class WalletNotFound < Error; end
+        class InvalidSighashType < Error; end
       end
     end
   end

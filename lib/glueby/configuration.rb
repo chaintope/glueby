@@ -15,7 +15,7 @@ module Glueby
     alias_method :use_utxo_provider?, :use_utxo_provider
 
     module Errors
-      class InvalidConfiguration < StandardError; end
+      class InvalidConfiguration < Error; end
     end
 
     def initialize

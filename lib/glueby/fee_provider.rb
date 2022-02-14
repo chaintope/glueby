@@ -3,7 +3,7 @@ module Glueby
 
     autoload :Tasks, 'glueby/fee_provider/tasks'
 
-    class NoUtxosInUtxoPool < StandardError; end
+    class NoUtxosInUtxoPool < Error; end
 
     WALLET_ID = 'FEE_PROVIDER_WALLET'
     DEFAULT_FIXED_FEE = 1000
@@ -42,7 +42,7 @@ module Glueby
     # Provide an input for fee to the tx.
     # @param [Tapyrus::Tx] tx - The tx that is provided fee as a input. It should be signed with ANYONECANPAY flag.
     # @return [Tapyrus::Tx]
-    # @raise [ArgumentError] If the signatures that the tx inputs has don't have ANYONECANPAY flag.
+    # @raise [Glueby::ArgumentError] If the signatures that the tx inputs has don't have ANYONECANPAY flag.
     # @raise [Glueby::FeeProvider::NoUtxosInUtxoPool] If there are no UTXOs for paying fee in FeeProvider's UTXO pool
     def provide(tx)
       tx.inputs.each do |txin|
