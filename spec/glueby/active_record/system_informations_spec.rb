@@ -60,4 +60,20 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
     it { expect(subject.int_value).to be 0 }
   end
 
+  describe '.set_utxo_provider_pool_size' do
+    before do
+      Glueby::AR::SystemInformation.create(
+        info_key: "utxo_provider_pool_size",
+        info_value: "0"
+      )
+    end 
+    let(:size) { 5 }
+    subject { Glueby::AR::SystemInformation.set_utxo_provider_pool_size(size) }
+
+    it do
+      subject
+      expect(Glueby::AR::SystemInformation.utxo_provider_pool_size).to eq size 
+    end
+  end
+
 end
