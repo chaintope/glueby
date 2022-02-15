@@ -12,7 +12,7 @@ module Glueby
         find_by(info_key: "use_only_finalized_utxo")&.int_value != 0
       end
 
-      # 
+      # Set use_only_finalized_utxo
       def self.set_use_only_finalized_utxo(status)
         if column_names.include? "use_only_finalized_utxo"
           current = find_by(info_key: "use_only_finalized_utxo")
@@ -31,7 +31,7 @@ module Glueby
         find_by(info_key: "utxo_provider_default_value")&.int_value
       end
 
-      # 
+      # Set utxo_provider_default_value
       def self.set_utxo_provider_default_value(value)
         if column_names.include? "utxo_provider_default_value"
           current = find_by(info_key: "utxo_provider_default_value")
@@ -50,7 +50,7 @@ module Glueby
         find_by(info_key: "utxo_provider_pool_size")&.int_value
       end
 
-      # 
+      # Set utxo_provider_pool_size
       def self.set_utxo_provider_pool_size(size)
         if column_names.include? "utxo_provider_pool_size"
           current = find_by(info_key: "utxo_provider_pool_size")
@@ -63,13 +63,13 @@ module Glueby
         end
       end
 
-      # 
-      # @return [Boolean] true 
+      # If return timestamp is to be executed immediately
+      # @return [Boolean] true status of broadcast_on_background
       def self.broadcast_on_background?
         find_by(info_key: "broadcast_on_background")&.int_value != 0
       end
 
-      # 
+      # Set the status of broadcast_on_background
       def self.set_broadcast_on_background(status)
         if column_names.include? "broadcast_on_background"
           current = find_by(info_key: "broadcast_on_background")
