@@ -1,4 +1,4 @@
-RSpec.describe 'Glueby::Contract::Timestamp' do
+RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
   describe '#initialize' do
     let(:wallet) { TestWallet.new(internal_wallet) }
     let(:internal_wallet) { TestInternalWallet.new }
@@ -34,24 +34,25 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
   describe '#save!' do
     subject { contract.save! }
 
-    let(:contract) do
-      Glueby::Contract::Timestamp.new(
-        wallet: wallet,
-        content: "\01",
-        prefix: ''
-      )
-    end
-    let(:wallet) { TestWallet.new(internal_wallet) }
-    let(:internal_wallet) { TestInternalWallet.new }
-    let(:unspents) do
-      [
-        {
-          txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
-          script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
-          vout: 0,
-          amount: 100_000_000,
-          finalized: false
-        }, {
+    context 'Use TestWallet' do
+      let(:contract) do
+        Glueby::Contract::Timestamp.new(
+          wallet: wallet,
+          content: "\01",
+          prefix: ''
+        )
+      end
+      let(:wallet) { TestWallet.new(internal_wallet) }
+      let(:internal_wallet) { TestInternalWallet.new }
+      let(:unspents) do
+        [
+          {
+            txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
+            script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+            vout: 0,
+            amount: 100_000_000,
+            finalized: false
+          }, {
           txid: 'd49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
           script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
           vout: 1,
@@ -88,73 +89,74 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
           amount: 100_000,
           finalized: true
         }
-      ]
-    end
-    let(:rpc) { double('mock') }
-
-    before do
-      allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
-      allow(rpc).to receive(:getnewaddress).and_return('13L2GiUwB3HuyURm81ht6JiQAa8EcBN23H')
-      allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
-      allow(internal_wallet).to receive(:broadcast).and_return('a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c')
-    end
-
-    it { expect(subject).to eq 'a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c' }
-    it 'create transaction' do
-      subject
-      expect(contract.tx.inputs.size).to eq 1
-      expect(contract.tx.outputs.size).to eq 2
-      expect(contract.tx.outputs[0].value).to eq 0
-      expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
-      expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
-      expect(contract.tx.outputs[1].value).to eq 99_990_000
-    end
-
-    context 'if already broadcasted' do
-      before { contract.save! }
-
-      it { expect { subject }.to raise_error(Glueby::Contract::Errors::TxAlreadyBroadcasted) }
-    end
-
-    context 'if digest is :none' do
-      let(:contract) do
-        Glueby::Contract::Timestamp.new(
-          wallet: wallet,
-          content: "01",
-          prefix: '',
-          digest: :none
-        )
+        ]
       end
 
-      it 'create transaction for content that is not digested' do
+      before do
+        allow(Glueby::Wallet).to receive(:load).and_return(wallet)
+        allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
+      end
+
+      it 'create transaction' do
         subject
         expect(contract.tx.inputs.size).to eq 1
         expect(contract.tx.outputs.size).to eq 2
         expect(contract.tx.outputs[0].value).to eq 0
         expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
-        expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq '01'
+        expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
         expect(contract.tx.outputs[1].value).to eq 99_990_000
       end
-    end
 
-    context 'if digest is :double_sha256' do
-      let(:contract) do
-        Glueby::Contract::Timestamp.new(
-          wallet: wallet,
-          content: "01",
-          prefix: '',
-          digest: :double_sha256
-        )
+      it 'create a record in glueby_timestamps table' do
+        expect { subject }.to change { Glueby::Contract::AR::Timestamp.count }.by(1)
       end
 
-      it 'create transaction for double sha256 digested content' do
-        subject
-        expect(contract.tx.inputs.size).to eq 1
-        expect(contract.tx.outputs.size).to eq 2
-        expect(contract.tx.outputs[0].value).to eq 0
-        expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
-        expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq 'bf3ae3deccfdee0ebf03fc924aea3dad4b1068acdd27e98d9e6cc9a140e589d1'
-        expect(contract.tx.outputs[1].value).to eq 99_990_000
+      context 'if already broadcasted' do
+        before { contract.save! }
+
+        it { expect { subject }.to raise_error(Glueby::Contract::Errors::TxAlreadyBroadcasted) }
+      end
+
+      context 'if digest is :none' do
+        let(:contract) do
+          Glueby::Contract::Timestamp.new(
+            wallet: wallet,
+            content: "01",
+            prefix: '',
+            digest: :none
+          )
+        end
+
+        it 'create transaction for content that is not digested' do
+          subject
+          expect(contract.tx.inputs.size).to eq 1
+          expect(contract.tx.outputs.size).to eq 2
+          expect(contract.tx.outputs[0].value).to eq 0
+          expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
+          expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq '01'
+          expect(contract.tx.outputs[1].value).to eq 99_990_000
+        end
+      end
+
+      context 'if digest is :double_sha256' do
+        let(:contract) do
+          Glueby::Contract::Timestamp.new(
+            wallet: wallet,
+            content: "01",
+            prefix: '',
+            digest: :double_sha256
+          )
+        end
+
+        it 'create transaction for double sha256 digested content' do
+          subject
+          expect(contract.tx.inputs.size).to eq 1
+          expect(contract.tx.outputs.size).to eq 2
+          expect(contract.tx.outputs[0].value).to eq 0
+          expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
+          expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq 'bf3ae3deccfdee0ebf03fc924aea3dad4b1068acdd27e98d9e6cc9a140e589d1'
+          expect(contract.tx.outputs[1].value).to eq 99_990_000
+        end
       end
     end
 
@@ -200,6 +202,8 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
     end
 
     context 'if use utxo provider', active_record: true do
+      let(:internal_wallet) { TestInternalWallet.new }
+      let(:wallet) { TestWallet.new(internal_wallet) }
       let(:contract) do
         Glueby::Contract::Timestamp.new(
           wallet: wallet,
@@ -228,6 +232,8 @@ RSpec.describe 'Glueby::Contract::Timestamp' do
         Glueby::Internal::Wallet.wallet_adapter = wallet_adapter
         allow(wallet_adapter).to receive(:load_wallet)
         allow(utxo_provider).to receive(:wallet).and_return(internal_wallet)
+        allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
+        allow(Glueby::Wallet).to receive(:load).and_return(wallet)
       end
 
       after { Glueby::Internal::Wallet.wallet_adapter = nil }

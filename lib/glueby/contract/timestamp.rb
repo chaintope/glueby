@@ -9,7 +9,7 @@ module Glueby
     # Storing timestamp transaction to the blockchain enables everyone to verify that the data existed at that time and a user signed it.
     class Timestamp
       include Glueby::Contract::TxBuilder
-      
+
       P2C_DEFAULT_VALUE = 1_000
 
       autoload :Syncer, 'glueby/contract/timestamp/syncer'
@@ -89,6 +89,7 @@ module Glueby
       # p2c_address and payment_base is used in `trackable` type
       attr_reader :p2c_address, :payment_base
 
+      # @param [Gleuby::Wallet] wallet The wallet that is sender of the timestamp transaction.
       # @param [String] content Data to be hashed and stored in blockchain.
       # @param [String] prefix prefix of op_return data
       # @param [Glueby::Contract::FeeEstimator] fee_estimator
@@ -126,26 +127,37 @@ module Glueby
       # @raise [TxAlreadyBroadcasted] if tx has been broadcasted.
       # @raise [InsufficientFunds] if result of listunspent is not enough to pay the specified amount
       def save!
-        raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @txid
+        raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @ar
 
-        funding_tx, @tx, @p2c_address, @payment_base = create_txs(@wallet, @prefix, digest_content, @fee_estimator, @utxo_provider, type: @timestamp_type)
-        @wallet.internal_wallet.broadcast(funding_tx) if funding_tx
-        @txid = @wallet.internal_wallet.broadcast(@tx)
+        @ar = Glueby::Contract::AR::Timestamp.new(
+          wallet_id: @wallet.id,
+          prefix: @prefix,
+          content: @content,
+          timestamp_type: @timestamp_type,
+          digest: @digest
+        )
+        @ar.save_with_broadcast(fee_estimator: @fee_estimator, utxo_provider: @utxo_provider)
+        @ar.txid
       end
 
-      private
+      def txid
+        raise Glueby::Error, 'The timestamp tx is not broadcasted yet.' unless @ar
+        @ar.txid
+      end
 
-      def digest_content
-        case @digest&.downcase
-        when :sha256
-          Tapyrus.sha256(@content)
-        when :double_sha256
-          Tapyrus.double_sha256(@content)
-        when :none
-          @content
-        else
-          raise Glueby::Contract::Errors::UnsupportedDigestType
-        end
+      def tx
+        raise Glueby::Error, 'The timestamp tx is not broadcasted yet.' unless @ar
+        @ar.tx
+      end
+
+      def p2c_address
+        raise Glueby::Error, 'The timestamp tx is not broadcasted yet.' unless @ar
+        @ar.p2c_address
+      end
+
+      def payment_base
+        raise Glueby::Error, 'The timestamp tx is not broadcasted yet.' unless @ar
+        @ar.payment_base
       end
     end
   end
