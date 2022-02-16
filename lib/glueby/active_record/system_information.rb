@@ -14,7 +14,7 @@ module Glueby
 
       # Set use_only_finalized_utxo
       def self.set_use_only_finalized_utxo(status)
-        if column_names.include? "use_only_finalized_utxo"
+        if exists?(info_key: "use_only_finalized_utxo")
           current = find_by(info_key: "use_only_finalized_utxo")
           current.update!(info_value: status)
         else
@@ -33,7 +33,7 @@ module Glueby
 
       # Set utxo_provider_default_value
       def self.set_utxo_provider_default_value(value)
-        if column_names.include? "utxo_provider_default_value"
+        if exists?(info_key: "utxo_provider_default_value")
           current = find_by(info_key: "utxo_provider_default_value")
           current.update!(info_value: value)
         else
@@ -52,7 +52,7 @@ module Glueby
 
       # Set utxo_provider_pool_size
       def self.set_utxo_provider_pool_size(size)
-        if column_names.include? "utxo_provider_pool_size"
+        if exists?(info_key: "utxo_provider_pool_size")
           current = find_by(info_key: "utxo_provider_pool_size")
           current.update!(info_value: size)
         else
@@ -71,7 +71,7 @@ module Glueby
 
       # Set the status of broadcast_on_background
       def self.set_broadcast_on_background(status)
-        if column_names.include? "broadcast_on_background"
+        if exists?(info_key: "broadcast_on_background")
           current = find_by(info_key: "broadcast_on_background")
           current.update!(info_value: status)
         else

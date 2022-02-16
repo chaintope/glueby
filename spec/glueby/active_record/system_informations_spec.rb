@@ -58,7 +58,7 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
     subject { Glueby::AR::SystemInformation.set_use_only_finalized_utxo(status) }
 
     context do 
-      let(:status) { true }
+      let(:status) { 1 }
 
       it do
         subject
@@ -67,7 +67,14 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
     end
 
     context do 
-      let(:status) { false }
+      before do
+        Glueby::AR::SystemInformation.create(
+          info_key: 'use_only_finalized_utxo',
+          info_value: '0'
+        )
+      end
+
+      let(:status) { 0 }
 
       it do
         subject
@@ -134,40 +141,40 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
     end
   end
 
-  describe '.broadcast_on_background?' do
-    subject { Glueby::AR::SystemInformation.broadcast_on_background? }
+  # describe '.broadcast_on_background?' do
+  #   subject { Glueby::AR::SystemInformation.broadcast_on_background? }
 
-    context 'default value' do
-      it { expect(subject).to be_truthy }
-    end
+  #   context 'default value' do
+  #     it { expect(subject).to be_truthy }
+  #   end
 
-    context 'if info_value is 0' do
-      before do
-        Glueby::AR::SystemInformation.create(
-          info_key: 'broadcast_on_background',
-          info_value: '0'
-        )
-      end
-      it { expect(subject).to be_falsy }
-    end
+  #   context 'if info_value is 0' do
+  #     before do
+  #       Glueby::AR::SystemInformation.create(
+  #         info_key: 'broadcast_on_background',
+  #         info_value: '0'
+  #       )
+  #     end
+  #     it { expect(subject).to be_falsy }
+  #   end
 
-    context 'if info_value is 1' do
-      before do
-        Glueby::AR::SystemInformation.create(
-          info_key: 'broadcast_on_background',
-          info_value: '1'
-        )
-      end
+  #   context 'if info_value is 1' do
+  #     before do
+  #       Glueby::AR::SystemInformation.create(
+  #         info_key: 'broadcast_on_background',
+  #         info_value: '1'
+  #       )
+  #     end
 
-      it { expect(subject).to be_truthy }
-    end
-  end
+  #     it { expect(subject).to be_truthy }
+  #   end
+  # end
 
   describe '.set_broadcast_on_background' do
     subject { Glueby::AR::SystemInformation.set_broadcast_on_background(status) }
 
     context do 
-      let(:status) { true }
+      let(:status) { 1 }
 
       it do
         subject
@@ -176,7 +183,14 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
     end
 
     context do 
-      let(:status) { false }
+      before do
+        Glueby::AR::SystemInformation.create(
+          info_key: 'broadcast_on_background',
+          info_value: '0'
+        )
+      end
+
+      let(:status) { 0 }
 
       it do
         subject
