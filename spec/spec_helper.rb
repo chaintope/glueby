@@ -185,6 +185,10 @@ class TestWallet
   def initialize(internal_wallet)
     @internal_wallet = internal_wallet
   end
+
+  def id
+    'testwallet'
+  end
 end
 
 class TestInternalWallet < Glueby::Internal::Wallet
