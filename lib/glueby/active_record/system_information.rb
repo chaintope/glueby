@@ -12,15 +12,17 @@ module Glueby
         find_by(info_key: "use_only_finalized_utxo")&.int_value != 0
       end
 
+
       # Set use_only_finalized_utxo
+      # @param [Boolean] status status of whether to use only finalized utxo
       def self.set_use_only_finalized_utxo(status)
-        if exists?(info_key: "use_only_finalized_utxo")
-          current = find_by(info_key: "use_only_finalized_utxo")
-          current.update!(info_value: status)
+        current = find_by(info_key: "use_only_finalized_utxo")
+        if current
+          current.update!(info_value: status ? "1" : "0")
         else
           create!(
             info_key: "use_only_finalized_utxo", 
-            info_value: status
+            info_value: status ? "1" : "0"
           )
         end
       end
@@ -32,9 +34,10 @@ module Glueby
       end
 
       # Set utxo_provider_default_value
+      # @param [Integer] value default value for utxo provider
       def self.set_utxo_provider_default_value(value)
-        if exists?(info_key: "utxo_provider_default_value")
-          current = find_by(info_key: "utxo_provider_default_value")
+        current = find_by(info_key: "utxo_provider_default_value")
+        if current
           current.update!(info_value: value)
         else
           create!(
@@ -51,9 +54,10 @@ module Glueby
       end
 
       # Set utxo_provider_pool_size
+      # @param [Integer] size pool size of the utxo provider
       def self.set_utxo_provider_pool_size(size)
-        if exists?(info_key: "utxo_provider_pool_size")
-          current = find_by(info_key: "utxo_provider_pool_size")
+        current = find_by(info_key: "utxo_provider_pool_size")
+        if current
           current.update!(info_value: size)
         else
           create!(
@@ -70,14 +74,15 @@ module Glueby
       end
 
       # Set the status of broadcast_on_background
+      # @param [Boolean] status status of broadcast_on_background
       def self.set_broadcast_on_background(status)
-        if exists?(info_key: "broadcast_on_background")
-          current = find_by(info_key: "broadcast_on_background")
-          current.update!(info_value: status)
+        current = find_by(info_key: "broadcast_on_background")
+        if current
+         current.update!(info_value: status ? "1" : "0")
         else
           create!(
             info_key: "broadcast_on_background", 
-            info_value: status
+            info_value: status ? "1" : "0"
           )
         end
       end

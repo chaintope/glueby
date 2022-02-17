@@ -58,7 +58,7 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
     subject { Glueby::AR::SystemInformation.set_use_only_finalized_utxo(status) }
 
     context do 
-      let(:status) { 1 }
+      let(:status) { true }
 
       it do
         subject
@@ -74,7 +74,7 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
         )
       end
 
-      let(:status) { 0 }
+      let(:status) { false }
 
       it do
         subject
@@ -174,7 +174,7 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
     subject { Glueby::AR::SystemInformation.set_broadcast_on_background(status) }
 
     context do 
-      let(:status) { 1 }
+      let(:status) { true }
 
       it do
         subject
@@ -190,7 +190,7 @@ RSpec.describe 'Glueby::AR::SystemInformation', active_record: true do
         )
       end
 
-      let(:status) { 0 }
+      let(:status) { false }
 
       it do
         subject
