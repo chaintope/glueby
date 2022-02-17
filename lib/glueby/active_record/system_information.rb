@@ -18,11 +18,11 @@ module Glueby
       def self.set_use_only_finalized_utxo(status)
         current = find_by(info_key: "use_only_finalized_utxo")
         if current
-          current.update!(info_value: status ? "1" : "0")
+          current.update!(info_value: convert_to_int(status))
         else
           create!(
             info_key: "use_only_finalized_utxo", 
-            info_value: status ? "1" : "0"
+            info_value: convert_to_int(status)
           )
         end
       end
@@ -78,17 +78,23 @@ module Glueby
       def self.set_broadcast_on_background(status)
         current = find_by(info_key: "broadcast_on_background")
         if current
-         current.update!(info_value: status ? "1" : "0")
+         current.update!(info_value: convert_to_int(status))
         else
           create!(
             info_key: "broadcast_on_background", 
-            info_value: status ? "1" : "0"
+            info_value: convert_to_int(status)
           )
         end
       end
 
       def int_value
         info_value.to_i
+      end
+
+      private
+
+      def self.convert_to_int(status)
+        status ? "1" : "0"
       end
 
     end
