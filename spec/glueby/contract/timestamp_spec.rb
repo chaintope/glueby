@@ -117,6 +117,14 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
         it { expect { subject }.to raise_error(Glueby::Contract::Errors::TxAlreadyBroadcasted) }
       end
 
+      context 'broadcasting is failure' do
+        before do
+          allow_any_instance_of(Glueby::Contract::AR::Timestamp).to receive(:save_with_broadcast).and_return(false)
+        end
+
+        it { expect { subject }.to raise_error(Glueby::Contract::Errors::FailedToBroadcast) }
+      end
+
       context 'if digest is :none' do
         let(:contract) do
           Glueby::Contract::Timestamp.new(
@@ -223,11 +231,12 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           status: :finalized,
           key: key
         )
+        allow(Glueby::Internal::RPC).to receive(:client).and_return(double(:rcp_client))
+        allow(Glueby::Internal::RPC.client).to receive(:sendrawtransaction).and_return('a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c')
       end
 
       let(:wallet) { Glueby::Wallet.create }
       it 'create pay-to-contract transaction' do
-        allow(wallet.internal_wallet).to receive(:broadcast).and_return('a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c')
         subject
         expect(contract.tx.inputs.size).to eq 1
         expect(contract.tx.outputs.size).to eq 2
