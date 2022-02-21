@@ -24,6 +24,30 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
   describe '#save_with_broadcast' do
     subject { timestamp.save_with_broadcast }
 
+    context 'it doesnt not raise errors' do
+      before do
+        allow(timestamp).to receive(:save_with_broadcast!).and_return(true)
+      end
+
+      it do
+        expect(subject).to be_truthy
+      end
+    end
+
+    context 'raises an error' do
+      before do
+        allow(timestamp).to receive(:save_with_broadcast!).and_raise(Glueby::Contract::Errors::FailedToBroadcast)
+      end
+
+      it do
+        expect(subject).to be_falsey
+      end
+    end
+  end
+
+  describe '#save_with_broadcast!' do
+    subject { timestamp.save_with_broadcast! }
+
     let(:rpc) { double('mock') }
     let(:wallet) { Glueby::Wallet.create }
 
@@ -61,6 +85,18 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       expect(timestamp.status).to eq "unconfirmed"
       expect(timestamp.p2c_address).to be_nil
       expect(timestamp.payment_base).to be_nil
+    end
+
+    context 'raises Tapyrus::RPC::Error' do
+      before do
+        error = Tapyrus::RPC::Error.new(500, nil, nil)
+        allow(error).to receive(:message).and_return('error message')
+        allow(rpc).to receive(:sendrawtransaction).and_raise(error)
+      end
+
+      it do
+        expect { subject }.to raise_error(Glueby::Contract::Errors::FailedToBroadcast, /failed to broadcast \(id=[0-9]+, reason=error message\)/)
+      end
     end
 
     context 'with trackable type' do

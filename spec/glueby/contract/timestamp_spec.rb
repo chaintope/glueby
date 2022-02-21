@@ -117,14 +117,6 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
         it { expect { subject }.to raise_error(Glueby::Contract::Errors::TxAlreadyBroadcasted) }
       end
 
-      context 'broadcasting is failure' do
-        before do
-          allow_any_instance_of(Glueby::Contract::AR::Timestamp).to receive(:save_with_broadcast).and_return(false)
-        end
-
-        it { expect { subject }.to raise_error(Glueby::Contract::Errors::FailedToBroadcast) }
-      end
-
       context 'if digest is :none' do
         let(:contract) do
           Glueby::Contract::Timestamp.new(

@@ -125,8 +125,7 @@ module Glueby
       # broadcast to Tapyrus Core
       # @return [String] txid
       # @raise [Glueby::Contract::Errors::TxAlreadyBroadcasted] if tx has been broadcasted.
-      # @raise [Glueby::Contract::Errors::InsufficientFunds] if result of listunspent is not enough to pay the specified amount
-      # @raise [Glueby::Contract::Errors::FailedToBroadcast] if the tx broadcasting is failure
+      # @raise [Glueby::Contract::Errors::FailedToBroadcast] If the broadcasting is failure
       def save!
         raise Glueby::Contract::Errors::TxAlreadyBroadcasted if @ar
 
@@ -137,11 +136,8 @@ module Glueby
           timestamp_type: @timestamp_type,
           digest: @digest
         )
-        if @ar.save_with_broadcast(fee_estimator: @fee_estimator, utxo_provider: @utxo_provider)
-          @ar.txid
-        else
-          raise Glueby::Contract::Errors::FailedToBroadcast, 'failed to broadcast timestamp'
-        end
+        @ar.save_with_broadcast!(fee_estimator: @fee_estimator, utxo_provider: @utxo_provider)
+        @ar.txid
       end
 
       def txid
