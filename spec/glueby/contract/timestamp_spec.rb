@@ -158,6 +158,45 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           expect(contract.tx.outputs[1].value).to eq 99_990_000
         end
       end
+
+      context 'if use utxo provider', active_record: true do
+        let(:contract) do
+          Glueby::Contract::Timestamp.new(
+            wallet: wallet,
+            content: "\01",
+            prefix: '',
+            utxo_provider: utxo_provider
+          )
+        end
+        # Utxo provider use utxos whose value is UtxoProvider#default_value
+        let(:unspents) do
+          (0...20).map do |i|
+            {
+              txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
+              script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+              vout: i,
+              amount: 1_000,
+              finalized: true
+            }
+          end
+        end
+
+        let(:utxo_provider) { Glueby::UtxoProvider.new }
+        let(:wallet_adapter) { double(:wallet_adapter) }
+
+        before do
+          Glueby::Internal::Wallet.wallet_adapter = wallet_adapter
+          allow(wallet_adapter).to receive(:load_wallet)
+          allow(utxo_provider).to receive(:wallet).and_return(internal_wallet)
+        end
+
+        after { Glueby::Internal::Wallet.wallet_adapter = nil }
+
+        it 'broadcast 2 transactions' do
+          expect(internal_wallet).to receive(:broadcast).twice
+          subject
+        end
+      end
     end
 
     context 'if type is trackable', active_record: true do
@@ -198,49 +237,6 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
         expect(contract.tx.outputs[1].value).to eq 99_989_000
         expect(contract.p2c_address).not_to be_nil
         expect(contract.payment_base).not_to be_nil
-      end
-    end
-
-    context 'if use utxo provider', active_record: true do
-      let(:internal_wallet) { TestInternalWallet.new }
-      let(:wallet) { TestWallet.new(internal_wallet) }
-      let(:contract) do
-        Glueby::Contract::Timestamp.new(
-          wallet: wallet,
-          content: "\01",
-          prefix: '',
-          utxo_provider: utxo_provider
-        )
-      end
-      # Utxo provider use utxos whose value is UtxoProvider#default_value
-      let(:unspents) do
-        (0...20).map do |i|
-          {
-            txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
-            script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
-            vout: i,
-            amount: 1_000,
-            finalized: true
-          }
-        end
-      end
-
-      let(:utxo_provider) { Glueby::UtxoProvider.new }
-      let(:wallet_adapter) { double(:wallet_adapter) }
-
-      before do
-        Glueby::Internal::Wallet.wallet_adapter = wallet_adapter
-        allow(wallet_adapter).to receive(:load_wallet)
-        allow(utxo_provider).to receive(:wallet).and_return(internal_wallet)
-        allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
-        allow(Glueby::Wallet).to receive(:load).and_return(wallet)
-      end
-
-      after { Glueby::Internal::Wallet.wallet_adapter = nil }
-
-      it 'broadcast 2 transactions' do
-        expect(internal_wallet).to receive(:broadcast).twice
-        subject
       end
     end
   end
