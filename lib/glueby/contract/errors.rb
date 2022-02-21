@@ -4,6 +4,7 @@ module Glueby
       class InsufficientFunds < Error; end
       class InsufficientTokens < Error; end
       class TxAlreadyBroadcasted < Error; end
+      class FailedToBroadcast < Error; end
 
       # Argument Errors
       class InvalidAmount < ArgumentError; end
