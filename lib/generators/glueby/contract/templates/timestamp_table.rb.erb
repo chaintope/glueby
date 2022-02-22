@@ -9,6 +9,9 @@ class CreateTimestamp < ActiveRecord::Migration<%= migration_version %>
       t.integer  :timestamp_type, null: false, default: 0
       t.string   :p2c_address
       t.string   :payment_base
+      t.bigint   :prev_id
     end
+
+    add_index :glueby_timestamps, [:prev_id], unique: true
   end
 end

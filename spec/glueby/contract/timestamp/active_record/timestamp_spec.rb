@@ -1,9 +1,26 @@
 
 RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
   let(:timestamp) do
-    Glueby::Contract::AR::Timestamp.create(wallet_id: '00000000000000000000000000000000', content: "\xFF\xFF\xFF", prefix: 'app', timestamp_type: timestamp_type)
+    Glueby::Contract::AR::Timestamp.create(
+      wallet_id: '00000000000000000000000000000000',
+      content: "\xFF\xFF\xFF",
+      prefix: 'app',
+      timestamp_type: timestamp_type,
+      prev_id: prev_id
+    )
   end
   let(:timestamp_type) { :simple }
+  let(:prev_id) { nil }
+
+  describe 'initialize' do
+    context 'unknown timestamp type' do
+      let(:timestamp_type) { :unknown }
+
+      it do
+        expect { timestamp }.to raise_error(Glueby::ArgumentError, "'unknown' is not a valid timestamp_type")
+      end
+    end
+  end
 
   describe '#latest' do
     subject { timestamp.latest }
@@ -112,6 +129,70 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         expect(timestamp.status).to eq "unconfirmed"
         expect(timestamp.p2c_address).not_to be_nil
         expect(timestamp.payment_base).not_to be_nil
+      end
+
+      context 'has prev_id' do
+        context 'prev timestamp that is correspond with prev_id is not exist' do
+          let(:prev_id) { 999 }
+
+          it do
+            expect { subject }.to raise_error(Glueby::Contract::Errors::PrevTimestampNotFound, 'The previous timestamp(id: 999) not found.')
+          end
+        end
+
+        context 'has existing prev_id' do
+          let!(:prev_id) do
+            prev = Glueby::Contract::AR::Timestamp.create(
+              wallet_id: '00000000000000000000000000000000',
+              content: "\xFF\xFF\xFF",
+              prefix: 'app',
+              timestamp_type: :trackable
+            )
+            prev.save_with_broadcast!
+            prev.id
+          end
+
+          before do
+            # Prepare an UTXO for previous timestamp tx.
+            Glueby::Internal::Wallet::AR::Utxo.create(
+              txid: 'aa' * 32,
+              index: 1,
+              value: 20_000,
+              script_pubkey: '76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
+              status: :finalized,
+              key: key
+            )
+          end
+
+          it do
+            expect(rpc).to receive(:sendrawtransaction).once
+            subject
+          end
+
+          it do
+            subject
+            expect(timestamp.status).to eq "unconfirmed"
+            expect(timestamp.p2c_address).not_to be_nil
+            expect(timestamp.payment_base).not_to be_nil
+          end
+
+          context 'previous timestamp type is not trackable' do
+            let!(:prev_id) do
+              prev = Glueby::Contract::AR::Timestamp.create(
+                wallet_id: '00000000000000000000000000000000',
+                content: "\xFF\xFF\xFF",
+                prefix: 'app',
+                timestamp_type: :simple
+              )
+              prev.save_with_broadcast!
+              prev.id
+            end
+
+            it do
+              expect { subject }.to raise_error(Glueby::Contract::Errors::PrevTimestampIsNotTrackable, /The previous timestamp\(id: [0-9]+\) type must be trackable/)
+            end
+          end
+        end
       end
     end
 

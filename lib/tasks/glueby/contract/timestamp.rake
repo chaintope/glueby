@@ -4,7 +4,6 @@ module Glueby
       module Timestamp
         module_function
         extend Glueby::Contract::TxBuilder
-        extend Glueby::Contract::Timestamp::Util
 
         def create
           timestamps = Glueby::Contract::AR::Timestamp.where(status: :init)
