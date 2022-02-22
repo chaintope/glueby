@@ -91,6 +91,32 @@ RSpec.describe 'Timestamp Contract', functional: true do
           Rake.application['glueby:block_syncer:start'].execute
           ar.reload
           expect(ar.status).to eq('confirmed')
+
+          # Update the timestamp
+          update_ar = Glueby::Contract::AR::Timestamp.create(
+            wallet_id: sender.id,
+            content: "1234".htb,
+            prefix: 'app',
+            timestamp_type: :trackable,
+            prev_id: ar.id
+          )
+          expect do
+            Rake.application['glueby:contract:timestamp:create'].execute
+          end.to change { Glueby::UtxoProvider.new.wallet.list_unspent.count }.by(-1)
+
+          update_ar.reload
+          # expect(sender.balances(false)['']).to be_nil
+          expect(update_ar.status).to eq('unconfirmed')
+          expect(update_ar.txid).not_to be_nil
+          expect(update_ar.p2c_address).not_to be_nil
+          expect(update_ar.payment_base).not_to be_nil
+
+          process_block
+
+          # Sync blocks, then the status is changed to confirmed because of generating a block.
+          Rake.application['glueby:block_syncer:start'].execute
+          update_ar.reload
+          expect(update_ar.status).to eq('confirmed')
         end
       end
     end

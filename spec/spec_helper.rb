@@ -100,7 +100,9 @@ def setup_database
     t.integer  :timestamp_type, null: false, default: 0
     t.string   :p2c_address
     t.string   :payment_base
+    t.bigint   :prev_id
   end
+  connection.add_index :glueby_timestamps, [:prev_id], unique: true
 
   connection.create_table :glueby_system_informations, force: true do |t|
     t.string  :info_key

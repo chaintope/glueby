@@ -239,6 +239,69 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
         expect(contract.p2c_address).not_to be_nil
         expect(contract.payment_base).not_to be_nil
       end
+
+      it 'the wallet never store the UTXO of the created trackable timestamp' do
+        subject
+        result = wallet.internal_wallet.list_unspent(false, :all).find { |i| i[:txid] == contract.txid && i[:vout] == 0 }
+        expect(result).to be_nil
+      end
+    end
+
+    context 'if type is trackable and update existing timestamps', active_record: true do
+      let(:contract) do
+        Glueby::Contract::Timestamp.new(
+          wallet: wallet,
+          content: 'updated',
+          prefix: 'foo',
+          digest: :none,
+          timestamp_type: :trackable,
+          prev_timestamp_id: prev_contract.ar_id
+        )
+      end
+
+      let(:prev_contract) do
+        Glueby::Contract::Timestamp.new(
+          wallet: wallet,
+          content: 'bar',
+          prefix: 'foo',
+          digest: :none,
+          timestamp_type: :trackable
+        )
+      end
+
+      let(:active_record_wallet) { Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet.id) }
+      let(:key) { active_record_wallet.keys.create(purpose: :receive) }
+      let(:wallet) { Glueby::Wallet.create }
+
+      before do
+        Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+        2.times do |i|
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: '0000000000000000000000000000000000000000000000000000000000000000',
+            index: i,
+            value: 100_000_000,
+            script_pubkey: key.to_p2pkh.to_hex,
+            status: :finalized,
+            key: key
+          )
+          end
+        allow(Glueby::Internal::RPC).to receive(:client).and_return(double(:rcp_client))
+        allow(Glueby::Internal::RPC.client).to receive(:sendrawtransaction).and_return('a01d8a6bf7bef5719ada2b7813c1ce4dabaf8eb4ff22791c67299526793b511c')
+
+        prev_contract.save!
+      end
+
+      it 'create pay-to-contract transaction' do
+        subject
+        expect(contract.tx.inputs.size).to eq 2
+        expect(contract.tx.outputs.size).to eq 2
+        expect(contract.tx.outputs[0].value).to eq 1_000
+        expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_falsy
+        expect(contract.tx.outputs[0].script_pubkey.p2pkh?).to be_truthy
+        expect(contract.tx.outputs[1].value).to eq 99_990_000
+        expect(contract.p2c_address).not_to be_nil
+        expect(contract.payment_base).not_to be_nil
+      end
     end
   end
 end

@@ -3,13 +3,13 @@ module Glueby
     module AR
       class Timestamp < ::ActiveRecord::Base
         include Glueby::GluebyLogger
-        include Glueby::Contract::Timestamp::Util
-        include Glueby::Contract::TxBuilder
 
         enum status: { init: 0, unconfirmed: 1, confirmed: 2 }
         enum timestamp_type: { simple: 0, trackable: 1 }
 
         attr_reader :tx
+
+        belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp'
 
         class << self
           def digest_content(content, digest)
@@ -31,16 +31,34 @@ module Glueby
         # - content
         # - prefix(optional)
         # - timestamp_type(optional)
+        # @raise [Glueby::ArgumentError] If the timestamp_type is not in :simple or :trackable
         def initialize(attributes = nil)
           # Set content_hash from :content attribute
           content_hash = Timestamp.digest_content(attributes[:content], attributes[:digest] || :sha256)
-          super(wallet_id: attributes[:wallet_id], content_hash: content_hash,
-            prefix: attributes[:prefix] ? attributes[:prefix] : '', status: :init, timestamp_type: attributes[:timestamp_type] || :simple)
+          super(
+            wallet_id: attributes[:wallet_id],
+            content_hash: content_hash,
+            prefix: attributes[:prefix] ? attributes[:prefix] : '',
+            status: :init,
+            timestamp_type: attributes[:timestamp_type] || :simple,
+            prev_id: attributes[:prev_id]
+          )
+        rescue ::ArgumentError => e
+          raise Glueby::ArgumentError, e.message
         end
 
         # Return true if timestamp type is 'trackable' and output in timestamp transaction has not been spent yet, otherwise return false.
         def latest
           trackable?
+        end
+
+        def utxo
+          {
+            script_pubkey: Tapyrus::Script.parse_from_addr(p2c_address).to_hex,
+            txid: txid,
+            vout: 0,
+            amount: Glueby::Contract::Timestamp::P2C_DEFAULT_VALUE
+          }
         end
 
         # Broadcast and save timestamp
@@ -49,7 +67,7 @@ module Glueby
         # @return true if tapyrus transactions were broadcasted and the timestamp was updated successfully, otherwise false.
         def save_with_broadcast(fee_estimator: Glueby::Contract::FixedFeeEstimator.new, utxo_provider: nil)
           save_with_broadcast!(fee_estimator: fee_estimator, utxo_provider: utxo_provider)
-        rescue Errors::FailedToBroadcast => e
+        rescue Errors::FailedToBroadcast, Errors::PrevTimestampNotFound, Errors::PrevTimestampIsNotTrackable => e
           logger.error("failed to broadcast (id=#{id}, reason=#{e.message})")
           false
         end
@@ -59,10 +77,13 @@ module Glueby
         # @param [Glueby::UtxoProvider] utxo_provider
         # @return true if tapyrus transactions were broadcasted and the timestamp was updated successfully
         # @raise [Glueby::Contract::Errors::FailedToBroadcast] If the broadcasting is failure
+        # @raise [Glueby::Contract::Errors::PrevTimestampNotFound] If it is not available that the timestamp record which correspond with the prev_id attribute
+        # @raise [Glueby::Contract::Errors::PrevTimestampIsNotTrackable] If the timestamp record by prev_id is not trackable
         def save_with_broadcast!(fee_estimator: Glueby::Contract::FixedFeeEstimator.new, utxo_provider: nil)
           utxo_provider = Glueby::UtxoProvider.new if !utxo_provider && Glueby.configuration.use_utxo_provider?
-          wallet = Glueby::Wallet.load(wallet_id)
-          funding_tx, tx, p2c_address, payment_base = create_txs(wallet, prefix, content_hash, fee_estimator, utxo_provider, type: timestamp_type.to_sym)
+
+          funding_tx, tx, p2c_address, payment_base = create_txs(fee_estimator, utxo_provider)
+
           if funding_tx
             ::ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
               wallet.internal_wallet.broadcast(funding_tx)
@@ -85,6 +106,60 @@ module Glueby
                Errors::InsufficientFunds => e
           errors.add(:base, "failed to broadcast (id=#{id}, reason=#{e.message})")
           raise Errors::FailedToBroadcast, "failed to broadcast (id=#{id}, reason=#{e.message})"
+        end
+
+        private
+
+        def wallet
+          @wallet ||= Glueby::Wallet.load(wallet_id)
+        end
+
+        def create_txs(fee_estimator, utxo_provider)
+          builder = builder_class.new(wallet, fee_estimator)
+
+          if builder.instance_of?(Contract::Timestamp::TxBuilder::UpdatingTrackableTxBuilder)
+            unless prev
+              message = "The previous timestamp(id: #{prev_id}) not found."
+              errors.add(:prev_id, message)
+              raise Errors::PrevTimestampNotFound, message
+            end
+
+            if prev.timestamp_type != 'trackable'
+              message = "The previous timestamp(id: #{prev_id}) type must be trackable"
+              errors.add(:prev_id, message)
+              raise Errors::PrevTimestampIsNotTrackable, message
+            end
+
+            builder.set_prev_timestamp_info(
+              timestamp_utxo: prev.utxo,
+              payment_base: prev.payment_base,
+              prefix: prev.prefix,
+              data: prev.content_hash
+            )
+          end
+
+          tx = builder.set_data(prefix, content_hash)
+                      .set_inputs(utxo_provider)
+                      .build
+
+          if builder.instance_of?(Contract::Timestamp::TxBuilder::SimpleTxBuilder)
+            [builder.funding_tx, tx, nil, nil]
+          else
+            [builder.funding_tx, tx, builder.p2c_address, builder.payment_base]
+          end
+        end
+
+        def builder_class
+          case timestamp_type.to_sym
+          when :simple
+            Contract::Timestamp::TxBuilder::SimpleTxBuilder
+          when :trackable
+            if prev_id
+              Contract::Timestamp::TxBuilder::UpdatingTrackableTxBuilder
+            else
+              Contract::Timestamp::TxBuilder::TrackableTxBuilder
+            end
+          end
         end
       end
     end
