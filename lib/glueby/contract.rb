@@ -8,6 +8,5 @@ module Glueby
     autoload :Token, 'glueby/contract/token'
     autoload :TxBuilder, 'glueby/contract/tx_builder'
     autoload :AR, 'glueby/contract/active_record'
-    autoload :Wallet, 'glueby/contract/wallet'
   end
 end
