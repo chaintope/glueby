@@ -148,6 +148,31 @@ module Glueby
         def get_addresses(wallet_id, label = nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
+
+        # Create and returns pay to contract address
+        # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [String] contents - The data to be used for generating pay-to-contract address
+        # @return [String] pay to contract P2PKH address
+        def create_pay_to_contract_address(wallet_id, contents)
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
+
+        # Sign to the pay to contract input
+        # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [Tapyrus::Tx] tx - The tx that has pay to contract input in the inputs list
+        # @param [Hash] utxo - The utxo that indicates pay to contract output to be signed
+        # @option utxo [String] txid - Transaction id
+        # @option utxo [Integer] vout - Output index
+        # @option utxo [Integer] amount - The amount the output has
+        # @option utxo [String] script_pubkey - The script_pubkey hex string
+        # @param [String] payment_base - The public key that is used to generate pay to contract public key
+        # @param [String] contents - The data to be used for generating pay-to-contract address
+        # @param [Integer] sighashtype - The sighash flag for each signature that would be produced here.
+        # @return [Tapyrus::Tx]
+        # @raise [Glueby::Internal::Wallet::Errors::InvalidSighashType] when the specified sighashtype is invalid
+        def sign_to_pay_to_contract_address(wallet_id, tx, utxo, payment_base, contents, sighashtype: Tapyrus::SIGHASH_TYPE[:all])
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
       end
     end
   end
