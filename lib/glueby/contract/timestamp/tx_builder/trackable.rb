@@ -1,8 +1,8 @@
 module Glueby
   module Contract
     class Timestamp
-      class TxBuilder
-        class TrackableTxBuilder < SimpleTxBuilder
+      module TxBuilder
+        class Trackable < Simple
           attr_reader :p2c_address, :payment_base
 
           # @override

@@ -123,7 +123,7 @@ module Glueby
         def create_txs(fee_estimator, utxo_provider)
           builder = builder_class.new(wallet, fee_estimator)
 
-          if builder.instance_of?(Contract::Timestamp::TxBuilder::UpdatingTrackableTxBuilder)
+          if builder.instance_of?(Contract::Timestamp::TxBuilder::UpdatingTrackable)
             unless prev
               message = "The previous timestamp(id: #{prev_id}) not found."
               errors.add(:prev_id, message)
@@ -148,7 +148,7 @@ module Glueby
                       .set_inputs(utxo_provider)
                       .build
 
-          if builder.instance_of?(Contract::Timestamp::TxBuilder::SimpleTxBuilder)
+          if builder.instance_of?(Contract::Timestamp::TxBuilder::Simple)
             [builder.funding_tx, tx, nil, nil]
           else
             [builder.funding_tx, tx, builder.p2c_address, builder.payment_base]
@@ -158,12 +158,12 @@ module Glueby
         def builder_class
           case timestamp_type.to_sym
           when :simple
-            Contract::Timestamp::TxBuilder::SimpleTxBuilder
+            Contract::Timestamp::TxBuilder::Simple
           when :trackable
             if prev_id
-              Contract::Timestamp::TxBuilder::UpdatingTrackableTxBuilder
+              Contract::Timestamp::TxBuilder::UpdatingTrackable
             else
-              Contract::Timestamp::TxBuilder::TrackableTxBuilder
+              Contract::Timestamp::TxBuilder::Trackable
             end
           end
         end

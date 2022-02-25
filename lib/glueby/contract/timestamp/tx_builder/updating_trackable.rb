@@ -1,8 +1,8 @@
 module Glueby
   module Contract
     class Timestamp
-      class TxBuilder
-        class UpdatingTrackableTxBuilder < TrackableTxBuilder
+      module TxBuilder
+        class UpdatingTrackable < Trackable
           def set_prev_timestamp_info(timestamp_utxo:, payment_base:, prefix:, data:)
             @prev_timestamp_utxo = timestamp_utxo
             @prev_payment_base = payment_base
