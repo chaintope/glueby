@@ -255,7 +255,7 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           prefix: 'foo',
           digest: :none,
           timestamp_type: :trackable,
-          prev_timestamp_id: prev_contract.ar_id
+          prev_timestamp_id: Glueby::Contract::AR::Timestamp.find_by(txid: prev_contract.txid).id
         )
       end
 

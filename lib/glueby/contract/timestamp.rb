@@ -91,11 +91,6 @@ module Glueby
         raise Glueby::Error, 'The timestamp tx is not broadcasted yet.' unless @ar
         @ar.payment_base
       end
-
-      def ar_id
-        raise Glueby::Error, 'The timestamp tx is not broadcasted yet.' unless @ar
-        @ar.id
-      end
     end
   end
 end
