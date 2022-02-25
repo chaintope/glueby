@@ -52,11 +52,17 @@ module Glueby
           trackable?
         end
 
+        # Returns a UTXO that corresponds to the timestamp
+        # @return [Hash] UTXO
+        #   - [String] script_pubkey A script pubkey hex string
+        #   - [String] txid A txid
+        #   - [Integer] vout An index of the tx
+        #   - [Integer] amount A value of
         def utxo
           {
             script_pubkey: Tapyrus::Script.parse_from_addr(p2c_address).to_hex,
             txid: txid,
-            vout: 0,
+            vout: Contract::Timestamp::TxBuilder::PAY_TO_CONTRACT_INPUT_INDEX,
             amount: Glueby::Contract::Timestamp::P2C_DEFAULT_VALUE
           }
         end
