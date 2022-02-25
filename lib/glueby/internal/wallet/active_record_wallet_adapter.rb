@@ -153,6 +153,51 @@ module Glueby
           keys = keys.where(label: label) if label
           keys.map(&:address)
         end
+
+        def create_pay_to_contract_address(wallet_id, contents)
+          # Calculate P + H(P || contents)G
+          group = ECDSA::Group::Secp256k1
+          pubkey = create_pubkey(wallet_id)
+          p = pubkey.to_point # P
+          commitment = create_pay_to_contract_commitment(pubkey, contents)
+          point = p + group.generator.multiply_by_scalar(commitment) # P + H(P || contents)G
+          [Tapyrus::Key.new(pubkey: point.to_hex(true)).to_p2pkh, pubkey.pubkey] # [p2c address, P]
+        end
+
+        def sign_to_pay_to_contract_address(wallet_id, tx, utxo, payment_base, contents, sighashtype: Tapyrus::SIGHASH_TYPE[:all])
+          key = create_pay_to_contract_private_key(wallet_id, payment_base, contents)
+          sighash = tx.sighash_for_input(utxo[:vout], Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb))
+
+          sig = key.sign(sighash, algo: :schnorr) + [Tapyrus::SIGHASH_TYPE[:all]].pack('C')
+          script_sig = Tapyrus::Script.parse_from_payload(Tapyrus::Script.pack_pushdata(sig) + Tapyrus::Script.pack_pushdata(key.pubkey.htb))
+          tx.inputs[utxo[:vout]].script_sig = script_sig
+          tx
+        end
+
+        private
+
+        # Calculate commitment = H(P || contents)
+        # @param [Tapyrus::Key] pubkey The public key
+        # @param [String] contents
+        # @return Integer
+        def create_pay_to_contract_commitment(pubkey, contents)
+          group = ECDSA::Group::Secp256k1
+          p = pubkey.to_point # P
+          Tapyrus.sha256(p.to_hex(true).htb + contents).bth.to_i(16) % group.order # H(P || contents)
+        end
+
+        # @param [String] wallet_id
+        # @param [String] payment_base The public key hex string
+        # @param [String] contents
+        # @return [Tapyrus::Key] pay to contract private key
+        def create_pay_to_contract_private_key(wallet_id, payment_base, contents)
+          group = ECDSA::Group::Secp256k1
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
+          ar_key = wallet.keys.where(public_key: payment_base).first
+          key = Tapyrus::Key.new(pubkey: payment_base)
+          commitment = create_pay_to_contract_commitment(key, contents)
+          Tapyrus::Key.new(priv_key: ((ar_key.private_key.to_i(16) + commitment) % group.order).to_even_length_hex) # K + commitment
+        end
       end
     end
   end
