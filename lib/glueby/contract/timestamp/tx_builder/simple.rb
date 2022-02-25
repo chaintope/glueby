@@ -1,10 +1,9 @@
 module Glueby
   module Contract
     class Timestamp
-      class TxBuilder
-
+      module TxBuilder
         # The simple Timestamp method
-        class SimpleTxBuilder
+        class Simple
           include Glueby::Contract::TxBuilder
 
           attr_reader :funding_tx
