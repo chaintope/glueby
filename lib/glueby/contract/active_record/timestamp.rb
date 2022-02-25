@@ -130,7 +130,7 @@ module Glueby
               raise Errors::PrevTimestampNotFound, message
             end
 
-            if prev.timestamp_type != 'trackable'
+            unless prev.trackable?
               message = "The previous timestamp(id: #{prev_id}) type must be trackable"
               errors.add(:prev_id, message)
               raise Errors::PrevTimestampIsNotTrackable, message
