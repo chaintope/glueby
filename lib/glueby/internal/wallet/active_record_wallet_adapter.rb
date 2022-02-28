@@ -164,7 +164,7 @@ module Glueby
           [Tapyrus::Key.new(pubkey: point.to_hex(true)).to_p2pkh, pubkey.pubkey] # [p2c address, P]
         end
 
-        def sign_to_pay_to_contract_address(wallet_id, tx, utxo, payment_base, contents, sighashtype: Tapyrus::SIGHASH_TYPE[:all])
+        def sign_to_pay_to_contract_address(wallet_id, tx, utxo, payment_base, contents)
           key = create_pay_to_contract_private_key(wallet_id, payment_base, contents)
           sighash = tx.sighash_for_input(utxo[:vout], Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb))
 

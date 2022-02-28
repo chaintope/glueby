@@ -345,4 +345,43 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       end
     end
   end
+
+  describe '#create_pay_to_contract_address' do
+    subject { adapter.create_pay_to_contract_address(wallet.wallet_id, 'contents') }
+
+    it { expect { subject }.to change { wallet.keys.where(purpose: :receive).count }.from(0).to(1) }
+    it { expect { subject }.not_to change { wallet.keys.where(purpose: :change).count } }
+    it { expect { Tapyrus.decode_base58_address(subject[0]) }.not_to raise_error }
+  end
+
+  describe '#sign_to_pay_to_contract_address' do
+    subject { adapter.sign_to_pay_to_contract_address(wallet.wallet_id, tx, utxo, payment_base, contents)}
+
+    let(:tx) { Tapyrus::Tx.parse_from_payload('0100000002f27e1bf8f372cc149a3ab29813e01c1482b271608ba26bdf737abaa9322550140000000000ffffffff153ba5cb9832474c1a19877824b01960dc0e81d9bac5a0a568b608557d79498e00000000644110ce5ba4c4c13ae914e6f3abb2f248ee622423a0d83f4a7ae0c080178b5a967c1fed066eba4c6489f679e79cada9f167e4d65dd2d0183f0db1a6220de93ce52401210211e33617dcdf5732056c441b918b4ae6c5269f6fba1547e3b9ef6cbaaebeb2b6ffffffff01e8030000000000001976a91494ccd55800015cd996281aaca5f60f25d173af3d88ac00000000'.htb) }
+    let(:utxo) do
+      {
+        txid: '14502532a9ba7a73df6ba28b6071b282141ce01398b23a9a14cc72f3f81b7ef2',
+        vout: 0,
+        amount: 1000,
+        script_pubkey: '76a914539b48fe6cebb55c207e150b4e2443210b7e971088ac'
+      }
+    end
+    let(:payment_base) { '02046e89be90d26872e1318feb7d5ca7a6f588118e76f4906cf5b8ef262b63ab49' }
+    let(:contents) { 'app5ae7e6a42304dc6e4176210b83c43024f99a0bce9a870c3b6d2c95fc8ebfb74c' }
+
+    before do
+      Glueby::Internal::Wallet::AR::Key.create!(
+        private_key: 'c5580f6c26f83fb513dd5e0d1b03c36be26fcefa139b1720a7ca7c0dedd439c2',
+        public_key: '02046e89be90d26872e1318feb7d5ca7a6f588118e76f4906cf5b8ef262b63ab49',
+        script_pubkey: '76a9141747ad39deefc57d933d0d625f7f71ca6fcc688d88ac',
+        label: nil,
+        purpose: 'receive',
+        wallet_id: wallet.id
+      )
+    end
+
+    it do
+      expect(subject.inputs[0].script_sig.to_hex).to eq '41c88a45a008be7bbdac85b400085ed24f30adf6f9c7c86556a794ffd3d5e2b7dda128dccc3dbe24e5b59793bf3e4ad5a00f98c408d736b166a334a3c8e2297e420121021d25c88f2cd16e317156b6bf9870b08f5e6d782ca653473cee9c7a6746cac58c'
+    end
+  end
 end
