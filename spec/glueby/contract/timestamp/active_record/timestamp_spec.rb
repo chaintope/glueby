@@ -53,23 +53,32 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
 
   describe '#latest' do
     include_context 'timestamp can be saved and broadcasted'
-    subject { timestamp.latest }
+    subject { timestamp.latest? }
 
     before do
       timestamp.save_with_broadcast!
       timestamp.reload
     end
 
-    context 'timestamp type is simple' do
-      let(:timestamp_type) { :simple }
+    shared_examples 'check latest?' do
+      context 'timestamp type is simple' do
+        let(:timestamp_type) { :simple }
 
-      it { is_expected.to be_falsy }
+        it { is_expected.to be_falsy }
+      end
+
+      context 'timestamp type is trackable' do
+        let(:timestamp_type) { :trackable }
+
+        it { is_expected.to be_truthy }
+      end
     end
 
-    context 'timestamp type is trackable' do
-      let(:timestamp_type) { :trackable }
+    include_examples 'check latest?'
 
-      it { is_expected.to be_truthy }
+    context 'use alias name' do
+      subject { timestamp.latest }
+      include_examples 'check latest?'
     end
   end
 

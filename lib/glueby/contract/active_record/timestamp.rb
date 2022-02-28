@@ -48,9 +48,10 @@ module Glueby
         end
 
         # Return true if timestamp type is 'trackable' and output in timestamp transaction has not been spent yet, otherwise return false.
-        def latest
+        def latest?
           trackable? && attributes['latest']
         end
+        alias_method :latest, :latest?
 
         # Returns a UTXO that corresponds to the timestamp
         # @return [Hash] UTXO
