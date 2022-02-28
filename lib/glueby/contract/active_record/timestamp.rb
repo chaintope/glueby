@@ -49,7 +49,7 @@ module Glueby
 
         # Return true if timestamp type is 'trackable' and output in timestamp transaction has not been spent yet, otherwise return false.
         def latest
-          trackable?
+          trackable? && attributes['latest']
         end
 
         # Returns a UTXO that corresponds to the timestamp
@@ -101,6 +101,11 @@ module Glueby
               assign_attributes(txid: tx.txid, status: :unconfirmed, p2c_address: p2c_address, payment_base: payment_base)
               @tx = tx
               save!
+
+              if update_trackable?
+                prev.latest = false
+                prev.save!
+              end
             end
           end
           logger.info("timestamp tx was broadcasted (id=#{id}, txid=#{tx.txid})")
@@ -166,6 +171,10 @@ module Glueby
               Contract::Timestamp::TxBuilder::Trackable
             end
           end
+        end
+
+        def update_trackable?
+          trackable? && prev_id
         end
       end
     end

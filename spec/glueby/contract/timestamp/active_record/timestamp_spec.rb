@@ -1,5 +1,34 @@
 
 RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
+  shared_context 'timestamp can be saved and broadcasted' do
+    let(:rpc) { double('mock') }
+    let(:wallet) { Glueby::Wallet.create }
+
+    let(:address) { wallet.internal_wallet.receive_address }
+    let(:key) do
+      Glueby::Internal::Wallet::AR::Key.find_by(script_pubkey: Tapyrus::Script.parse_from_addr(address).to_hex)
+    end
+
+    before do
+      Glueby.configuration.wallet_adapter = :activerecord
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: 'aa' * 32,
+        index: 0,
+        value: 20_000,
+        script_pubkey: '76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
+        status: :finalized,
+        key: key
+      )
+
+      allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
+      allow(rpc).to receive(:sendrawtransaction).and_return('0000000000000000000000000000000000000000000000000000000000000000')
+      allow(rpc).to receive(:generatetoaddress).and_return('0000000000000000000000000000000000000000000000000000000000000000')
+      allow(Glueby::Wallet).to receive(:load).with("00000000000000000000000000000000").and_return(wallet)
+    end
+
+    after { Glueby::Internal::Wallet.wallet_adapter = nil }
+  end
+
   let(:timestamp) do
     Glueby::Contract::AR::Timestamp.create(
       wallet_id: '00000000000000000000000000000000',
@@ -23,7 +52,13 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
   end
 
   describe '#latest' do
+    include_context 'timestamp can be saved and broadcasted'
     subject { timestamp.latest }
+
+    before do
+      timestamp.save_with_broadcast!
+      timestamp.reload
+    end
 
     context 'timestamp type is simple' do
       let(:timestamp_type) { :simple }
@@ -65,32 +100,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
   describe '#save_with_broadcast!' do
     subject { timestamp.save_with_broadcast! }
 
-    let(:rpc) { double('mock') }
-    let(:wallet) { Glueby::Wallet.create }
-
-    let(:address) { wallet.internal_wallet.receive_address }
-    let(:key) do
-      Glueby::Internal::Wallet::AR::Key.find_by(script_pubkey: Tapyrus::Script.parse_from_addr(address).to_hex)
-    end
-
-    before do
-      Glueby.configuration.wallet_adapter = :activerecord
-      Glueby::Internal::Wallet::AR::Utxo.create(
-        txid: 'aa' * 32,
-        index: 0,
-        value: 20_000,
-        script_pubkey: '76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
-        status: :finalized,
-        key: key
-      )
-
-      allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
-      allow(rpc).to receive(:sendrawtransaction).and_return('0000000000000000000000000000000000000000000000000000000000000000')
-      allow(rpc).to receive(:generatetoaddress).and_return('0000000000000000000000000000000000000000000000000000000000000000')
-      allow(Glueby::Wallet).to receive(:load).with("00000000000000000000000000000000").and_return(wallet)
-    end
-
-    after { Glueby::Internal::Wallet.wallet_adapter = nil }
+    include_context 'timestamp can be saved and broadcasted'
 
     it do
       expect(rpc).to receive(:sendrawtransaction).once
@@ -141,13 +151,15 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         end
 
         context 'has existing prev_id' do
-          let!(:prev_id) do
-            prev = Glueby::Contract::AR::Timestamp.create(
+          let(:prev) do
+            Glueby::Contract::AR::Timestamp.create(
               wallet_id: '00000000000000000000000000000000',
               content: "\xFF\xFF\xFF",
               prefix: 'app',
               timestamp_type: :trackable
             )
+          end
+          let!(:prev_id) do
             prev.save_with_broadcast!
             prev.id
           end
@@ -171,9 +183,16 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
 
           it do
             subject
+            timestamp.reload
             expect(timestamp.status).to eq "unconfirmed"
             expect(timestamp.p2c_address).not_to be_nil
             expect(timestamp.payment_base).not_to be_nil
+            expect(timestamp.latest).to be_truthy
+          end
+
+          it 'update previous timestamp\'s latest falg to false' do
+            subject
+            expect(prev.reload.latest).to be_falsey
           end
 
           context 'previous timestamp type is not trackable' do
