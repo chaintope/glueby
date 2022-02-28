@@ -101,6 +101,7 @@ def setup_database
     t.string   :p2c_address
     t.string   :payment_base
     t.bigint   :prev_id
+    t.boolean  :latest, null: false, default: true
   end
   connection.add_index :glueby_timestamps, [:prev_id], unique: true
 
