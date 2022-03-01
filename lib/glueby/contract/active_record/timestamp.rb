@@ -9,7 +9,7 @@ module Glueby
 
         attr_reader :tx
 
-        belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp'
+        belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp', optional: true
 
         class << self
           def digest_content(content, digest)

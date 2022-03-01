@@ -30,7 +30,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
   end
 
   let(:timestamp) do
-    Glueby::Contract::AR::Timestamp.create(
+    Glueby::Contract::AR::Timestamp.create!(
       wallet_id: '00000000000000000000000000000000',
       content: "\xFF\xFF\xFF",
       prefix: 'app',
@@ -47,6 +47,21 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
 
       it do
         expect { timestamp }.to raise_error(Glueby::ArgumentError, "'unknown' is not a valid timestamp_type")
+      end
+    end
+
+    context 'belongs_to required by default is true' do
+      before do
+        # From rails 6, true is the default value
+        ActiveRecord::Base.belongs_to_required_by_default = true
+      end
+
+      after do
+        ActiveRecord::Base.belongs_to_required_by_default = nil
+      end
+
+      it do
+        expect { timestamp }.not_to raise_error
       end
     end
   end
