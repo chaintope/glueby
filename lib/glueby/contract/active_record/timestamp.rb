@@ -174,11 +174,19 @@ module Glueby
         def validate_prev
           validate_prev!
           true
-        rescue Errors::PrevTimestampNotFound, Errors::PrevTimestampIsNotTrackable
+        rescue Errors::PrevTimestampNotFound,
+               Errors::PrevTimestampIsNotTrackable,
+               Errors::UnnecessaryPrevTimestamp
           false
         end
 
         def validate_prev!
+          if simple? && prev_id
+            message = "The previous timestamp(id: #{prev_id}) must be nil in simple timestamp"
+            errors.add(:prev_id, message)
+            raise Errors::UnnecessaryPrevTimestamp, message
+          end
+
           return unless update_trackable?
 
           unless prev
