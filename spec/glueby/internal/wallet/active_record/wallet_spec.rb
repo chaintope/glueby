@@ -55,6 +55,18 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       expect(tx.verify_input_sig(2, key1.to_p2pkh.add_color(color_id))).to be_truthy
     end
 
+    context 'the tx has outputs for a other\'s key' do
+      let(:another_wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: '0000000000000000000000000000') }
+      let(:key2) { another_wallet.keys.create(purpose: :receive) }
+
+      it 'keeps blank script sig for the second input that has pubkey in another wallet' do
+        subject
+        expect(tx.verify_input_sig(0, key1.to_p2pkh)).to be_truthy
+        expect(tx.inputs[1].script_sig).to be_blank
+        expect(tx.verify_input_sig(2, key1.to_p2pkh.add_color(color_id))).to be_truthy
+      end
+    end
+
     context 'with previout txs' do
       let(:prevtxs) do
         [
