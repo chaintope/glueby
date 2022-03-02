@@ -11,6 +11,9 @@ module Glueby
 
         belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp', optional: true
 
+        validates :prev, uniqueness: true, allow_nil: true
+        validate :validate_prev
+
         class << self
           def digest_content(content, digest)
             case digest&.downcase
@@ -130,17 +133,7 @@ module Glueby
           builder = builder_class.new(wallet, fee_estimator)
 
           if builder.instance_of?(Contract::Timestamp::TxBuilder::UpdatingTrackable)
-            unless prev
-              message = "The previous timestamp(id: #{prev_id}) not found."
-              errors.add(:prev_id, message)
-              raise Errors::PrevTimestampNotFound, message
-            end
-
-            unless prev.trackable?
-              message = "The previous timestamp(id: #{prev_id}) type must be trackable"
-              errors.add(:prev_id, message)
-              raise Errors::PrevTimestampIsNotTrackable, message
-            end
+            validate_prev!
 
             builder.set_prev_timestamp_info(
               timestamp_utxo: prev.utxo,
@@ -176,6 +169,29 @@ module Glueby
 
         def update_trackable?
           trackable? && prev_id
+        end
+
+        def validate_prev
+          validate_prev!
+          true
+        rescue Errors::PrevTimestampNotFound, Errors::PrevTimestampIsNotTrackable
+          false
+        end
+
+        def validate_prev!
+          return unless update_trackable?
+
+          unless prev
+            message = "The previous timestamp(id: #{prev_id}) not found."
+            errors.add(:prev_id, message)
+            raise Errors::PrevTimestampNotFound, message
+          end
+
+          unless prev.trackable?
+            message = "The previous timestamp(id: #{prev_id}) type must be trackable"
+            errors.add(:prev_id, message)
+            raise Errors::PrevTimestampIsNotTrackable, message
+          end
         end
       end
     end

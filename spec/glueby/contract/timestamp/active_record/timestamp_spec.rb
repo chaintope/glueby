@@ -1,6 +1,17 @@
 
 RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
   shared_context 'timestamp can be saved and broadcasted' do
+    let(:timestamp) do
+      Glueby::Contract::AR::Timestamp.new(
+        wallet_id: '00000000000000000000000000000000',
+        content: "\xFF\xFF\xFF",
+        prefix: 'app',
+        timestamp_type: timestamp_type,
+        prev_id: prev_id
+      )
+    end
+    let(:timestamp_type) { :simple }
+    let(:prev_id) { nil }
     let(:rpc) { double('mock') }
     let(:wallet) { Glueby::Wallet.create }
 
@@ -29,19 +40,17 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
     after { Glueby::Internal::Wallet.wallet_adapter = nil }
   end
 
-  let(:timestamp) do
-    Glueby::Contract::AR::Timestamp.create!(
-      wallet_id: '00000000000000000000000000000000',
-      content: "\xFF\xFF\xFF",
-      prefix: 'app',
-      timestamp_type: timestamp_type,
-      prev_id: prev_id
-    )
-  end
-  let(:timestamp_type) { :simple }
-  let(:prev_id) { nil }
-
   describe 'initialize' do
+    let(:timestamp) do
+      Glueby::Contract::AR::Timestamp.create!(
+        wallet_id: '00000000000000000000000000000000',
+        content: "\xFF\xFF\xFF",
+        prefix: 'app',
+        timestamp_type: timestamp_type
+      )
+    end
+    let(:timestamp_type) { :simple }
+
     context 'unknown timestamp type' do
       let(:timestamp_type) { :unknown }
 
@@ -62,6 +71,66 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
 
       it do
         expect { timestamp }.not_to raise_error
+      end
+    end
+  end
+
+  describe 'validation' do
+    let(:valid_attributes) do
+      {
+        wallet_id: '00000000000000000000000000000000',
+        content: "\xFF\xFF\xFF",
+        prefix: 'app',
+        timestamp_type: 'trackable'
+      }
+    end
+
+    it 'valid trackable timestamp' do
+      Glueby::Contract::AR::Timestamp.create!(valid_attributes)
+    end
+
+    it 'valid simple timestamp multiple tiems' do
+      2.times do
+        Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(timestamp_type: :simple)).prev_id
+      end
+    end
+
+    context 'the prev timestamp is not exists' do
+      it 'error' do
+        expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(prev_id: 0)) }
+          .to raise_error(ActiveRecord::RecordInvalid, 'Validation failed: Prev The previous timestamp(id: 0) not found.')
+      end
+    end
+
+    context 'has prev timestamp' do
+      let!(:prev) do
+        Glueby::Contract::AR::Timestamp.create!(valid_attributes)
+      end
+
+      it 'valid updating trackable timestamp' do
+        Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(prev_id: prev.id))
+      end
+
+      context 'the prev timestamp is already updated' do
+        before do
+          Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(prev_id: prev.id))
+        end
+
+        it 'error' do
+          expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(prev_id: prev.id)) }
+            .to raise_error(ActiveRecord::RecordInvalid, 'Validation failed: Prev has already been taken')
+        end
+      end
+
+      context 'prev is simple timestamp' do
+        let!(:prev) do
+          Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(timestamp_type: :simple))
+        end
+
+        it 'error' do
+          expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(prev_id: prev.id)) }
+            .to raise_error(ActiveRecord::RecordInvalid, /Validation failed: Prev The previous timestamp\(id: [0-9]+\) type must be trackable/)
+        end
       end
     end
   end
@@ -99,6 +168,15 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
 
   describe '#save_with_broadcast' do
     subject { timestamp.save_with_broadcast }
+
+    let(:timestamp) do
+      Glueby::Contract::AR::Timestamp.new(
+        wallet_id: '00000000000000000000000000000000',
+        content: "\xFF\xFF\xFF",
+        prefix: 'app',
+        timestamp_type: :simple
+      )
+    end
 
     context 'it doesnt not raise errors' do
       before do
@@ -146,7 +224,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       end
 
       it do
-        expect { subject }.to raise_error(Glueby::Contract::Errors::FailedToBroadcast, /failed to broadcast \(id=[0-9]+, reason=error message\)/)
+        expect { subject }.to raise_error(Glueby::Contract::Errors::FailedToBroadcast, 'failed to broadcast (id=, reason=error message)')
       end
     end
 
