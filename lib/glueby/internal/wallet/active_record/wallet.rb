@@ -20,7 +20,7 @@ module Glueby
             tx.inputs.each.with_index do |input, index|
               script_pubkey = script_for_input(input, prevtxs)
               next unless script_pubkey
-              key = Key.key_for_script(script_pubkey)
+              key = keys.key_for_script(script_pubkey)
               next unless key
               sign_tx_for_p2pkh(tx, index, key, script_pubkey, sighashtype)
             end
