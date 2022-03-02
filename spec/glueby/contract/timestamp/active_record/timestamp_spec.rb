@@ -95,6 +95,13 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       end
     end
 
+    context 'set prev_id to simple timestamp' do
+      it 'error' do
+        expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(timestamp_type: :simple, prev_id: 0)) }
+          .to raise_error(ActiveRecord::RecordInvalid, 'Validation failed: Prev The previous timestamp(id: 0) must be nil in simple timestamp')
+      end
+    end
+
     context 'the prev timestamp is not exists' do
       it 'error' do
         expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(prev_id: 0)) }

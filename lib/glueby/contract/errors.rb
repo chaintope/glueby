@@ -17,6 +17,7 @@ module Glueby
       class UnsupportedDigestType < ArgumentError; end
       class PrevTimestampNotFound < ArgumentError; end
       class PrevTimestampIsNotTrackable < ArgumentError; end
+      class UnnecessaryPrevTimestamp < ArgumentError; end
     end
   end
 end
