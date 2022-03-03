@@ -18,6 +18,7 @@ module Glueby
       class PrevTimestampNotFound < ArgumentError; end
       class PrevTimestampIsNotTrackable < ArgumentError; end
       class UnnecessaryPrevTimestamp < ArgumentError; end
+      class PrevTimestampAlreadyUpdated < ArgumentError; end
     end
   end
 end

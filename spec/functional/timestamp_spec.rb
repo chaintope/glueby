@@ -59,7 +59,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
 
         let(:sender) { Glueby::Wallet.create }
 
-        it 'use rake task' do
+        it do
           # Add timestamp job to timestamps table
           ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app', timestamp_type: :trackable)
           expect(ar.status).to eq('init')
@@ -117,6 +117,21 @@ RSpec.describe 'Timestamp Contract', functional: true do
           Rake.application['glueby:block_syncer:start'].execute
           update_ar.reload
           expect(update_ar.status).to eq('confirmed')
+
+          # Try to update already updated timestamp
+          timestamp = Glueby::Contract::AR::Timestamp.new(
+            wallet_id: sender.id,
+            content: "1234".htb,
+            prefix: 'app',
+            timestamp_type: :trackable,
+            prev_id: ar.id
+          )
+          expect { timestamp.save_with_broadcast! }
+            .to raise_error(
+              Glueby::Contract::Errors::PrevTimestampAlreadyUpdated,
+              /The previous timestamp\(id: [0-9]+\) was already updated/
+            )
+            .and change { Glueby::UtxoProvider.new.wallet.list_unspent.count }.by(0) # never consume UTXO pool and never broadcast any tx.
         end
       end
     end

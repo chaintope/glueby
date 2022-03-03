@@ -11,7 +11,6 @@ module Glueby
 
         belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp', optional: true
 
-        validates :prev, uniqueness: true, allow_nil: true
         validate :validate_prev
 
         class << self
@@ -77,7 +76,10 @@ module Glueby
         # @return true if tapyrus transactions were broadcasted and the timestamp was updated successfully, otherwise false.
         def save_with_broadcast(fee_estimator: Glueby::Contract::FixedFeeEstimator.new, utxo_provider: nil)
           save_with_broadcast!(fee_estimator: fee_estimator, utxo_provider: utxo_provider)
-        rescue Errors::FailedToBroadcast, Errors::PrevTimestampNotFound, Errors::PrevTimestampIsNotTrackable => e
+        rescue Errors::FailedToBroadcast,
+               Errors::PrevTimestampNotFound,
+               Errors::PrevTimestampIsNotTrackable,
+               Errors::PrevTimestampAlreadyUpdated => e
           logger.error("failed to broadcast (id=#{id}, reason=#{e.message})")
           false
         end
@@ -89,7 +91,9 @@ module Glueby
         # @raise [Glueby::Contract::Errors::FailedToBroadcast] If the broadcasting is failure
         # @raise [Glueby::Contract::Errors::PrevTimestampNotFound] If it is not available that the timestamp record which correspond with the prev_id attribute
         # @raise [Glueby::Contract::Errors::PrevTimestampIsNotTrackable] If the timestamp record by prev_id is not trackable
+        # @raise [Glueby::Contract::Errors::PrevTimestampAlreadyUpdated] If the previous timestamp was already updated
         def save_with_broadcast!(fee_estimator: Glueby::Contract::FixedFeeEstimator.new, utxo_provider: nil)
+          validate_prev!
           utxo_provider = Glueby::UtxoProvider.new if !utxo_provider && Glueby.configuration.use_utxo_provider?
 
           funding_tx, tx, p2c_address, payment_base = create_txs(fee_estimator, utxo_provider)
@@ -104,7 +108,7 @@ module Glueby
             wallet.internal_wallet.broadcast(tx) do |tx|
               assign_attributes(txid: tx.txid, status: :unconfirmed, p2c_address: p2c_address, payment_base: payment_base)
               @tx = tx
-              save!
+              save!(validate: false) # The validation is already executed at head of #save_with_broadcast!
 
               if update_trackable?
                 prev.latest = false
@@ -133,8 +137,6 @@ module Glueby
           builder = builder_class.new(wallet, fee_estimator)
 
           if builder.instance_of?(Contract::Timestamp::TxBuilder::UpdatingTrackable)
-            validate_prev!
-
             builder.set_prev_timestamp_info(
               timestamp_utxo: prev.utxo,
               payment_base: prev.payment_base,
@@ -199,6 +201,12 @@ module Glueby
             message = "The previous timestamp(id: #{prev_id}) type must be trackable"
             errors.add(:prev_id, message)
             raise Errors::PrevTimestampIsNotTrackable, message
+          end
+
+          if new_record? && self.class.where(prev_id: prev_id).exists?
+            message = "The previous timestamp(id: #{prev_id}) was already updated"
+            errors.add(:prev_id, message)
+            raise Errors::PrevTimestampAlreadyUpdated, message
           end
         end
       end
