@@ -76,11 +76,11 @@ module Glueby
         # @return true if tapyrus transactions were broadcasted and the timestamp was updated successfully, otherwise false.
         def save_with_broadcast(fee_estimator: Glueby::Contract::FixedFeeEstimator.new, utxo_provider: nil)
           save_with_broadcast!(fee_estimator: fee_estimator, utxo_provider: utxo_provider)
-        rescue Errors::FailedToBroadcast,
-               Errors::PrevTimestampNotFound,
-               Errors::PrevTimestampIsNotTrackable,
-               Errors::PrevTimestampAlreadyUpdated => e
+        rescue Errors::FailedToBroadcast => e
           logger.error("failed to broadcast (id=#{id}, reason=#{e.message})")
+          false
+        rescue Errors::ArgumentError => e
+          logger.info("failed to broadcast by argument error (id=#{id}, reason=#{e.message})")
           false
         end
 
@@ -118,8 +118,7 @@ module Glueby
           end
           logger.info("timestamp tx was broadcasted (id=#{id}, txid=#{tx.txid})")
           true
-        rescue ActiveRecord::RecordInvalid,
-               Tapyrus::RPC::Error,
+        rescue Tapyrus::RPC::Error,
                Internal::Wallet::Errors::WalletAlreadyLoaded,
                Internal::Wallet::Errors::WalletNotFound,
                Errors::InsufficientFunds => e
@@ -176,10 +175,7 @@ module Glueby
         def validate_prev
           validate_prev!
           true
-        rescue Errors::PrevTimestampNotFound,
-               Errors::PrevTimestampIsNotTrackable,
-               Errors::UnnecessaryPrevTimestamp,
-               Errors::PrevTimestampAlreadyUpdated
+        rescue Errors::ArgumentError
           false
         end
 
