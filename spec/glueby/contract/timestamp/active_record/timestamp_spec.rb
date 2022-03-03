@@ -125,7 +125,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
 
         it 'error' do
           expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(prev_id: prev.id)) }
-            .to raise_error(ActiveRecord::RecordInvalid, 'Validation failed: Prev has already been taken')
+            .to raise_error(Glueby::Contract::Errors::PrevTimestampAlreadyUpdated, /The previous timestamp\(id: [0-9]+\) was already updated/)
         end
       end
 
@@ -195,14 +195,26 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       end
     end
 
-    context 'raises an error' do
+    shared_examples 'returns false if it raises an error' do
+      let(:error_class) { Glueby::Contract::Errors::FailedToBroadcast }
       before do
-        allow(timestamp).to receive(:save_with_broadcast!).and_raise(Glueby::Contract::Errors::FailedToBroadcast)
+        allow(timestamp).to receive(:save_with_broadcast!).and_raise(error_class)
       end
 
       it do
         expect(subject).to be_falsey
       end
+    end
+
+    it_behaves_like 'returns false if it raises an error'
+    it_behaves_like 'returns false if it raises an error' do
+      let(:error_class) { Glueby::Contract::Errors::PrevTimestampNotFound }
+    end
+    it_behaves_like 'returns false if it raises an error' do
+      let(:error_class) { Glueby::Contract::Errors::PrevTimestampIsNotTrackable }
+    end
+    it_behaves_like 'returns false if it raises an error' do
+      let(:error_class) { Glueby::Contract::Errors::PrevTimestampAlreadyUpdated }
     end
   end
 
