@@ -178,7 +178,8 @@ module Glueby
           true
         rescue Errors::PrevTimestampNotFound,
                Errors::PrevTimestampIsNotTrackable,
-               Errors::UnnecessaryPrevTimestamp
+               Errors::UnnecessaryPrevTimestamp,
+               Errors::PrevTimestampAlreadyUpdated
           false
         end
 

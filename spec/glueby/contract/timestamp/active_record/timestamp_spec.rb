@@ -125,7 +125,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
 
         it 'error' do
           expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(prev_id: prev.id)) }
-            .to raise_error(Glueby::Contract::Errors::PrevTimestampAlreadyUpdated, /The previous timestamp\(id: [0-9]+\) was already updated/)
+            .to raise_error(ActiveRecord::RecordInvalid, /Validation failed: Prev The previous timestamp\(id: [0-9]+\) was already updated/)
         end
       end
 
