@@ -98,7 +98,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
       end
 
       it 'create transaction' do
-        subject
+        txid = subject
+        expect(txid).to eq 'ebeae6702ac450d9281049047e9110d5c2091e864827a64a84611d042f8eda23'
         expect(contract.tx.inputs.size).to eq 1
         expect(contract.tx.outputs.size).to eq 2
         expect(contract.tx.outputs[0].value).to eq 0
