@@ -1,6 +1,8 @@
 module Glueby
   module Contract
     module FeeEstimator
+      autoload :Calc, 'glueby/contract/fee_estimator/calc'
+
       # @param [Tapyrus::Tx] tx - The target tx
       # @return fee by tapyrus(not TPC).
       def fee(tx)
