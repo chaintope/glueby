@@ -16,7 +16,7 @@ RSpec.shared_context 'setup utxo provider' do
     Rake.application['glueby:utxo_provider:manage_utxo_pool'].execute
     process_block # finalize UTXOs in the pool
 
-    Glueby::Contract::FixedFeeEstimator.default_fixed_fee = 2000
+    Glueby::Contract::FeeEstimator::Fixed.default_fixed_fee = 2000
   end
 
   after do
@@ -27,6 +27,6 @@ RSpec.shared_context 'setup utxo provider' do
         utxo_pool_size: 20
       }
     end
-    Glueby::Contract::FixedFeeEstimator.default_fixed_fee = nil
+    Glueby::Contract::FeeEstimator::Fixed.default_fixed_fee = nil
   end
 end

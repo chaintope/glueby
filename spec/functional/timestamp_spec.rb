@@ -13,7 +13,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
     context 'trackable type' do
       context 'bear fees by sender' do
         let(:fee) { 10_000 }
-        let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: fee) }
+        let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: fee) }
         let(:sender) { Glueby::Wallet.create }
         let(:before_balance) { sender.balances(false)[''] }
 
@@ -139,7 +139,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
     context 'simple type' do
       context 'bear fees by sender' do
         let(:fee) { 10_000 }
-        let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: fee) }
+        let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: fee) }
         let(:sender) { Glueby::Wallet.create }
         let(:before_balance) { sender.balances(false)[''] }
 
@@ -191,7 +191,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
         include_context 'setup fee provider'
 
         let(:fee) { 10_000 }
-        let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: fee) }
+        let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: fee) }
         let(:sender) { Glueby::Wallet.create }
         let(:before_balance) { sender.balances(false)[''] }
 

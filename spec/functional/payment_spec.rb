@@ -13,7 +13,7 @@ RSpec.describe 'Payment Contract', functional: true do
       let!(:receiver) { Glueby::Wallet.create }
       let(:before_balance) { sender.balances(false)[''] }
       let(:fee) { 10_000 }
-      let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: fee) }
+      let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: fee) }
 
       it 'pays TPC to another wallet' do
         # create labeled utxo

@@ -1,25 +1,27 @@
-RSpec.describe 'Glueby::Contract::FeeEstimator' do
-  describe 'FixedFeeEstimator' do
+RSpec.describe 'Glueby::Contract::FeeEstimator::Fiexed' do
     let(:tx) { Tapyrus::Tx.new }
 
-    describe '#fee' do
-      subject { Glueby::Contract::FixedFeeEstimator.new.fee(tx) }
+  describe '#fee' do
+    shared_examples 'fine fixed estimator' do
+      subject { estimator_class.new.fee(tx) }
+
+      let(:estimator_class) { Glueby::Contract::FeeEstimator::Fixed }
 
       it { is_expected.to eq 10_000 }
 
       context 'if specify fixed fee' do
-        subject { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: 100).fee(tx) }
+        subject { estimator_class.new(fixed_fee: 100).fee(tx) }
 
         it { is_expected.to eq 100 }
       end
 
       context 'default_fixed_fee is specified' do
         before do
-          Glueby::Contract::FixedFeeEstimator.default_fixed_fee = 600
+          estimator_class.default_fixed_fee = 600
         end
 
         after do
-          Glueby::Contract::FixedFeeEstimator.default_fixed_fee = nil
+          estimator_class.default_fixed_fee = nil
         end
 
         it { is_expected.to eq 600 }
@@ -36,6 +38,12 @@ RSpec.describe 'Glueby::Contract::FeeEstimator' do
 
         it { is_expected.to eq 0 }
       end
+    end
+
+    it_behaves_like 'fine fixed estimator'
+
+    it_behaves_like 'fine fixed estimator' do
+      let(:estimator_class) { Glueby::Contract::FixedFeeEstimator }
     end
   end
 end

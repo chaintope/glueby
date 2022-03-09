@@ -83,10 +83,10 @@ module Glueby
       UtxoProvider.configure(config)
     end
 
-    # Set default fixed fee to the FixedFeeEstimator
-    # @param [Integer] fee The default fee value in tapyrus to the FixedFeeEstimator
+    # Set default fixed fee to the FeeEstimator::Fixed
+    # @param [Integer] fee The default fee value in tapyrus to the FeeEstimator::Fixed
     def default_fixed_fee=(fee)
-      Contract::FixedFeeEstimator.default_fixed_fee = fee
+      Contract::FeeEstimator::Fixed.default_fixed_fee = fee
     end
   end
 end

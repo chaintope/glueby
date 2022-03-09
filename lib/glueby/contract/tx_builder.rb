@@ -8,7 +8,7 @@ module Glueby
       end
 
       # Create new public key, and new transaction that sends TPC to it
-      def create_funding_tx(wallet:, script: nil, fee_estimator: FixedFeeEstimator.new, need_value_for_change_output: false, only_finalized: true)
+      def create_funding_tx(wallet:, script: nil, fee_estimator: FeeEstimator::Fixed.new, need_value_for_change_output: false, only_finalized: true)
         if Glueby.configuration.use_utxo_provider?
           utxo_provider = UtxoProvider.new
           script_pubkey = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
@@ -37,7 +37,7 @@ module Glueby
         end
       end
 
-      def create_issue_tx_for_reissuable_token(funding_tx:, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new)
+      def create_issue_tx_for_reissuable_token(funding_tx:, issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new)
         tx = Tapyrus::Tx.new
 
         out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -61,15 +61,15 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_issue_tx_for_non_reissuable_token(funding_tx: nil, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
+      def create_issue_tx_for_non_reissuable_token(funding_tx: nil, issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator, only_finalized: only_finalized)
       end
 
-      def create_issue_tx_for_nft_token(funding_tx: nil, issuer:, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
+      def create_issue_tx_for_nft_token(funding_tx: nil, issuer:, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         create_issue_tx_from_out_point(funding_tx: funding_tx, token_type: Tapyrus::Color::TokenTypes::NFT, issuer: issuer, amount: 1, fee_estimator: fee_estimator, only_finalized: only_finalized)
       end
 
-      def create_issue_tx_from_out_point(funding_tx: nil, token_type:, issuer:, amount:, split: 1, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
+      def create_issue_tx_from_out_point(funding_tx: nil, token_type:, issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         tx = Tapyrus::Tx.new
 
         fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
@@ -111,7 +111,7 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_reissue_tx(funding_tx:, issuer:, amount:, color_id:, split: 1, fee_estimator: FixedFeeEstimator.new)
+      def create_reissue_tx(funding_tx:, issuer:, amount:, color_id:, split: 1, fee_estimator: FeeEstimator::Fixed.new)
         tx = Tapyrus::Tx.new
 
         out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -133,7 +133,7 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_transfer_tx(funding_tx:nil, color_id:, sender:, receiver_address:, amount:, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
+      def create_transfer_tx(funding_tx:nil, color_id:, sender:, receiver_address:, amount:, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         receivers = [{ address: receiver_address, amount: amount }]
         create_multi_transfer_tx(
           funding_tx: funding_tx,
@@ -145,7 +145,7 @@ module Glueby
         )
       end
 
-      def create_multi_transfer_tx(funding_tx:nil, color_id:, sender:, receivers:, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
+      def create_multi_transfer_tx(funding_tx:nil, color_id:, sender:, receivers:, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         tx = Tapyrus::Tx.new
 
         amount = receivers.reduce(0) { |sum, r| sum + r[:amount].to_i }
@@ -187,7 +187,7 @@ module Glueby
         sender.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_burn_tx(funding_tx:nil, color_id:, sender:, amount: 0, fee_estimator: FixedFeeEstimator.new, only_finalized: true)
+      def create_burn_tx(funding_tx:nil, color_id:, sender:, amount: 0, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         tx = Tapyrus::Tx.new
 
         utxos = sender.internal_wallet.list_unspent(only_finalized)
@@ -311,15 +311,15 @@ module Glueby
       private
 
       # The amount of output in funding tx
-      # It returns same amount with FixedFeeEstimator's fixed fee. Because it is enough for paying fee for consumer
+      # It returns same amount with FeeEstimator::Fixed's fixed fee. Because it is enough for paying fee for consumer
       # transactions of the funding transactions.
       #
       # @option [Boolean] need_value_for_change_output If it is true, adds more value than the fee for producing change output.
       def funding_tx_amount(need_value_for_change_output: false)
         if need_value_for_change_output
-          FixedFeeEstimator.new.fixed_fee + DUST_LIMIT
+          FeeEstimator::Fixed.new.fixed_fee + DUST_LIMIT
         else
-          FixedFeeEstimator.new.fixed_fee
+          FeeEstimator::Fixed.new.fixed_fee
         end
       end
     end

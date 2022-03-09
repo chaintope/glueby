@@ -35,7 +35,7 @@ module Glueby
         wallet:,
         content:,
         prefix: '',
-        fee_estimator: Glueby::Contract::FixedFeeEstimator.new,
+        fee_estimator: Glueby::Contract::FeeEstimator::Fixed.new,
         digest: :sha256,
         utxo_provider: nil,
         timestamp_type: :simple,

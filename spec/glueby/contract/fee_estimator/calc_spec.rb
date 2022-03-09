@@ -20,7 +20,7 @@ RSpec.describe 'Glueby::Contract::FeeEstimator::Calc' do
       end
 
       after do
-        Glueby::Contract::FixedFeeEstimator.default_fixed_fee = nil
+        Glueby::Contract::FeeEstimator::Fixed.default_fixed_fee = nil
       end
 
       it { is_expected.to eq 132 }
