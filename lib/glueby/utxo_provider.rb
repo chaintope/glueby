@@ -26,7 +26,7 @@ module Glueby
     def initialize
       @wallet = load_wallet
       validate_config!
-      @fee_estimator = (UtxoProvider.config && UtxoProvider.config[:fee_estimator]) || Glueby::Contract::FixedFeeEstimator.new
+      @fee_estimator = (UtxoProvider.config && UtxoProvider.config[:fee_estimator]) || Glueby::Contract::FeeEstimator::Fixed.new
       @fee_estimator_for_manage = UtxoProvider.config && UtxoProvider.config[:fee_estimator_for_manage] || @fee_estimator
     end
 

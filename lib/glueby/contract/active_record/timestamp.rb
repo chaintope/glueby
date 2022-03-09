@@ -71,10 +71,10 @@ module Glueby
         end
 
         # Broadcast and save timestamp
-        # @param [Glueby::Contract::FixedFeeEstimator] fee_estimator
+        # @param [Glueby::Contract::FeeEstimator] fee_estimator
         # @param [Glueby::UtxoProvider] utxo_provider
         # @return true if tapyrus transactions were broadcasted and the timestamp was updated successfully, otherwise false.
-        def save_with_broadcast(fee_estimator: Glueby::Contract::FixedFeeEstimator.new, utxo_provider: nil)
+        def save_with_broadcast(fee_estimator: Glueby::Contract::FeeEstimator::Fixed.new, utxo_provider: nil)
           save_with_broadcast!(fee_estimator: fee_estimator, utxo_provider: utxo_provider)
         rescue Errors::FailedToBroadcast => e
           logger.error("failed to broadcast (id=#{id}, reason=#{e.message})")
@@ -85,14 +85,14 @@ module Glueby
         end
 
         # Broadcast and save timestamp, and it raises errors
-        # @param [Glueby::Contract::FixedFeeEstimator] fee_estimator
+        # @param [Glueby::Contract::FeeEstimator] fee_estimator
         # @param [Glueby::UtxoProvider] utxo_provider
         # @return true if tapyrus transactions were broadcasted and the timestamp was updated successfully
         # @raise [Glueby::Contract::Errors::FailedToBroadcast] If the broadcasting is failure
         # @raise [Glueby::Contract::Errors::PrevTimestampNotFound] If it is not available that the timestamp record which correspond with the prev_id attribute
         # @raise [Glueby::Contract::Errors::PrevTimestampIsNotTrackable] If the timestamp record by prev_id is not trackable
         # @raise [Glueby::Contract::Errors::PrevTimestampAlreadyUpdated] If the previous timestamp was already updated
-        def save_with_broadcast!(fee_estimator: Glueby::Contract::FixedFeeEstimator.new, utxo_provider: nil)
+        def save_with_broadcast!(fee_estimator: Glueby::Contract::FeeEstimator::Fixed.new, utxo_provider: nil)
           validate_prev!
           utxo_provider = Glueby::UtxoProvider.new if !utxo_provider && Glueby.configuration.use_utxo_provider?
 

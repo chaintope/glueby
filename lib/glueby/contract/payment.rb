@@ -32,7 +32,7 @@ module Glueby
       extend Glueby::Contract::TxBuilder
 
       class << self
-        def transfer(sender:, receiver_address:, amount:, fee_estimator: FixedFeeEstimator.new)
+        def transfer(sender:, receiver_address:, amount:, fee_estimator: FeeEstimator::Fixed.new)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
           tx = Tapyrus::Tx.new

@@ -2,11 +2,11 @@ RSpec.describe 'UtxoProvider', functional: true, active_record: true do
   let(:pool_size) { 20 }
   let(:default_value) { 4_000 }
   let(:utxo_provider) { Glueby::UtxoProvider.new }
-  let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new }
+  let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
   let(:fee_estimator_for_manage) { fee_estimator }
   before do
     Glueby.configuration.wallet_adapter = :activerecord
-    Glueby::Contract::FixedFeeEstimator.default_fixed_fee = 2000
+    Glueby::Contract::FeeEstimator::Fixed.default_fixed_fee = 2000
     Glueby.configure do |config|
       config.enable_utxo_provider!
       config.utxo_provider_config = {
@@ -30,7 +30,7 @@ RSpec.describe 'UtxoProvider', functional: true, active_record: true do
       }
     end
     Glueby::Internal::Wallet.wallet_adapter = nil
-    Glueby::Contract::FixedFeeEstimator.default_fixed_fee = nil
+    Glueby::Contract::FeeEstimator::Fixed.default_fixed_fee = nil
   end
 
   subject do

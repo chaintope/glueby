@@ -7,7 +7,7 @@ module Glueby
 
         def create
           timestamps = Glueby::Contract::AR::Timestamp.where(status: :init)
-          fee_estimator = Glueby::Contract::FixedFeeEstimator.new
+          fee_estimator = Glueby::Contract::FeeEstimator::Fixed.new
           timestamps.each { |t| t.save_with_broadcast(fee_estimator: fee_estimator) }
         end
       end

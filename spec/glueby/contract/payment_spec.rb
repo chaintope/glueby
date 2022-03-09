@@ -149,7 +149,7 @@ RSpec.describe 'Glueby::Contract::Payment', active_record: true do
     context 'does not have enough tpc because the fee is too high' do
       subject { Glueby::Contract::Payment.transfer(sender: sender, receiver_address: receiver_address, amount: amount, fee_estimator: fee_estimator) }
 
-      let(:fee_estimator) { Glueby::Contract::FixedFeeEstimator.new(fixed_fee: 1_000_000_000) }
+      let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 1_000_000_000) }
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::InsufficientFunds }
     end
