@@ -24,6 +24,7 @@ module Glueby
       # value is configurable by :default_value. This method do the management to the pool.
       def manage_utxo_pool
         txb = Tapyrus::TxBuilder.new
+        fee_estimator = utxo_provider.fee_estimator_for_manage
 
         sum, utxos = collect_outputs
         return if utxos.empty?
@@ -35,7 +36,7 @@ module Glueby
 
         added_outputs = 0
         shortage.times do
-          fee = utxo_provider.fee_estimator.fee(dummy_tx(txb.build))
+          fee = fee_estimator.fee(dummy_tx(txb.build))
           break if (sum - fee) < utxo_provider.default_value
           txb.pay(utxo_provider.address, utxo_provider.default_value)
           sum -= utxo_provider.default_value
@@ -44,7 +45,7 @@ module Glueby
 
         return if added_outputs == 0
 
-        fee = utxo_provider.fee_estimator.fee(dummy_tx(txb.build))
+        fee = fee_estimator.fee(dummy_tx(txb.build))
         tx = txb.change_address(utxo_provider.address)
                 .fee(fee)
                 .build

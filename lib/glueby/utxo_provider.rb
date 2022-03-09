@@ -16,6 +16,8 @@ module Glueby
       # @option config [Integer] :default_value 
       # @option opts [Integer] :utxo_pool_size
       # @option opts [Glueby::Contract::FeeEstimator] :fee_estimator
+      # @option opts [Glueby::Contract::FeeEstimator] :fee_estimator_for_manage It uses this estimator in glueby:utxo_provider:manage_utxo_pool rake task.
+      #                                                                         If it is nil, it uses same as :fee_estimator instead.
       def configure(config)
         @config = config
       end
@@ -25,9 +27,10 @@ module Glueby
       @wallet = load_wallet
       validate_config!
       @fee_estimator = (UtxoProvider.config && UtxoProvider.config[:fee_estimator]) || Glueby::Contract::FixedFeeEstimator.new
+      @fee_estimator_for_manage = UtxoProvider.config && UtxoProvider.config[:fee_estimator_for_manage] || @fee_estimator
     end
 
-    attr_reader :wallet, :fee_estimator, :address
+    attr_reader :wallet, :fee_estimator, :fee_estimator_for_manage, :address
 
     # Provide a UTXO
     # @param [Tapyrus::Script] script_pubkey The script to be provided
