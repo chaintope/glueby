@@ -64,7 +64,7 @@ RSpec.describe 'UtxoProvider', functional: true, active_record: true do
   end
 
   context 'use Glueby::Contract::FeeEstimator::Calc for manage utxo pool' do
-    let(:fee_estimator_for_manage) { Glueby::Contract::FeeEstimator::Calc.new }
+    let(:fee_estimator_for_manage) { Glueby::Contract::FeeEstimator::Auto.new }
 
     context 'utxo_pool_size is 100(This is enough over max size under 2000 tapyrus fee)' do
       let(:pool_size) { 100 }
