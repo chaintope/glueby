@@ -2,7 +2,7 @@ module Glueby
   module Contract
     module FeeEstimator
       autoload :Fixed, 'glueby/contract/fee_estimator/fixed'
-      autoload :Calc, 'glueby/contract/fee_estimator/calc'
+      autoload :Auto, 'glueby/contract/fee_estimator/auto'
 
       # @param [Tapyrus::Tx] tx - The target tx
       # @return fee by tapyrus(not TPC).

@@ -2,7 +2,7 @@ module Glueby
   module Contract
     module FeeEstimator
       # It calculates actual minimum fee to broadcast txs.
-      class Calc
+      class Auto
         include FeeEstimator
 
         # This is same with Tapyrus Core's default min_relay_fee value.(tapyrus/kB)
@@ -19,7 +19,7 @@ module Glueby
         end
 
         # @param [Integer] fee_rate
-        def initialize(fee_rate: Calc.default_fee_rate || DEFAULT_FEE_RATE)
+        def initialize(fee_rate: Auto.default_fee_rate || DEFAULT_FEE_RATE)
           @fee_rate = fee_rate
         end
 
