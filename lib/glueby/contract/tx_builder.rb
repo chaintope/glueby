@@ -16,7 +16,7 @@ module Glueby
           utxo_provider.wallet.sign_tx(funding_tx)
         else
           txb = Tapyrus::TxBuilder.new
-          fee = fee_estimator.fee(dummy_tx(txb.build))
+          fee = fee_estimator.fee(FeeEstimator.dummy_tx(txb.build))
           amount = fee + funding_tx_amount(need_value_for_change_output: need_value_for_change_output)
           sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(amount, nil, only_finalized)
           outputs.each do |utxo|
@@ -50,7 +50,7 @@ module Glueby
 
         add_split_output(tx, amount, split, receiver_colored_script)
 
-        fee = fee_estimator.fee(dummy_tx(tx))
+        fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
         fill_change_tpc(tx, issuer, output.value - fee)
         prev_txs = [{
           txid: funding_tx.txid,
@@ -122,7 +122,7 @@ module Glueby
         receiver_colored_script = receiver_script.add_color(color_id)
         add_split_output(tx, amount, split, receiver_colored_script)
 
-        fee = fee_estimator.fee(dummy_tx(tx))
+        fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
         fill_change_tpc(tx, issuer, output.value - fee)
         prev_txs = [{
           txid: funding_tx.txid,
@@ -161,7 +161,7 @@ module Glueby
 
         fill_change_token(tx, sender, sum_token - amount, color_id)
 
-        fee = fee_estimator.fee(dummy_tx(tx))
+        fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
         sum_tpc = if funding_tx
           out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
           tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
@@ -196,7 +196,7 @@ module Glueby
 
         fill_change_token(tx, sender, sum_token - amount, color_id) if amount.positive?
 
-        fee = fee_estimator.fee(dummy_tx(tx))
+        fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
 
         sum_tpc = if funding_tx
           out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -281,31 +281,12 @@ module Glueby
         results
       end
 
-      # Add dummy inputs and outputs to tx
-      def dummy_tx(tx)
-        dummy = Tapyrus::Tx.parse_from_payload(tx.to_payload)
-
-        # dummy input for tpc
-        out_point = Tapyrus::OutPoint.new('00' * 32, 0)
-        dummy.inputs << Tapyrus::TxIn.new(out_point: out_point)
-
-        # Add script_sig to all intpus
-        dummy.inputs.each do |input|
-          input.script_sig = Tapyrus::Script.parse_from_payload('000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'.htb)
-        end
-
-        # dummy output to return change
-        change_script = Tapyrus::Script.to_p2pkh('0000000000000000000000000000000000000000')
-        dummy.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: change_script)
-        dummy
-      end
-
       # Add dummy inputs and outputs to tx for issue non-reissuable transaction and nft transaction
       def dummy_issue_tx_from_out_point
         tx = Tapyrus::Tx.new
         receiver_colored_script = Tapyrus::Script.parse_from_payload('21c20000000000000000000000000000000000000000000000000000000000000000bc76a914000000000000000000000000000000000000000088ac'.htb)
         tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: receiver_colored_script)
-        dummy_tx(tx)
+        FeeEstimator.dummy_tx(tx)
       end
 
       private

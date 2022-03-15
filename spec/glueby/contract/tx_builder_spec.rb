@@ -489,13 +489,6 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     end
   end
 
-  describe '#dummy_tx' do
-    subject { mock.dummy_tx(Tapyrus::Tx.new) }
-
-    it { expect(subject.inputs.size).to eq 1 }
-    it { expect(subject.outputs.size).to eq 1 }
-  end
-
   describe '#dummy_issue_tx_from_out_point' do
     subject { mock.dummy_issue_tx_from_out_point }
 

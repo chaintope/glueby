@@ -43,7 +43,7 @@ module Glueby
       txb = Tapyrus::TxBuilder.new
       txb.pay(script_pubkey.addresses.first, value)
 
-      fee = fee_estimator.fee(dummy_tx(txb.build))
+      fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(txb.build))
       # The outputs need to be shuffled so that no utxos are spent twice as possible.
       sum, outputs = collect_uncolored_outputs(wallet, fee + value)
 
