@@ -88,5 +88,11 @@ module Glueby
     def default_fixed_fee=(fee)
       Contract::FeeEstimator::Fixed.default_fixed_fee = fee
     end
+
+    # Set default fee rate to the FeeEstimator::Auto
+    # @param [Integer] fee_rate The default fee rate in tapyrus/kB to the FeeEstimator::Auto
+    def default_fee_rate=(fee_rate)
+      Contract::FeeEstimator::Auto.default_fee_rate = fee_rate
+    end
   end
 end
