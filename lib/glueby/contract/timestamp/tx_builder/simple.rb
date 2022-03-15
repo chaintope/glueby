@@ -55,7 +55,7 @@ module Glueby
           private
 
           def fee
-            @fee ||= @fee_estimator.fee(dummy_tx(@txb.build))
+            @fee ||= @fee_estimator.fee(FeeEstimator.dummy_tx(@txb.build))
           end
 
           def sign_tx

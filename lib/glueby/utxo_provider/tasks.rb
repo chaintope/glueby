@@ -36,7 +36,7 @@ module Glueby
 
         added_outputs = 0
         shortage.times do
-          fee = fee_estimator.fee(dummy_tx(txb.build))
+          fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(txb.build))
           break if (sum - fee) < utxo_provider.default_value
           txb.pay(utxo_provider.address, utxo_provider.default_value)
           sum -= utxo_provider.default_value
@@ -45,7 +45,7 @@ module Glueby
 
         return if added_outputs == 0
 
-        fee = fee_estimator.fee(dummy_tx(txb.build))
+        fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(txb.build))
         tx = txb.change_address(utxo_provider.address)
                 .fee(fee)
                 .build

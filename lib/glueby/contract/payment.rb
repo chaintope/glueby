@@ -36,7 +36,7 @@ module Glueby
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
           tx = Tapyrus::Tx.new
-          dummy_fee = fee_estimator.fee(dummy_tx(tx))
+          dummy_fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
 
           sum, outputs = sender.internal_wallet.collect_uncolored_outputs(dummy_fee + amount)
           fill_input(tx, outputs)

@@ -11,6 +11,26 @@ module Glueby
         estimate_fee(tx)
       end
 
+      # Add dummy inputs and outputs to tx
+      def dummy_tx(tx)
+        dummy = Tapyrus::Tx.parse_from_payload(tx.to_payload)
+
+        # dummy input for tpc
+        out_point = Tapyrus::OutPoint.new('00' * 32, 0)
+        dummy.inputs << Tapyrus::TxIn.new(out_point: out_point)
+
+        # Add script_sig to all intpus
+        dummy.inputs.each do |input|
+          input.script_sig = Tapyrus::Script.parse_from_payload('000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'.htb)
+        end
+
+        # dummy output to return change
+        change_script = Tapyrus::Script.to_p2pkh('0000000000000000000000000000000000000000')
+        dummy.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: change_script)
+        dummy
+      end
+      module_function :dummy_tx
+
       private
 
       # @private
