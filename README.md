@@ -447,13 +447,26 @@ Configuration:
 
 ### Default fixed fee for the FeeEstimator::Fixed
 
-The architecture of Glueby accepts any fee estimation strategies for paying transactions fee. However, we officially support only one strategy: the fixed fee strategy.
+The architecture of Glueby accepts any fee estimation strategies for paying transactions fee. However, we officially support only one strategy: the fixed fee strategy to contract transactions.
 It just returns a fixed fee value without any estimation.
 Here provides a configuration to modify the default fixed fee value it returns like this:
 
 ```ruby
 Glueby.configure do |config|
    config.default_fixed_fee = 10_000
+end
+```
+
+### Default fee rate for the FeeEstimator::Auto
+
+Glueby provide automate fee estimator `Glueby::Contract::FeeEstimator::Auto` that calculate minimum fee possible to broadcast from fee rate and tx size.
+This method can be used in UTXO provider's management task so far. In other place where creates txs is not tested with this yet.
+
+Here provides a configuration to modify the default fee rate it returns like this:
+
+```ruby
+Glueby.configure do |config|
+   config.default_fee_rate = 1_000
 end
 ```
 
