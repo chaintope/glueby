@@ -1,4 +1,4 @@
-RSpec.describe 'Glueby::Contract::FeeEstimator::Calc' do
+RSpec.describe 'Glueby::Contract::FeeEstimator::Auto' do
   describe '#fee' do
     subject { Glueby::Contract::FeeEstimator::Auto.new.fee(tx) }
 
