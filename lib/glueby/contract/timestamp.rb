@@ -18,10 +18,10 @@ module Glueby
       attr_reader :p2c_address, :payment_base
 
       # @param [Gleuby::Wallet] wallet The wallet that is sender of the timestamp transaction.
-      # @param [String] content Data to be hashed and stored in blockchain.
+      # @param [String] content The data to be hashed(it is due to digest argument) and stored in blockchain.
       # @param [String] prefix prefix of op_return data
       # @param [Glueby::Contract::FeeEstimator] fee_estimator
-      # @param [Symbol] digest type which select of:
+      # @param [Symbol] digest The types which will be used for process the content argument. Select of:
       # - :sha256
       # - :double_sha256
       # - :none

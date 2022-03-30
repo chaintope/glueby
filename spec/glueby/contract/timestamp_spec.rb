@@ -39,7 +39,7 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
         Glueby::Contract::Timestamp.new(
           wallet: wallet,
           content: "\01",
-          prefix: ''
+          prefix: 'prefix'
         )
       end
       let(:wallet) { TestWallet.new(internal_wallet) }
@@ -99,17 +99,62 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
 
       it 'create transaction' do
         txid = subject
-        expect(txid).to eq 'ebeae6702ac450d9281049047e9110d5c2091e864827a64a84611d042f8eda23'
+        expect(txid).to eq '0c68d54805d167353d49a034a46133e992821a2cfac0f12209aa26dc03a4d97d'
         expect(contract.tx.inputs.size).to eq 1
         expect(contract.tx.outputs.size).to eq 2
         expect(contract.tx.outputs[0].value).to eq 0
         expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
-        expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+        expect(contract.tx.outputs[0].script_pubkey.op_return_data[0...6]).to eq "prefix"
+        expect(contract.tx.outputs[0].script_pubkey.op_return_data[6..]).to eq "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
         expect(contract.tx.outputs[1].value).to eq 99_990_000
       end
 
       it 'create a record in glueby_timestamps table' do
         expect { subject }.to change { Glueby::Contract::AR::Timestamp.count }.by(1)
+      end
+
+      context 'hex string' do
+        let(:contract) do
+          Glueby::Contract::Timestamp.new(
+            wallet: wallet,
+            content: 'ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73',
+            prefix: 'e7a2e8b216'
+          )
+        end
+
+        it 'create transaction' do
+          txid = subject
+          expect(txid).to eq 'a6fd59cde42206a0caaa9fadbe3ce397378a90eb9856171ea1e8ef92025f0e86'
+          expect(contract.tx.inputs.size).to eq 1
+          expect(contract.tx.outputs.size).to eq 2
+          expect(contract.tx.outputs[0].value).to eq 0
+          expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
+          expect(contract.tx.outputs[0].script_pubkey.op_return_data[0...10]).to eq 'e7a2e8b216'
+          expect(contract.tx.outputs[0].script_pubkey.op_return_data[10..]).to eq '9be8de7297ef35c78e2842039755ad0240c8cb405f063fb0d74a85bc8d1dd158'
+          expect(contract.tx.outputs[1].value).to eq 99_990_000
+        end
+      end
+
+      context 'multibyte characters' do
+        let(:contract) do
+          Glueby::Contract::Timestamp.new(
+            wallet: wallet,
+            content: 'タピルス',
+            prefix: 'あいうえお'
+          )
+        end
+
+        it 'create transaction' do
+          txid = subject
+          expect(txid).to eq '0576157a00634472eb77aa475c1d8f80ce3ad01f57747e52e8bef46dca0c6e1e'
+          expect(contract.tx.inputs.size).to eq 1
+          expect(contract.tx.outputs.size).to eq 2
+          expect(contract.tx.outputs[0].value).to eq 0
+          expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
+          expect(contract.tx.outputs[0].script_pubkey.op_return_data[0...15].force_encoding('UTF-8')).to eq 'あいうえお'
+          expect(contract.tx.outputs[0].script_pubkey.op_return_data[15..]).to eq '6cc7d38ba8216e215198eff6c4dc854830f024794410541b892b4571a55b7dd4'
+          expect(contract.tx.outputs[1].value).to eq 99_990_000
+        end
       end
 
       context 'if already broadcasted' do
@@ -122,8 +167,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
         let(:contract) do
           Glueby::Contract::Timestamp.new(
             wallet: wallet,
-            content: "01",
-            prefix: '',
+            content: 'Content for Timestamp',
+            prefix: 'TIMESTAMPAPP',
             digest: :none
           )
         end
@@ -134,8 +179,55 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           expect(contract.tx.outputs.size).to eq 2
           expect(contract.tx.outputs[0].value).to eq 0
           expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
-          expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq '01'
+          expect(contract.tx.outputs[0].script_pubkey.op_return_data[0...12].force_encoding('UTF-8')).to eq 'TIMESTAMPAPP'
+          expect(contract.tx.outputs[0].script_pubkey.op_return_data[12..].force_encoding('UTF-8')).to eq 'Content for Timestamp'
           expect(contract.tx.outputs[1].value).to eq 99_990_000
+        end
+
+        context 'hex string' do
+          let(:contract) do
+            Glueby::Contract::Timestamp.new(
+              wallet: wallet,
+              content: 'ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73',
+              prefix: 'e7a2e8b216',
+              digest: :none
+            )
+          end
+
+          it 'create transaction' do
+            txid = subject
+            expect(txid).to eq 'ae96f7cb24c3619d0610db8dbdb2ea280a80f1dcff0fc410d494b01688483c29'
+            expect(contract.tx.inputs.size).to eq 1
+            expect(contract.tx.outputs.size).to eq 2
+            expect(contract.tx.outputs[0].value).to eq 0
+            expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
+            expect(contract.tx.outputs[0].script_pubkey.op_return_data[0...10]).to eq 'e7a2e8b216'
+            expect(contract.tx.outputs[0].script_pubkey.op_return_data[10..]).to eq 'ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73'
+            expect(contract.tx.outputs[1].value).to eq 99_990_000
+          end
+        end
+
+        context 'multibyte characters' do
+          let(:contract) do
+            Glueby::Contract::Timestamp.new(
+              wallet: wallet,
+              content: 'タピルス',
+              prefix: 'あいうえお',
+              digest: :none
+            )
+          end
+
+          it 'create transaction' do
+            txid = subject
+            expect(txid).to eq 'f05dc2a4d1fb009940bf6e5736b606609b5abe3ba0c1d4f8cfc56149da498c19'
+            expect(contract.tx.inputs.size).to eq 1
+            expect(contract.tx.outputs.size).to eq 2
+            expect(contract.tx.outputs[0].value).to eq 0
+            expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
+            expect(contract.tx.outputs[0].script_pubkey.op_return_data[0...15].force_encoding('UTF-8')).to eq 'あいうえお'
+            expect(contract.tx.outputs[0].script_pubkey.op_return_data[15..].force_encoding('UTF-8')).to eq 'タピルス'
+            expect(contract.tx.outputs[1].value).to eq 99_990_000
+          end
         end
       end
 
@@ -155,8 +247,31 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           expect(contract.tx.outputs.size).to eq 2
           expect(contract.tx.outputs[0].value).to eq 0
           expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
-          expect(contract.tx.outputs[0].script_pubkey.op_return_data.bth).to eq 'bf3ae3deccfdee0ebf03fc924aea3dad4b1068acdd27e98d9e6cc9a140e589d1'
+          expect(contract.tx.outputs[0].script_pubkey.op_return_data).to eq 'bf3ae3deccfdee0ebf03fc924aea3dad4b1068acdd27e98d9e6cc9a140e589d1'
           expect(contract.tx.outputs[1].value).to eq 99_990_000
+        end
+
+        context 'hex string' do
+          let(:contract) do
+            Glueby::Contract::Timestamp.new(
+              wallet: wallet,
+              content: 'ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73',
+              prefix: 'e7a2e8b216',
+              digest: :double_sha256
+            )
+          end
+
+          it 'create transaction' do
+            txid = subject
+            expect(txid).to eq 'c95a838214e274842ee6cace961bcbb0974f7ca0f7100c60e5fb6142d4d7b609'
+            expect(contract.tx.inputs.size).to eq 1
+            expect(contract.tx.outputs.size).to eq 2
+            expect(contract.tx.outputs[0].value).to eq 0
+            expect(contract.tx.outputs[0].script_pubkey.op_return?).to be_truthy
+            expect(contract.tx.outputs[0].script_pubkey.op_return_data[0...10]).to eq 'e7a2e8b216'
+            expect(contract.tx.outputs[0].script_pubkey.op_return_data[10..]).to eq '9f1870eb2a0e780a98f977e19de9679dccb084be928fef57bd1b11751d323d98'
+            expect(contract.tx.outputs[1].value).to eq 99_990_000
+          end
         end
       end
 
