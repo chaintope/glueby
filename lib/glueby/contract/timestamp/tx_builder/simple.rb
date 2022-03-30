@@ -25,7 +25,11 @@ module Glueby
             @prefix = prefix
             @data = data
 
-            @txb.data(prefix + data)
+            contents = [prefix, data].map do |content|
+              content.bytes.map { |i| i.to_s(16) }.join
+            end
+
+            @txb.data(*contents)
             self
           end
 
