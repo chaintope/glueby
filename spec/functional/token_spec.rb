@@ -236,9 +236,10 @@ RSpec.describe 'Token Contract', functional: true do
         expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
 
         # Specify split option
-        # It allow to split up to 26. If it set over 26, it raises the min relay fee error.
+        # It allow to split up to 24. If it set over 24, it raises the min relay fee error.
+        # It uses Fixed fee strategy and the strategy estimate the fee to fixed amount but here it is insufficient to split to much outputs.
         token2, _txs = Glueby::Contract::Token.issue!(
-          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000, split: 26)
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000, split: 24)
         process_block
 
         expect(sender.balances(false)['']).to be_nil
@@ -246,13 +247,12 @@ RSpec.describe 'Token Contract', functional: true do
 
         # Specify split option with FeeEstimator::Auto. It allow to split over 26.
         token3, _txs = Glueby::Contract::Token.issue!(
-          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000, split: 27,
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000, split: 100,
           fee_estimator: Glueby::Contract::FeeEstimator::Auto.new)
         process_block
 
         expect(sender.balances(false)['']).to be_nil
         expect(sender.balances(false)[token3.color_id.to_hex]).to eq(10_000)
-
 
         token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000)
         process_block
@@ -263,6 +263,9 @@ RSpec.describe 'Token Contract', functional: true do
         expect(receiver.balances(false)[token.color_id.to_hex]).to eq(5_000)
 
         token.reissue!(issuer: sender, amount: 5_000)
+        process_block
+
+        token3.reissue!(issuer: sender, amount: 10_000, split: 100, fee_estimator: Glueby::Contract::FeeEstimator::Auto.new)
         process_block
 
         expect(sender.balances(false)['']).to be_nil

@@ -150,20 +150,17 @@ module Glueby
       # @raise [InvalidAmount] if amount is not positive integer.
       # @raise [InvalidTokenType] if token is not reissuable.
       # @raise [UnknownScriptPubkey] when token is reissuable but it doesn't know script pubkey to issue token.
-      def reissue!(issuer:, amount:, split: 1)
+      def reissue!(issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
+        raise Glueby::Contract::Errors::UnknownScriptPubkey unless validate_reissuer(wallet: issuer)
 
-        if validate_reissuer(wallet: issuer)
-          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, only_finalized: only_finalized?)
-          funding_tx = issuer.internal_wallet.broadcast(funding_tx)
-          tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id, split: split)
-          tx = issuer.internal_wallet.broadcast(tx)
+        funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, only_finalized: only_finalized?)
+        funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+        tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id, split: split, fee_estimator: fee_estimator)
+        tx = issuer.internal_wallet.broadcast(tx)
 
-          [color_id, tx]
-        else
-          raise Glueby::Contract::Errors::UnknownScriptPubkey
-        end
+        [color_id, tx]
       end
 
       # Send the token to other wallet
@@ -175,7 +172,7 @@ module Glueby
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InsufficientTokens] if wallet does not have enough token to send.
       # @raise [InvalidAmount] if amount is not positive integer.
-      def transfer!(sender:, receiver_address:, amount: 1)
+      def transfer!(sender:, receiver_address:, amount: 1, fee_estimator: FeeEstimator::Fixed.new)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
         funding_tx = create_funding_tx(wallet: sender, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
@@ -187,7 +184,8 @@ module Glueby
           sender: sender,
           receiver_address: receiver_address,
           amount: amount,
-          only_finalized: only_finalized?
+          only_finalized: only_finalized?,
+          fee_estimator: fee_estimator
         )
         sender.internal_wallet.broadcast(tx)
         [color_id, tx]
