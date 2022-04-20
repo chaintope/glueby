@@ -38,6 +38,7 @@ module Glueby
       end
 
       def create_issue_tx_for_reissuable_token(funding_tx:, issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new)
+        utxo_provider = UtxoProvider.new
         tx = Tapyrus::Tx.new
 
         out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -51,13 +52,31 @@ module Glueby
         add_split_output(tx, amount, split, receiver_colored_script)
 
         fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
-        fill_change_tpc(tx, issuer, output.value - fee)
+
+        # FeeEstimator::Auto calculate just amount of fee, but Tapyrus Core requires more over 1 from the just amount fee if the tx has colored outputs.
+        fee += 1 if fee_estimator.is_a?(FeeEstimator::Auto)
+
         prev_txs = [{
           txid: funding_tx.txid,
           vout: 0,
           scriptPubKey: output.script_pubkey.to_hex,
           amount: output.value
         }]
+
+        input_sum = output.value
+        if input_sum - fee < 0
+          utxos_sum, utxos = UtxoProvider.new.get_raw_utxos(fee - input_sum)
+
+          utxos.each do |utxo|
+            tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:vout]))
+            prev_txs << utxo
+          end
+          input_sum += utxos_sum
+        end
+
+        fill_change_tpc(tx, issuer, input_sum - fee)
+
+        utxo_provider.wallet.sign_tx(tx, prev_txs)
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 

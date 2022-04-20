@@ -63,6 +63,14 @@ module Glueby
       [signed_tx, 0]
     end
 
+    # Provide UTXOs up to fill the value by the sum amount
+    # @param [Integer] value The tapyrus amount to be provided
+    # @return [Array<Hash>]
+    # TODO: documentation
+    def get_raw_utxos(value)
+      collect_uncolored_outputs(wallet, value)
+    end
+
     def default_value
       @default_value ||=
         (
