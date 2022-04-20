@@ -21,7 +21,7 @@ module Glueby
 
         # Add script_sig to all intpus
         dummy.inputs.each do |input|
-          input.script_sig = Tapyrus::Script.parse_from_payload('000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'.htb)
+          input.script_sig = Tapyrus::Script.parse_from_payload(('00' * 100).htb)
         end
 
         # dummy output to return change
