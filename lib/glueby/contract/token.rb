@@ -62,13 +62,13 @@ module Glueby
         # @raise [InvalidAmount] if amount is not positive integer.
         # @raise [InvalidSplit] if split is greater than 1 for NFT token.
         # @raise [UnspportedTokenType] if token is not supported.
-        def issue!(issuer:, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 1, split: 1)
+        def issue!(issuer:, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 1, split: 1, fee_estimator: FeeEstimator::Fixed.new)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
           raise Glueby::Contract::Errors::InvalidSplit if token_type == Tapyrus::Color::TokenTypes::NFT && split > 1
 
           txs, color_id = case token_type
                          when Tapyrus::Color::TokenTypes::REISSUABLE
-                           issue_reissuable_token(issuer: issuer, amount: amount, split: split)
+                           issue_reissuable_token(issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
                          when Tapyrus::Color::TokenTypes::NON_REISSUABLE
                            issue_non_reissuable_token(issuer: issuer, amount: amount, split: split)
                          when Tapyrus::Color::TokenTypes::NFT
@@ -86,7 +86,7 @@ module Glueby
 
         private
 
-        def issue_reissuable_token(issuer:, amount:, split: 1)
+        def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:)
           funding_tx = create_funding_tx(wallet: issuer, only_finalized: only_finalized?)
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
@@ -99,7 +99,7 @@ module Glueby
             # Store the script_pubkey for reissue the token.
             Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
 
-            tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split)
+            tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
             tx = issuer.internal_wallet.broadcast(tx)
             [[funding_tx, tx], color_id]
           end
