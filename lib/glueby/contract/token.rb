@@ -175,11 +175,7 @@ module Glueby
       def transfer!(sender:, receiver_address:, amount: 1, fee_estimator: FeeEstimator::Fixed.new)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-        funding_tx = create_funding_tx(wallet: sender, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
-        funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
-
         tx = create_transfer_tx(
-          funding_tx: funding_tx,
           color_id: color_id,
           sender: sender,
           receiver_address: receiver_address,
@@ -199,19 +195,17 @@ module Glueby
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InsufficientTokens] if wallet does not have enough token to send.
       # @raise [InvalidAmount] if amount is not positive integer.
-      def multi_transfer!(sender:, receivers:)
+      def multi_transfer!(sender:, receivers:, fee_estimator: FeeEstimator::Fixed.new)
         receivers.each do |r|
           raise Glueby::Contract::Errors::InvalidAmount unless r[:amount].positive?
         end
-        funding_tx = create_funding_tx(wallet: sender, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
-        funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
 
         tx = create_multi_transfer_tx(
-          funding_tx: funding_tx,
           color_id: color_id,
           sender: sender,
           receivers: receivers,
-          only_finalized: only_finalized?
+          only_finalized: only_finalized?,
+          fee_estimator: fee_estimator
         )
         sender.internal_wallet.broadcast(tx)
         [color_id, tx]

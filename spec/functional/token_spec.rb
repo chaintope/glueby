@@ -320,6 +320,22 @@ RSpec.describe 'Token Contract', functional: true do
         expect(receiver.balances(false)['']).to be_nil
         expect(receiver.balances(false)[token.color_id.to_hex]).to be_nil
       end
+
+      it 'multiple transfer' do
+        token, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
+
+        receivers = 100.times.map { { address: receiver.internal_wallet.receive_address, amount: 100 } }
+        token.multi_transfer!(sender: sender, receivers: receivers, fee_estimator: Glueby::Contract::FeeEstimator::Auto.new)
+
+        expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+        expect(receiver.balances(false)[token.color_id.to_hex]).to eq(10_000)
+        # expect(receiver.list_unspent(false).select {|i| i[:color_id] == token.color_id.to_hex}.size).to eq(100)
+      end
     end
   end
 end

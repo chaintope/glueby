@@ -355,7 +355,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       after { Glueby.configuration.disable_utxo_provider! }
 
       it do
-        expect(internal_wallet).to receive(:broadcast).twice
+        expect(internal_wallet).to receive(:broadcast).once
         subject
       end
     end
@@ -458,7 +458,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       after { Glueby.configuration.disable_utxo_provider! }
 
       it do
-        expect(internal_wallet).to receive(:broadcast).twice
+        expect(internal_wallet).to receive(:broadcast).once
         subject
       end
     end

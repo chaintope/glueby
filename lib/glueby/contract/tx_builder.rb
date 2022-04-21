@@ -175,10 +175,9 @@ module Glueby
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_transfer_tx(funding_tx:nil, color_id:, sender:, receiver_address:, amount:, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
+      def create_transfer_tx(color_id:, sender:, receiver_address:, amount:, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         receivers = [{ address: receiver_address, amount: amount }]
         create_multi_transfer_tx(
-          funding_tx: funding_tx,
           color_id: color_id,
           sender: sender,
           receivers: receivers,
@@ -187,7 +186,8 @@ module Glueby
         )
       end
 
-      def create_multi_transfer_tx(funding_tx:nil, color_id:, sender:, receivers:, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
+      def create_multi_transfer_tx(color_id:, sender:, receivers:, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
+        utxo_provider = UtxoProvider.new
         tx = Tapyrus::Tx.new
 
         amount = receivers.reduce(0) { |sum, r| sum + r[:amount].to_i }
@@ -204,28 +204,29 @@ module Glueby
         fill_change_token(tx, sender, sum_token - amount, color_id)
 
         fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
-        sum_tpc = if funding_tx
-          out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
-          tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
-          funding_tx.outputs.first.value
+
+        # FeeEstimator::Auto calculate just amount of fee, but Tapyrus Core requires more over 1 from the just amount fee if the tx has colored outputs.
+        fee += 1 if fee_estimator.is_a?(FeeEstimator::Auto)
+
+        # Fill inputs for paying fee
+        prev_txs = []
+        if Glueby.configuration.use_utxo_provider?
+          tx, fee, sum_tpc, provided_utxos = utxo_provider.fill_inputs(
+            tx,
+            target_amount: 0,
+            current_amount: 0,
+            fee_estimator: fee_estimator
+          )
+          prev_txs.append(provided_utxos)
         else
+          # TODO: Support the case of increasing fee by adding multiple inputs
           sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee, nil, only_finalized)
           fill_input(tx, outputs)
           sum_tpc
         end
 
         fill_change_tpc(tx, sender, sum_tpc - fee)
-        prev_txs = if funding_tx
-          output = funding_tx.outputs.first
-          [{
-            txid: funding_tx.txid,
-            vout: 0,
-            scriptPubKey: output.script_pubkey.to_hex,
-            amount: output.value
-          }]
-        else
-          []
-        end
+        utxo_provider.wallet.sign_tx(tx, prev_txs)
         sender.internal_wallet.sign_tx(tx, prev_txs)
       end
 

@@ -65,10 +65,11 @@ module Glueby
 
     # Provide UTXOs up to fill the value by the sum amount
     # @param [Integer] value The tapyrus amount to be provided
+    # @param [Array<Hash>] exclude The UTXO array that must be excluded from the result
     # @return [Array<Hash>]
     # TODO: documentation
-    def get_raw_utxos(value)
-      collect_uncolored_outputs(wallet, value)
+    def get_raw_utxos(value, exclude = [])
+      collect_uncolored_outputs(wallet, value, exclude)
     end
 
     # Fill inputs in the tx up to target_amount of TPC
@@ -82,10 +83,15 @@ module Glueby
     # @return [Array<Hash>] provided_utxos The utxos that are added to the tx inputs
     def fill_inputs(tx, target_amount: , current_amount: 0, fee_estimator: Contract::FeeEstimator::Fixed.new)
       fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
+      # FeeEstimator::Auto calculate just amount of fee, but Tapyrus Core requires more over 1 from the just amount fee if the tx has colored outputs.
+      fee += 1 if fee_estimator.is_a?(Contract::FeeEstimator::Auto)
       provided_utxos = []
 
+      # If the change output value is less than DUST_LIMIT, tapyrus core returns "dust" error while broadcasting.
+      target_amount += DUST_LIMIT if target_amount < DUST_LIMIT
+
       while current_amount - fee < target_amount
-        sum, utxos = get_raw_utxos(fee + target_amount - current_amount)
+        sum, utxos = get_raw_utxos(fee + target_amount - current_amount, provided_utxos)
 
         utxos.each do |utxo|
           tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:vout]))
@@ -149,16 +155,18 @@ module Glueby
       end
     end
 
-    def collect_uncolored_outputs(wallet, amount)
+    def collect_uncolored_outputs(wallet, amount, excludes = [])
       utxos = wallet.list_unspent.select { |o| !o[:color_id] && o[:amount] == default_value }
       utxos.shuffle!
 
-      utxos.inject([0, []]) do |sum, output|
-        new_sum = sum[0] + output[:amount]
-        new_outputs = sum[1] << output
-        return [new_sum, new_outputs] if new_sum >= amount
+      utxos.inject([0, []]) do |(sum, outputs), output|
+        next [sum, outputs] if excludes.find { |i| i[:txid] == output[:txid] && i[:vout] == output[:vout] }
 
-        [new_sum, new_outputs]
+        sum += output[:amount]
+        outputs << output
+        return [sum, outputs] if sum >= amount
+
+        [sum, outputs]
       end
       raise Glueby::Contract::Errors::InsufficientFunds
     end
