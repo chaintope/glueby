@@ -70,7 +70,7 @@ module Glueby
                          when Tapyrus::Color::TokenTypes::REISSUABLE
                            issue_reissuable_token(issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
                          when Tapyrus::Color::TokenTypes::NON_REISSUABLE
-                           issue_non_reissuable_token(issuer: issuer, amount: amount, split: split)
+                           issue_non_reissuable_token(issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
                          when Tapyrus::Color::TokenTypes::NFT
                            issue_nft_token(issuer: issuer)
                          else
@@ -105,11 +105,11 @@ module Glueby
           end
         end
 
-        def issue_non_reissuable_token(issuer:, amount:, split: 1)
+        def issue_non_reissuable_token(issuer:, amount:, split: 1, fee_estimator:)
           funding_tx = create_funding_tx(wallet: issuer, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
           funding_tx = issuer.internal_wallet.broadcast(funding_tx) if funding_tx
 
-          tx = create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split)
+          tx = create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
           tx = issuer.internal_wallet.broadcast(tx)
 
           out_point = tx.inputs.first.out_point

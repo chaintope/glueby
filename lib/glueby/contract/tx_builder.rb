@@ -70,7 +70,7 @@ module Glueby
             current_amount: output.value,
             fee_estimator: fee_estimator
           )
-          prev_txs.append(provided_utxos)
+          prev_txs.concat(provided_utxos)
         else
           # TODO: Support the case of providing UTXOs from sender's wallet.
           input_amount = output.value
@@ -91,6 +91,7 @@ module Glueby
       end
 
       def create_issue_tx_from_out_point(funding_tx: nil, token_type:, issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
+        utxo_provider = UtxoProvider.new
         tx = Tapyrus::Tx.new
 
         fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
@@ -117,18 +118,31 @@ module Glueby
         receiver_colored_script = receiver_script.add_color(color_id)
         add_split_output(tx, amount, split, receiver_colored_script)
 
-        fill_change_tpc(tx, issuer, sum - fee)
         prev_txs = if funding_tx
-          output = funding_tx.outputs.first
-          [{
-            txid: funding_tx.txid,
-            vout: 0,
-            scriptPubKey: output.script_pubkey.to_hex,
-            amount: output.value
-          }]
-        else
-          []
+                     output = funding_tx.outputs.first
+                     [{
+                       txid: funding_tx.txid,
+                       vout: 0,
+                       scriptPubKey: output.script_pubkey.to_hex,
+                       amount: output.value
+                     }]
+                   else
+                     []
+                   end
+
+        if Glueby.configuration.use_utxo_provider?
+          tx, fee, sum, provided_utxos = utxo_provider.fill_inputs(
+            tx,
+            target_amount: 0,
+            current_amount: sum,
+            fee_estimator: fee_estimator
+          )
+          prev_txs.concat(provided_utxos)
         end
+
+        fill_change_tpc(tx, issuer, sum - fee)
+
+        utxo_provider.wallet.sign_tx(tx, prev_txs)
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
@@ -163,7 +177,7 @@ module Glueby
             current_amount: output.value,
             fee_estimator: fee_estimator
           )
-          prev_txs.append(provided_utxos)
+          prev_txs.concat(provided_utxos)
         else
           # TODO: Support the case of providing UTXOs from sender's wallet.
           input_amount = output.value
@@ -217,7 +231,7 @@ module Glueby
             current_amount: 0,
             fee_estimator: fee_estimator
           )
-          prev_txs.append(provided_utxos)
+          prev_txs.concat(provided_utxos)
         else
           # TODO: Support the case of increasing fee by adding multiple inputs
           sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee, nil, only_finalized)
