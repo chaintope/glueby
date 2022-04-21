@@ -71,6 +71,37 @@ module Glueby
       collect_uncolored_outputs(wallet, value)
     end
 
+    # Fill inputs in the tx up to target_amount of TPC
+    # @param [Tapyrus::Tx] tx
+    # @param [Integer] target_amount The tapyrus amount the tx is expected to be added in this method
+    # @param [Integer] current_amount The tapyrus amount the tx already has in its inputs
+    # @param [Glueby::Contract::FeeEstimator] fee_estimator
+    # @return [Tapyrus::Tx] tx The tx that is added inputs
+    # @return [Integer] fee The final fee after the inputs are filled
+    # @return [Integer] current_amount The final amount of the tx inputs
+    # @return [Array<Hash>] provided_utxos The utxos that are added to the tx inputs
+    def fill_inputs(tx, target_amount: , current_amount: 0, fee_estimator: Contract::FeeEstimator::Fixed.new)
+      fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
+      provided_utxos = []
+
+      while current_amount - fee < target_amount
+        sum, utxos = get_raw_utxos(fee + target_amount - current_amount)
+
+        utxos.each do |utxo|
+          tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:vout]))
+          provided_utxos << utxo
+        end
+        current_amount += sum
+
+        new_fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
+        # FeeEstimator::Auto calculate just amount of fee, but Tapyrus Core requires more over 1 at least from the just amount fee if the tx has colored outputs.
+        new_fee += 1 if fee_estimator.is_a?(Contract::FeeEstimator::Auto)
+        fee = new_fee
+      end
+
+      [tx, fee, current_amount, provided_utxos]
+    end
+
     def default_value
       @default_value ||=
         (

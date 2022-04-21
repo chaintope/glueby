@@ -63,22 +63,20 @@ module Glueby
           amount: output.value
         }]
 
-        input_sum = output.value
-        while input_sum - fee < 0
-          utxos_sum, utxos = UtxoProvider.new.get_raw_utxos(fee - input_sum)
-
-          utxos.each do |utxo|
-            tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:vout]))
-            prev_txs << utxo
-          end
-          input_sum += utxos_sum
-
-          new_fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
-          new_fee += 1 if fee_estimator.is_a?(FeeEstimator::Auto)
-          fee = new_fee
+        if Glueby.configuration.use_utxo_provider?
+          tx, fee, input_amount, provided_utxos = utxo_provider.fill_inputs(
+            tx,
+            target_amount: 0,
+            current_amount: output.value,
+            fee_estimator: fee_estimator
+          )
+          prev_txs.append(provided_utxos)
+        else
+          # TODO: Support the case of providing UTXOs from sender's wallet.
+          input_amount = output.value
         end
 
-        fill_change_tpc(tx, issuer, input_sum - fee)
+        fill_change_tpc(tx, issuer, input_amount - fee)
 
         utxo_provider.wallet.sign_tx(tx, prev_txs)
         issuer.internal_wallet.sign_tx(tx, prev_txs)
@@ -158,22 +156,20 @@ module Glueby
           amount: output.value
         }]
 
-        input_sum = output.value
-        while input_sum - fee < 0
-          utxos_sum, utxos = utxo_provider.get_raw_utxos(fee - input_sum)
-
-          utxos.each do |utxo|
-            tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:vout]))
-            prev_txs << utxo
-          end
-          input_sum += utxos_sum
-
-          new_fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
-          new_fee += 1 if fee_estimator.is_a?(FeeEstimator::Auto)
-          fee = new_fee
+        if Glueby.configuration.use_utxo_provider?
+          tx, fee, input_amount, provided_utxos = utxo_provider.fill_inputs(
+            tx,
+            target_amount: 0,
+            current_amount: output.value,
+            fee_estimator: fee_estimator
+          )
+          prev_txs.append(provided_utxos)
+        else
+          # TODO: Support the case of providing UTXOs from sender's wallet.
+          input_amount = output.value
         end
 
-        fill_change_tpc(tx, issuer, output.value - fee)
+        fill_change_tpc(tx, issuer, input_amount - fee)
 
         utxo_provider.wallet.sign_tx(tx, prev_txs)
         issuer.internal_wallet.sign_tx(tx, prev_txs)
