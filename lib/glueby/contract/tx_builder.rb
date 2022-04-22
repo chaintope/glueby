@@ -38,7 +38,6 @@ module Glueby
       end
 
       def create_issue_tx_for_reissuable_token(funding_tx:, issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new)
-        utxo_provider = UtxoProvider.new
         tx = Tapyrus::Tx.new
 
         out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -61,6 +60,7 @@ module Glueby
         }]
 
         if Glueby.configuration.use_utxo_provider?
+          utxo_provider = UtxoProvider.new
           tx, fee, input_amount, provided_utxos = utxo_provider.fill_inputs(
             tx,
             target_amount: 0,
@@ -75,7 +75,7 @@ module Glueby
 
         fill_change_tpc(tx, issuer, input_amount - fee)
 
-        utxo_provider.wallet.sign_tx(tx, prev_txs)
+        UtxoProvider.new.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
@@ -88,7 +88,6 @@ module Glueby
       end
 
       def create_issue_tx_from_out_point(funding_tx: nil, token_type:, issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
-        utxo_provider = UtxoProvider.new
         tx = Tapyrus::Tx.new
 
         fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
@@ -128,6 +127,7 @@ module Glueby
                    end
 
         if Glueby.configuration.use_utxo_provider?
+          utxo_provider = UtxoProvider.new
           tx, fee, sum, provided_utxos = utxo_provider.fill_inputs(
             tx,
             target_amount: 0,
@@ -139,12 +139,11 @@ module Glueby
 
         fill_change_tpc(tx, issuer, sum - fee)
 
-        utxo_provider.wallet.sign_tx(tx, prev_txs)
+        UtxoProvider.new.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
       def create_reissue_tx(funding_tx:, issuer:, amount:, color_id:, split: 1, fee_estimator: FeeEstimator::Fixed.new)
-        utxo_provider = UtxoProvider.new
         tx = Tapyrus::Tx.new
 
         out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
@@ -165,6 +164,7 @@ module Glueby
         }]
 
         if Glueby.configuration.use_utxo_provider?
+          utxo_provider = UtxoProvider.new
           tx, fee, input_amount, provided_utxos = utxo_provider.fill_inputs(
             tx,
             target_amount: 0,
@@ -179,7 +179,7 @@ module Glueby
 
         fill_change_tpc(tx, issuer, input_amount - fee)
 
-        utxo_provider.wallet.sign_tx(tx, prev_txs)
+        UtxoProvider.new.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
@@ -195,7 +195,6 @@ module Glueby
       end
 
       def create_multi_transfer_tx(color_id:, sender:, receivers:, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
-        utxo_provider = UtxoProvider.new
         tx = Tapyrus::Tx.new
 
         amount = receivers.reduce(0) { |sum, r| sum + r[:amount].to_i }
@@ -216,6 +215,7 @@ module Glueby
         # Fill inputs for paying fee
         prev_txs = []
         if Glueby.configuration.use_utxo_provider?
+          utxo_provider = UtxoProvider.new
           tx, fee, sum_tpc, provided_utxos = utxo_provider.fill_inputs(
             tx,
             target_amount: 0,
@@ -231,7 +231,7 @@ module Glueby
         end
 
         fill_change_tpc(tx, sender, sum_tpc - fee)
-        utxo_provider.wallet.sign_tx(tx, prev_txs)
+        UtxoProvider.new.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
         sender.internal_wallet.sign_tx(tx, prev_txs)
       end
 
@@ -243,7 +243,7 @@ module Glueby
         fill_input(tx, outputs)
 
         fill_change_token(tx, sender, sum_token - amount, color_id) if amount.positive?
-
+        Tapyrus::Key
         fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
 
         sum_tpc = if funding_tx
