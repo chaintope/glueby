@@ -57,6 +57,7 @@ module Glueby
         # @param token_type [TokenTypes]
         # @param amount [Integer]
         # @param split [Integer] The tx outputs should be split by specified number.
+        # @param fee_estimator [Glueby::Contract::FeeEstimator]
         # @return [Array<token, Array<tx>>] Tuple of tx array and token object
         # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
         # @raise [InvalidAmount] if amount is not positive integer.
@@ -145,6 +146,7 @@ module Glueby
       # @param issuer [Glueby::Wallet]
       # @param amount [Integer]
       # @param split [Integer]
+      # @param fee_estimator [Glueby::Contract::FeeEstimator]
       # @return [Array<String, tx>] Tuple of color_id and tx object
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InvalidAmount] if amount is not positive integer.
@@ -168,6 +170,7 @@ module Glueby
       # @param sender [Glueby::Wallet] wallet to send this token
       # @param receiver_address [String] address to receive this token
       # @param amount [Integer]
+      # @param fee_estimator [Glueby::Contract::FeeEstimator]
       # @return [Array<String, tx>] Tuple of color_id and tx object
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InsufficientTokens] if wallet does not have enough token to send.
@@ -191,6 +194,7 @@ module Glueby
       #
       # @param sender [Glueby::Wallet] wallet to send this token
       # @param receivers [Array<Hash>] array of hash, which keys are :address and :amount
+      # @param fee_estimator [Glueby::Contract::FeeEstimator]
       # @return [Array<String, tx>] Tuple of color_id and tx object
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InsufficientTokens] if wallet does not have enough token to send.
