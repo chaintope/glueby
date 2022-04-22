@@ -32,6 +32,12 @@ RSpec.describe Glueby::Contract::Timestamp::Syncer, active_record: true do
 
     subject { described_class.new.block_sync(block) }
 
+    it 'update block_time and block_height' do
+      subject
+      expect(unconfirmed.reload.block_time).to eq 1624867760
+      expect(unconfirmed.reload.block_height).to eq 2
+    end
+
     it 'changes unconfirmed timestamp record' do
       expect { subject }
         .to change { Glueby::Contract::AR::Timestamp.find(unconfirmed.id).status }
