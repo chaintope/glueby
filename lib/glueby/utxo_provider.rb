@@ -63,17 +63,11 @@ module Glueby
       [signed_tx, 0]
     end
 
-    # Provide UTXOs up to fill the value by the sum amount
-    # @param [Integer] value The tapyrus amount to be provided
-    # @param [Array<Hash>] exclude The UTXO array that must be excluded from the result
-    # @return [Array<Hash>]
-    # TODO: documentation
-    def get_raw_utxos(value, exclude = [])
-      collect_uncolored_outputs(wallet, value, exclude)
-    end
-
-    # Fill inputs in the tx up to target_amount of TPC
-    # @param [Tapyrus::Tx] tx
+    # Fill inputs in the tx up to target_amount of TPC from UTXO pool
+    # This method should be called before adding change output and script_sig in outputs.
+    # FeeEstimator.dummy_tx returns fee amount to the TX that will be added one TPC input, a change TPC output and
+    # script sigs in outputs.
+    # @param [Tapyrus::Tx] tx The tx that will be filled the inputs
     # @param [Integer] target_amount The tapyrus amount the tx is expected to be added in this method
     # @param [Integer] current_amount The tapyrus amount the tx already has in its inputs
     # @param [Glueby::Contract::FeeEstimator] fee_estimator
@@ -89,7 +83,7 @@ module Glueby
       target_amount += DUST_LIMIT if target_amount < DUST_LIMIT
 
       while current_amount - fee < target_amount
-        sum, utxos = get_raw_utxos(fee + target_amount - current_amount, provided_utxos)
+        sum, utxos = collect_uncolored_outputs(wallet, fee + target_amount - current_amount, provided_utxos)
 
         utxos.each do |utxo|
           tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:vout]))
