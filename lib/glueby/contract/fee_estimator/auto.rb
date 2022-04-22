@@ -26,7 +26,14 @@ module Glueby
         private
 
         def estimate_fee(tx)
-          ((tx.to_payload.bytesize / 1000.0) * fee_rate).ceil
+          fee = ((tx.to_payload.bytesize / 1000.0) * fee_rate).ceil
+
+          if tx.outputs.find { |i| i.script_pubkey.colored? }
+            # Tapyrus Core requires more over 1 from the just amount fee if the tx has colored outputs
+            fee + 1
+          else
+            fee
+          end
         end
       end
     end

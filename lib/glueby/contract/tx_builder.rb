@@ -53,9 +53,6 @@ module Glueby
 
         fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
 
-        # FeeEstimator::Auto calculate just amount of fee, but Tapyrus Core requires more over 1 from the just amount fee if the tx has colored outputs.
-        fee += 1 if fee_estimator.is_a?(FeeEstimator::Auto)
-
         prev_txs = [{
           txid: funding_tx.txid,
           vout: 0,
@@ -160,9 +157,6 @@ module Glueby
 
         fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
 
-        # FeeEstimator::Auto calculate just amount of fee, but Tapyrus Core requires more over 1 from the just amount fee if the tx has colored outputs.
-        fee += 1 if fee_estimator.is_a?(FeeEstimator::Auto)
-
         prev_txs = [{
           txid: funding_tx.txid,
           vout: 0,
@@ -218,9 +212,6 @@ module Glueby
         fill_change_token(tx, sender, sum_token - amount, color_id)
 
         fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
-
-        # FeeEstimator::Auto calculate just amount of fee, but Tapyrus Core requires more over 1 from the just amount fee if the tx has colored outputs.
-        fee += 1 if fee_estimator.is_a?(FeeEstimator::Auto)
 
         # Fill inputs for paying fee
         prev_txs = []
