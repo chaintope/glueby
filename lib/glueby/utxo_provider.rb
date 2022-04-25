@@ -145,6 +145,12 @@ module Glueby
       end
     end
 
+    # Collects and returns TPC UTXOs.
+    # @param [Glueby::Internal::Wallet] wallet The wallet that funds the caller
+    # @param [Integer] amount The target amount which to be collected
+    # @param [Array<Hash>] excludes The exclusion UTXO list. It excludes this UTXOs from the targets that will be collected TPC UTXOs.
+    # @return [Integer] sum The sum amount of the funds
+    # @return [Array<Hash>] outputs The UTXO set of the funds
     def collect_uncolored_outputs(wallet, amount, excludes = [])
       utxos = wallet.list_unspent.select { |o| !o[:color_id] && o[:amount] == default_value }
       utxos.shuffle!
