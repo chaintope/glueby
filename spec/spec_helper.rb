@@ -99,8 +99,8 @@ def setup_database
     t.string   :prefix
     t.string   :wallet_id
     t.integer  :timestamp_type, null: false, default: 0
-    t.integer  :block_height, index: true, null: false, default: 0
-    t.integer  :block_time, index: true, null: false, default: 0
+    t.integer  :block_height, index: true
+    t.integer  :block_time, index: true
     t.string   :p2c_address
     t.string   :payment_base
     t.bigint   :prev_id
