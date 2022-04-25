@@ -227,7 +227,6 @@ module Glueby
           # TODO: Support the case of increasing fee by adding multiple inputs
           sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee, nil, only_finalized)
           fill_input(tx, outputs)
-          sum_tpc
         end
 
         fill_change_tpc(tx, sender, sum_tpc - fee)
@@ -243,7 +242,6 @@ module Glueby
         fill_input(tx, outputs)
 
         fill_change_token(tx, sender, sum_token - amount, color_id) if amount.positive?
-        Tapyrus::Key
         fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
 
         sum_tpc = if funding_tx
