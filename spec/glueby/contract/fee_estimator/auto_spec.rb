@@ -5,7 +5,7 @@ RSpec.describe 'Glueby::Contract::FeeEstimator::Auto' do
     let(:tx) do
       double(
         'tx',
-        to_payload: "\x00" * bytesize,
+        size: bytesize,
         outputs: outputs
       )
     end
