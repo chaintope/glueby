@@ -153,12 +153,14 @@ module Glueby
     # @return [Integer] sum The sum amount of the funds
     # @return [Array<Hash>] outputs The UTXO set of the funds
     def collect_uncolored_outputs(wallet, amount, excludes = [])
-      utxos = wallet.list_unspent.select { |o| !o[:color_id] && o[:amount] == default_value }
+      utxos = wallet.list_unspent.select do |o|
+        !o[:color_id] &&
+          o[:amount] == default_value &&
+          !excludes.find { |i| i[:txid] == o[:txid] && i[:vout] == o[:vout] }
+      end
       utxos.shuffle!
 
       utxos.inject([0, []]) do |(sum, outputs), output|
-        next [sum, outputs] if excludes.find { |i| i[:txid] == output[:txid] && i[:vout] == output[:vout] }
-
         sum += output[:amount]
         outputs << output
         return [sum, outputs] if sum >= amount
