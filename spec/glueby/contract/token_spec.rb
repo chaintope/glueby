@@ -90,7 +90,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         before do
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
           Glueby.configuration.enable_utxo_provider!
-          privider = Glueby::UtxoProvider.new
+          privider = Glueby::UtxoProvider.instance
 
           # 20 Utxos are pooled.
           (0...20).each do |i|
@@ -134,7 +134,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         before do
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
           Glueby.configuration.enable_utxo_provider!
-          privider = Glueby::UtxoProvider.new
+          privider = Glueby::UtxoProvider.instance
 
           # 20 Utxos are pooled.
           (0...20).each do |i|
@@ -179,7 +179,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         before do
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
           Glueby.configuration.enable_utxo_provider!
-          privider = Glueby::UtxoProvider.new
+          privider = Glueby::UtxoProvider.instance
 
           (0...20).each do |i|
             Glueby::Internal::Wallet::AR::Utxo.create(
@@ -250,7 +250,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       before do
         Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
         Glueby.configuration.enable_utxo_provider!
-        privider = Glueby::UtxoProvider.new
+        privider = Glueby::UtxoProvider.instance
 
         (0...20).each do |i|
           Glueby::Internal::Wallet::AR::Utxo.create(
@@ -339,7 +339,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       before do
         Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
         Glueby.configuration.enable_utxo_provider!
-        privider = Glueby::UtxoProvider.new
+        privider = Glueby::UtxoProvider.instance
 
         (0...20).each do |i|
           Glueby::Internal::Wallet::AR::Utxo.create(
@@ -442,7 +442,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       before do
         Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
         Glueby.configuration.enable_utxo_provider!
-        privider = Glueby::UtxoProvider.new
+        privider = Glueby::UtxoProvider.instance
 
         (0...20).each do |i|
           Glueby::Internal::Wallet::AR::Utxo.create(
@@ -535,7 +535,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
         Glueby.configuration.enable_utxo_provider!
         # create a wallet for UtxoProvider
-        Glueby::UtxoProvider.new
+        Glueby::UtxoProvider.instance
 
         (0...25).each do |i|
           Glueby::Internal::Wallet::AR::Utxo.create(

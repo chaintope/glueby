@@ -1,5 +1,5 @@
 RSpec.describe 'Glueby::UtxoProvider', active_record: true do
-  let(:provider) { Glueby::UtxoProvider.new }
+  let(:provider) { Glueby::UtxoProvider.instance }
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
   before do

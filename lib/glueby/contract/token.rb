@@ -231,7 +231,7 @@ module Glueby
 
         burn_all_amount_flag = true if balance - amount == 0
 
-        utxo_provider = Glueby::UtxoProvider.new if Glueby.configuration.use_utxo_provider?
+        utxo_provider = Glueby::UtxoProvider.instance if Glueby.configuration.use_utxo_provider?
         if utxo_provider
           funding_tx = create_funding_tx(
             wallet: sender,

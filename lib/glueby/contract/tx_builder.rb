@@ -10,7 +10,7 @@ module Glueby
       # Create new public key, and new transaction that sends TPC to it
       def create_funding_tx(wallet:, script: nil, fee_estimator: FeeEstimator::Fixed.new, need_value_for_change_output: false, only_finalized: true)
         if Glueby.configuration.use_utxo_provider?
-          utxo_provider = UtxoProvider.new
+          utxo_provider = UtxoProvider.instance
           script_pubkey = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
           funding_tx, _index = utxo_provider.get_utxo(script_pubkey, funding_tx_amount(need_value_for_change_output: need_value_for_change_output))
           utxo_provider.wallet.sign_tx(funding_tx)
@@ -60,7 +60,7 @@ module Glueby
         }]
 
         if Glueby.configuration.use_utxo_provider?
-          utxo_provider = UtxoProvider.new
+          utxo_provider = UtxoProvider.instance
           tx, fee, input_amount, provided_utxos = utxo_provider.fill_inputs(
             tx,
             target_amount: 0,
@@ -75,7 +75,7 @@ module Glueby
 
         fill_change_tpc(tx, issuer, input_amount - fee)
 
-        UtxoProvider.new.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
+        UtxoProvider.instance.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
@@ -127,7 +127,7 @@ module Glueby
                    end
 
         if Glueby.configuration.use_utxo_provider?
-          utxo_provider = UtxoProvider.new
+          utxo_provider = UtxoProvider.instance
           tx, fee, sum, provided_utxos = utxo_provider.fill_inputs(
             tx,
             target_amount: 0,
@@ -139,7 +139,7 @@ module Glueby
 
         fill_change_tpc(tx, issuer, sum - fee)
 
-        UtxoProvider.new.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
+        UtxoProvider.instance.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
@@ -164,7 +164,7 @@ module Glueby
         }]
 
         if Glueby.configuration.use_utxo_provider?
-          utxo_provider = UtxoProvider.new
+          utxo_provider = UtxoProvider.instance
           tx, fee, input_amount, provided_utxos = utxo_provider.fill_inputs(
             tx,
             target_amount: 0,
@@ -179,7 +179,7 @@ module Glueby
 
         fill_change_tpc(tx, issuer, input_amount - fee)
 
-        UtxoProvider.new.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
+        UtxoProvider.instance.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
         issuer.internal_wallet.sign_tx(tx, prev_txs)
       end
 
@@ -215,7 +215,7 @@ module Glueby
         # Fill inputs for paying fee
         prev_txs = []
         if Glueby.configuration.use_utxo_provider?
-          utxo_provider = UtxoProvider.new
+          utxo_provider = UtxoProvider.instance
           tx, fee, sum_tpc, provided_utxos = utxo_provider.fill_inputs(
             tx,
             target_amount: 0,
@@ -230,7 +230,7 @@ module Glueby
         end
 
         fill_change_tpc(tx, sender, sum_tpc - fee)
-        UtxoProvider.new.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
+        UtxoProvider.instance.wallet.sign_tx(tx, prev_txs) if Glueby.configuration.use_utxo_provider?
         sender.internal_wallet.sign_tx(tx, prev_txs)
       end
 
@@ -291,7 +291,7 @@ module Glueby
         return unless change.positive?
 
         if Glueby.configuration.use_utxo_provider?
-          change_script = Tapyrus::Script.parse_from_addr(UtxoProvider.new.wallet.change_address)
+          change_script = Tapyrus::Script.parse_from_addr(UtxoProvider.instance.wallet.change_address)
         else
           change_script = Tapyrus::Script.parse_from_addr(wallet.internal_wallet.change_address)
         end

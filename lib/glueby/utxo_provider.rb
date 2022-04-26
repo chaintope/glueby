@@ -1,6 +1,7 @@
 module Glueby
   class UtxoProvider
     include Glueby::Contract::TxBuilder
+    include Singleton
 
     autoload :Tasks, 'glueby/utxo_provider/tasks'
 
