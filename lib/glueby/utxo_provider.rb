@@ -1,6 +1,7 @@
 module Glueby
   class UtxoProvider
     include Glueby::Contract::TxBuilder
+    include Singleton
 
     autoload :Tasks, 'glueby/utxo_provider/tasks'
 
@@ -63,6 +64,41 @@ module Glueby
       [signed_tx, 0]
     end
 
+    # Fill inputs in the tx up to target_amount of TPC from UTXO pool
+    # This method should be called before adding change output and script_sig in outputs.
+    # FeeEstimator.dummy_tx returns fee amount to the TX that will be added one TPC input, a change TPC output and
+    # script sigs in outputs.
+    # @param [Tapyrus::Tx] tx The tx that will be filled the inputs
+    # @param [Integer] target_amount The tapyrus amount the tx is expected to be added in this method
+    # @param [Integer] current_amount The tapyrus amount the tx already has in its inputs
+    # @param [Glueby::Contract::FeeEstimator] fee_estimator
+    # @return [Tapyrus::Tx] tx The tx that is added inputs
+    # @return [Integer] fee The final fee after the inputs are filled
+    # @return [Integer] current_amount The final amount of the tx inputs
+    # @return [Array<Hash>] provided_utxos The utxos that are added to the tx inputs
+    def fill_inputs(tx, target_amount: , current_amount: 0, fee_estimator: Contract::FeeEstimator::Fixed.new)
+      fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
+      provided_utxos = []
+
+      # If the change output value is less than DUST_LIMIT, tapyrus core returns "dust" error while broadcasting.
+      target_amount += DUST_LIMIT if target_amount < DUST_LIMIT
+
+      while current_amount - fee < target_amount
+        sum, utxos = collect_uncolored_outputs(wallet, fee + target_amount - current_amount, provided_utxos)
+
+        utxos.each do |utxo|
+          tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:vout]))
+          provided_utxos << utxo
+        end
+        current_amount += sum
+
+        new_fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
+        fee = new_fee
+      end
+
+      [tx, fee, current_amount, provided_utxos]
+    end
+
     def default_value
       @default_value ||=
         (
@@ -110,16 +146,26 @@ module Glueby
       end
     end
 
-    def collect_uncolored_outputs(wallet, amount)
-      utxos = wallet.list_unspent.select { |o| !o[:color_id] && o[:amount] == default_value }
+    # Collects and returns TPC UTXOs.
+    # @param [Glueby::Internal::Wallet] wallet The wallet that funds the caller
+    # @param [Integer] amount The target amount which to be collected
+    # @param [Array<Hash>] excludes The exclusion UTXO list. It excludes this UTXOs from the targets that will be collected TPC UTXOs.
+    # @return [Integer] sum The sum amount of the funds
+    # @return [Array<Hash>] outputs The UTXO set of the funds
+    def collect_uncolored_outputs(wallet, amount, excludes = [])
+      utxos = wallet.list_unspent.select do |o|
+        !o[:color_id] &&
+          o[:amount] == default_value &&
+          !excludes.find { |i| i[:txid] == o[:txid] && i[:vout] == o[:vout] }
+      end
       utxos.shuffle!
 
-      utxos.inject([0, []]) do |sum, output|
-        new_sum = sum[0] + output[:amount]
-        new_outputs = sum[1] << output
-        return [new_sum, new_outputs] if new_sum >= amount
+      utxos.inject([0, []]) do |(sum, outputs), output|
+        sum += output[:amount]
+        outputs << output
+        return [sum, outputs] if sum >= amount
 
-        [new_sum, new_outputs]
+        [sum, outputs]
       end
       raise Glueby::Contract::Errors::InsufficientFunds
     end

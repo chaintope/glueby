@@ -1,7 +1,7 @@
 RSpec.describe 'UtxoProvider', functional: true, active_record: true do
   let(:pool_size) { 20 }
   let(:default_value) { 4_000 }
-  let(:utxo_provider) { Glueby::UtxoProvider.new }
+  let(:utxo_provider) { Glueby::UtxoProvider.instance }
   let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
   let(:fee_estimator_for_manage) { fee_estimator }
   before do

@@ -26,7 +26,15 @@ module Glueby
         private
 
         def estimate_fee(tx)
-          ((tx.to_payload.bytesize / 1000.0) * fee_rate).ceil
+          fee = ((tx.size / 1000.0) * fee_rate).ceil
+
+          # TODO: Eliminate the below block after https://github.com/chaintope/tapyrus-core/issues/191 will be done.
+          if tx.outputs.find(&:colored?)
+            # Tapyrus Core requires more over 1 from the just amount fee if the tx has colored outputs
+            fee + 1
+          else
+            fee
+          end
         end
       end
     end

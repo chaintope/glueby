@@ -41,6 +41,9 @@ RSpec.configure do |config|
       Tapyrus.chain_params = :prod
       TapyrusCoreContainer.teardown
     end
+
+    # Reset Glueby::UtxoProvider singleton instance
+    Singleton.__init__(Glueby::UtxoProvider)
   end
 
   config.before(:suite) do

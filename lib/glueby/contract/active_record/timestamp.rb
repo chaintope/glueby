@@ -94,7 +94,7 @@ module Glueby
         # @raise [Glueby::Contract::Errors::PrevTimestampAlreadyUpdated] If the previous timestamp was already updated
         def save_with_broadcast!(fee_estimator: Glueby::Contract::FeeEstimator::Fixed.new, utxo_provider: nil)
           validate_prev!
-          utxo_provider = Glueby::UtxoProvider.new if !utxo_provider && Glueby.configuration.use_utxo_provider?
+          utxo_provider = Glueby::UtxoProvider.instance if !utxo_provider && Glueby.configuration.use_utxo_provider?
 
           funding_tx, tx, p2c_address, payment_base = create_txs(fee_estimator, utxo_provider)
 

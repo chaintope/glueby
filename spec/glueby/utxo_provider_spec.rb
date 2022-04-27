@@ -1,5 +1,5 @@
 RSpec.describe 'Glueby::UtxoProvider', active_record: true do
-  let(:provider) { Glueby::UtxoProvider.new }
+  let(:provider) { Glueby::UtxoProvider.instance }
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
   before do
@@ -68,6 +68,99 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
           end
           subject
         }.to raise_error(Glueby::Contract::Errors::InsufficientFunds)
+      end
+    end
+  end
+
+  describe '#fill_inputs' do
+    subject do
+      provider.fill_inputs(
+        tx,
+        target_amount: target_amount,
+        current_amount: current_amount,
+        fee_estimator: fee_estimator
+      )
+    end
+
+    let(:tx) do
+      tx = Tapyrus::Tx.new
+      tx.outputs << Tapyrus::TxOut.new(value: 1_000, script_pubkey: Tapyrus::Script.to_p2pkh(Tapyrus::Key.generate.hash160))
+      tx
+    end
+    let(:target_amount) { 1_000 }
+    let(:current_amount) { 0 }
+
+    context 'use FeeEstimator::Auto' do
+      let(:fee_estimator) { Glueby::Contract::FeeEstimator::Auto.new }
+
+      context 'the tx has no inputs' do
+        let(:utxos) do
+          2.times.to_a.map{ |i| { txid: "33a87aa53268376862076180bad5aa0542373dfde22d4b4d62dd7016c16fd5a2", vout: i, amount: 1_000 } }
+        end
+
+        it 'adds inputs' do
+          allow(provider.wallet).to receive(:list_unspent).once.and_return(utxos)
+          tx, fee, current_amount, provided_utxos = subject
+          expect(tx.inputs.size).to eq(2)
+          expect(fee).to eq(501)
+          expect(current_amount).to eq(2_000)
+          expect(provided_utxos).to contain_exactly(*utxos)
+        end
+      end
+
+      context 'the tx already has enough TPC amount in inputs' do
+        let(:target_amount) { 1_000 }
+        let(:current_amount) { 2_000 }
+
+        before do
+          tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid('33a87aa53268376862076180bad5aa0542373dfde22d4b4d62dd7016c16fd5a2', 0))
+        end
+
+        it 'doesn\'t add inputs' do
+          tx, fee, current_amount, provided_utxos = subject
+          expect(tx.inputs.size).to eq(1)
+          expect(fee).to eq(360)
+          expect(current_amount).to eq(2_000)
+          expect(provided_utxos).to be_empty
+        end
+      end
+
+      context 'the tx already has an TPC input' do
+        let(:target_amount) { 1_000 }
+        let(:current_amount) { 1_000 }
+
+        let(:utxos) do
+          [{ txid: "33a87aa53268376862076180bad5aa0542373dfde22d4b4d62dd7016c16fd5a2", vout: 0, amount: 1_000 }]
+        end
+
+        before do
+          tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid('33a87aa53268376862076180bad5aa0542373dfde22d4b4d62dd7016c16fd5a2', 1))
+        end
+
+        it 'adds inputs' do
+          allow(provider.wallet).to receive(:list_unspent).once.and_return(utxos)
+          tx, fee, current_amount, provided_utxos = subject
+          expect(tx.inputs.size).to eq(2)
+          expect(fee).to eq(501)
+          expect(current_amount).to eq(2_000)
+          expect(provided_utxos).to contain_exactly(*utxos)
+        end
+      end
+
+      context 'by adding inputs, the fee will increase and insufficient' do
+        let(:target_amount) { 10_000 }
+        let(:utxos) do
+          12.times.to_a.map{ |i| { txid: "33a87aa53268376862076180bad5aa0542373dfde22d4b4d62dd7016c16fd5a2", vout: i, amount: 1_000 } }
+        end
+
+        it 'adds inputs' do
+          expect(provider.wallet).to receive(:list_unspent).twice.and_return(utxos)
+          tx, fee, current_amount, provided_utxos = subject
+          expect(tx.inputs.size).to eq(12)
+          expect(fee).to eq(1_911)
+          expect(current_amount).to eq(12_000)
+          expect(provided_utxos).to contain_exactly(*utxos)
+        end
       end
     end
   end

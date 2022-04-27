@@ -235,6 +235,25 @@ RSpec.describe 'Token Contract', functional: true do
         expect(sender.balances(false)['']).to be_nil
         expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
 
+        # Specify split option
+        # It allow to split up to 24. If it set over 24, it raises the min relay fee error.
+        # It uses Fixed fee strategy and the strategy estimate the fee to fixed amount but here it is insufficient to split to much outputs.
+        token2, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000, split: 24)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token2.color_id.to_hex]).to eq(10_000)
+
+        # Specify split option with FeeEstimator::Auto. It allow to split over 26.
+        token3, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000, split: 100,
+          fee_estimator: Glueby::Contract::FeeEstimator::Auto.new)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token3.color_id.to_hex]).to eq(10_000)
+
         token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000)
         process_block
 
@@ -244,6 +263,9 @@ RSpec.describe 'Token Contract', functional: true do
         expect(receiver.balances(false)[token.color_id.to_hex]).to eq(5_000)
 
         token.reissue!(issuer: sender, amount: 5_000)
+        process_block
+
+        token3.reissue!(issuer: sender, amount: 10_000, split: 100, fee_estimator: Glueby::Contract::FeeEstimator::Auto.new)
         process_block
 
         expect(sender.balances(false)['']).to be_nil
@@ -263,6 +285,15 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(sender.balances(false)['']).to be_nil
         expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
+
+        token2, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, amount: 10_000, split: 100,
+          fee_estimator: Glueby::Contract::FeeEstimator::Auto.new)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token2.color_id.to_hex]).to eq(10_000)
+        expect(sender.internal_wallet.list_unspent(false).select {|i| i[:color_id] == token2.color_id.to_hex}.size).to eq(100)
 
         token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000)
         process_block
@@ -297,6 +328,44 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(receiver.balances(false)['']).to be_nil
         expect(receiver.balances(false)[token.color_id.to_hex]).to be_nil
+      end
+
+      it 'multiple transfer' do
+        token, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
+
+        receivers = 100.times.map { { address: receiver.internal_wallet.receive_address, amount: 100 } }
+        token.multi_transfer!(sender: sender, receivers: receivers, fee_estimator: Glueby::Contract::FeeEstimator::Auto.new)
+
+        expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+        expect(receiver.balances(false)[token.color_id.to_hex]).to eq(10_000)
+        expect(receiver.internal_wallet.list_unspent(false).select {|i| i[:color_id] == token.color_id.to_hex}.size).to eq(100)
+      end
+
+      it 'raise insufficient error in to much split number' do
+        expect do
+          Glueby::Contract::Token.issue!(
+            issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000, split: 25)
+        end.to raise_error(
+          Tapyrus::RPC::Error,
+          '{"response_code":"500","response_msg":"Internal Server Error","rpc_error":{"code":-26,"message":"min relay fee not met, 2000 \u003c 2051 (code 66)"}}'
+        )
+        # It remains the amount of funding tx to sender's wallet
+        expect(sender.balances(false)['']).to eq(2000)
+
+        expect do
+          Glueby::Contract::Token.issue!(
+            issuer: sender, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, amount: 10_000, split: 25)
+        end.to raise_error(
+          Tapyrus::RPC::Error,
+          '{"response_code":"500","response_msg":"Internal Server Error","rpc_error":{"code":-26,"message":"min relay fee not met, 2000 \u003c 2051 (code 66)"}}'
+        )
+        # It remains the amount of funding tx to sender's wallet
+        expect(sender.balances(false)['']).to eq(4000)
       end
     end
   end

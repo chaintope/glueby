@@ -2,6 +2,7 @@
 
 RSpec.shared_context 'setup utxo provider' do
   before do
+    Glueby::Contract::FeeEstimator::Fixed.default_fixed_fee = 2000
     Glueby.configure do |config|
       config.enable_utxo_provider!
       config.utxo_provider_config = {
@@ -10,13 +11,11 @@ RSpec.shared_context 'setup utxo provider' do
       }
     end
     # create UTXOs in the UTXO pool
-    utxo_provider = Glueby::UtxoProvider.new
+    utxo_provider = Glueby::UtxoProvider.instance
     wallet = utxo_provider.wallet
     process_block(to_address: wallet.receive_address)
     Rake.application['glueby:utxo_provider:manage_utxo_pool'].execute
     process_block # finalize UTXOs in the pool
-
-    Glueby::Contract::FeeEstimator::Fixed.default_fixed_fee = 2000
   end
 
   after do
