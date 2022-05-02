@@ -11,13 +11,20 @@ module Glueby
         estimate_fee(tx)
       end
 
-      # Add dummy inputs and outputs to tx
-      def dummy_tx(tx)
+      # Add dummy inputs and outputs to tx.
+      # Fee Estimation needs the actual tx size when it will be broadcasted to the blockchain network.
+      #
+      # @param [Tapyrus::Tx] tx The tx that is the target to be estimated fees
+      # @param [Integer] dummy_input_count The number of dummy inputs to be added before the estimation.
+      # @return [Tapyrus::Tx]
+      def dummy_tx(tx, dummy_input_count: 1)
         dummy = Tapyrus::Tx.parse_from_payload(tx.to_payload)
 
         # dummy input for tpc
-        out_point = Tapyrus::OutPoint.new('00' * 32, 0)
-        dummy.inputs << Tapyrus::TxIn.new(out_point: out_point)
+        dummy_input_count.times do
+          out_point = Tapyrus::OutPoint.new('00' * 32, 0)
+          dummy.inputs << Tapyrus::TxIn.new(out_point: out_point)
+        end
 
         # Add script_sig to all intpus
         dummy.inputs.each do |input|
