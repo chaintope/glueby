@@ -102,7 +102,7 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
           allow(provider.wallet).to receive(:list_unspent).once.and_return(utxos)
           tx, fee, current_amount, provided_utxos = subject
           expect(tx.inputs.size).to eq(2)
-          expect(fee).to eq(501)
+          expect(fee).to eq(360)
           expect(current_amount).to eq(2_000)
           expect(provided_utxos).to contain_exactly(*utxos)
         end
@@ -119,7 +119,7 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
         it 'doesn\'t add inputs' do
           tx, fee, current_amount, provided_utxos = subject
           expect(tx.inputs.size).to eq(1)
-          expect(fee).to eq(360)
+          expect(fee).to eq(219)
           expect(current_amount).to eq(2_000)
           expect(provided_utxos).to be_empty
         end
@@ -141,7 +141,7 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
           allow(provider.wallet).to receive(:list_unspent).once.and_return(utxos)
           tx, fee, current_amount, provided_utxos = subject
           expect(tx.inputs.size).to eq(2)
-          expect(fee).to eq(501)
+          expect(fee).to eq(360)
           expect(current_amount).to eq(2_000)
           expect(provided_utxos).to contain_exactly(*utxos)
         end
@@ -157,7 +157,7 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
           expect(provider.wallet).to receive(:list_unspent).twice.and_return(utxos)
           tx, fee, current_amount, provided_utxos = subject
           expect(tx.inputs.size).to eq(12)
-          expect(fee).to eq(1_911)
+          expect(fee).to eq(1_770)
           expect(current_amount).to eq(12_000)
           expect(provided_utxos).to contain_exactly(*utxos)
         end

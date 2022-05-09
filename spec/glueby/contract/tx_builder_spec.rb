@@ -5,6 +5,35 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     include Glueby::Contract::TxBuilder
   end
 
+  shared_context 'Use UtxoProvider' do
+    let(:utxo_provider) { Glueby::UtxoProvider.instance }
+    let(:wallet_adapter) { double(:wallet_adapter) }
+    let(:utxo_provider_wallet) { TestInternalWallet.new }
+    let(:pool_outputs) do
+      (0...20).map do |i|
+        {
+          txid: '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
+          script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+          vout: i,
+          amount: 1_000,
+          finalized: true
+        }
+      end
+    end
+
+    before do
+      Glueby.configuration.enable_utxo_provider!
+      Glueby::Internal::Wallet.wallet_adapter = wallet_adapter
+      allow(wallet_adapter).to receive(:load_wallet)
+      allow_any_instance_of(Glueby::UtxoProvider).to receive(:wallet).and_return(utxo_provider_wallet)
+      allow(utxo_provider_wallet).to receive(:list_unspent).and_return(pool_outputs)
+    end
+
+    after do
+      Glueby.configuration.disable_utxo_provider!
+    end
+  end
+
   let(:mock) { TxBuilderMock.new }
   let(:wallet) { TestWallet.new(internal_wallet) }
   let(:internal_wallet) { TestInternalWallet.new }
@@ -73,32 +102,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.outputs[1].value).to eq 99_980_000 }
 
     context 'use utxo provider', active_record: true do
-      let(:utxo_provider) { Glueby::UtxoProvider.instance }
-      let(:wallet_adapter) { double(:wallet_adapter) }
-      let(:utxo_provider_wallet) { TestInternalWallet.new }
-      let(:pool_outputs) do
-        (0...20).map do |i|
-          {
-            txid: '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
-            script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
-            vout: i,
-            amount: 1_000,
-            finalized: true
-          }
-        end
-      end
-
-      before do
-        Glueby.configuration.enable_utxo_provider!
-        Glueby::Internal::Wallet.wallet_adapter = wallet_adapter
-        allow(wallet_adapter).to receive(:load_wallet)
-        allow_any_instance_of(Glueby::UtxoProvider).to receive(:wallet).and_return(utxo_provider_wallet)
-        allow(utxo_provider_wallet).to receive(:list_unspent).and_return(pool_outputs)
-      end
-
-      after do
-        Glueby.configuration.disable_utxo_provider!
-      end
+      include_context 'Use UtxoProvider'
 
       it { expect(subject.inputs.size).to eq 20 }
       it do
@@ -151,6 +155,29 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
       it { expect(subject.outputs[3].value).to eq 99_990_000 }
       it { expect(subject.outputs[0].script_pubkey).to eq subject.outputs[1].script_pubkey }
       it { expect(subject.outputs[1].script_pubkey).to eq subject.outputs[2].script_pubkey }
+    end
+
+    context 'Use UtxoProvider and FeeEstimator::Auto', active_record: true do
+      include_context 'Use UtxoProvider'
+
+      subject do
+        mock.create_issue_tx_for_reissuable_token(
+          funding_tx: funding_tx,
+          issuer: issuer,
+          amount: amount,
+          split: split,
+          fee_estimator: Glueby::Contract::FeeEstimator::Auto.new
+        )
+      end
+
+      it 'Set fee with minimum relay fee' do
+        tx = subject
+        expect(tx.inputs.count).to eq(1)
+        tpc_output_sum = tx.outputs.sum { |i| i.colored? ? 0 : i.value }
+        tpc_input_sum = 100_000_000
+        actual_fee = tpc_input_sum - tpc_output_sum
+        expect(actual_fee).to eq(255)
+      end
     end
   end
 

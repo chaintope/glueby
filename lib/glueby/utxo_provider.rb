@@ -77,7 +77,7 @@ module Glueby
     # @return [Integer] current_amount The final amount of the tx inputs
     # @return [Array<Hash>] provided_utxos The utxos that are added to the tx inputs
     def fill_inputs(tx, target_amount: , current_amount: 0, fee_estimator: Contract::FeeEstimator::Fixed.new)
-      fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
+      fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx, dummy_input_count: 0))
       provided_utxos = []
 
       # If the change output value is less than DUST_LIMIT, tapyrus core returns "dust" error while broadcasting.
@@ -92,7 +92,7 @@ module Glueby
         end
         current_amount += sum
 
-        new_fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
+        new_fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx, dummy_input_count: 0))
         fee = new_fee
       end
 
