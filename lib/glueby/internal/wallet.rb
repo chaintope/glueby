@@ -33,6 +33,8 @@ module Glueby
       autoload :ActiveRecordWalletAdapter, 'glueby/internal/wallet/active_record_wallet_adapter'
       autoload :Errors, 'glueby/internal/wallet/errors'
 
+      include GluebyLogger
+
       class << self
         def create(wallet_id = nil)
           begin
@@ -118,6 +120,7 @@ module Glueby
       # @param [Proc] block The block that is called before broadcasting. It can be used to handle tx that is modified by FeeProvider.
       def broadcast(tx, without_fee_provider: false, &block)
         tx = FeeProvider.provide(tx) if !without_fee_provider && Glueby.configuration.fee_provider_bears?
+        logger.info("Try to broadcast a tx (tx payload: #{tx.to_hex} )")
         wallet_adapter.broadcast(id, tx, &block)
         tx
       end
