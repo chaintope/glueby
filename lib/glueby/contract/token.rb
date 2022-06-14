@@ -220,10 +220,11 @@ module Glueby
       #
       # @param sender [Glueby::Wallet] wallet to send this token
       # @param amount [Integer]
+      # @param fee_estimator [Glueby::Contract::FeeEstimator]
       # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
       # @raise [InsufficientTokens] if wallet does not have enough token to send transaction.
       # @raise [InvalidAmount] if amount is not positive integer.
-      def burn!(sender:, amount: 0)
+      def burn!(sender:, amount: 0, fee_estimator: FeeEstimator::Fixed.new)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         balance = sender.balances(only_finalized?)[color_id.to_hex]
         raise Glueby::Contract::Errors::InsufficientTokens unless balance
@@ -246,7 +247,7 @@ module Glueby
 
         funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
 
-        tx = create_burn_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, amount: amount, only_finalized: only_finalized?)
+        tx = create_burn_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, amount: amount, only_finalized: only_finalized?, fee_estimator: fee_estimator)
         sender.internal_wallet.broadcast(tx)
       end
 

@@ -243,7 +243,6 @@ module Glueby
 
         fill_change_token(tx, sender, sum_token - amount, color_id) if amount.positive?
         fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
-
         sum_tpc = if funding_tx
           out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
           tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
