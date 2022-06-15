@@ -534,11 +534,12 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
   end
 
   describe '#burn!' do
-    subject { token.burn!(sender: sender, amount: amount) }
+    subject { token.burn!(sender: sender, amount: amount, fee_estimator: fee_estimator) }
 
     let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
     let(:sender) { wallet }
     let(:amount) { 200_000 }
+    let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 450) }
 
     before do
       allow(sender).to receive(:balances).and_return({ 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000 })
@@ -551,6 +552,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
         wallet.keys.create(purpose: :receive)
       end
+      let(:amount) { 50_000 }
 
       before do
         Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
@@ -572,7 +574,13 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       after { Glueby.configuration.disable_utxo_provider! }
 
       it do
-        expect(internal_wallet).to receive(:broadcast).twice
+        expect(internal_wallet).to receive(:broadcast).once do |tx|
+          # 1 colored input(100_000 token), 2 uncolored inputs(2_000 tapyrus)
+          expect(tx.inputs.count).to eq 3
+          expect(tx.outputs.count).to eq(2)
+          expect(tx.outputs[0].value).to eq(50_000)
+          expect(tx.outputs[1].value).to eq(1550)
+        end
         subject
       end
 
@@ -580,16 +588,29 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         let(:amount) { 200_000 }
 
         it 'has one output for to be a standard tx' do
-          txs = []
-          expect(internal_wallet).to receive(:broadcast).twice do |tx|
-            txs << tx
-            tx
+          expect(internal_wallet).to receive(:broadcast).once do |tx|
+            # 2 colored input(200_000 token), 2 uncolored inputs(2_000 tapyrus)
+            expect(tx.inputs.count).to eq 4
+            expect(tx.outputs.count).to eq(1)
+            expect(tx.outputs[0].value).to eq(1550)
           end
           subject
+        end
+      end
 
-          _, burn_tx = txs
-          expect(burn_tx.outputs.count).to eq(1)
-          expect(burn_tx.outputs[0].value).to eq(Glueby::DUST_LIMIT)
+      context 'use Auto fee estimator' do
+        let(:fee_estimator) { Glueby::Contract::FeeEstimator::Auto.new }
+
+        it do
+          expect(internal_wallet).to receive(:broadcast).once do |tx|
+            # 1 colored input(100_000 token), 1 uncolored inputs(1_000 tapyrus)
+            expect(tx.inputs.count).to eq 2
+            expect(tx.outputs.count).to eq(2)
+            expect(tx.outputs[0].value).to eq(50_000)
+            # dummy tx size is 396
+            expect(tx.outputs[1].value).to eq(604)
+          end
+          subject
         end
       end
     end

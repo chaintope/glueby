@@ -232,22 +232,7 @@ module Glueby
 
         burn_all_amount_flag = true if balance - amount == 0
 
-        utxo_provider = Glueby::UtxoProvider.instance if Glueby.configuration.use_utxo_provider?
-        if utxo_provider
-          funding_tx = create_funding_tx(
-            wallet: sender,
-            # When it burns all the amount of the color id, burn tx is not going to be have any output
-            # because change outputs is not necessary. Transactions needs one output at least.
-            # At that time, set true to this option to get more value to be created change output to
-            # the tx.
-            need_value_for_change_output: burn_all_amount_flag,
-            only_finalized: only_finalized?
-          )
-        end
-
-        funding_tx = sender.internal_wallet.broadcast(funding_tx) if funding_tx
-
-        tx = create_burn_tx(funding_tx: funding_tx, color_id: color_id, sender: sender, amount: amount, only_finalized: only_finalized?, fee_estimator: fee_estimator)
+        tx = create_burn_tx(color_id: color_id, sender: sender, amount: amount, only_finalized: only_finalized?, fee_estimator: fee_estimator, burn_all_amount: burn_all_amount_flag)
         sender.internal_wallet.broadcast(tx)
       end
 
