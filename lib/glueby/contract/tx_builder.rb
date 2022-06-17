@@ -246,6 +246,10 @@ module Glueby
 
         provided_utxos = []
         if Glueby.configuration.use_utxo_provider?
+          # When it burns all the amount of the color id, burn tx is not going to be have any output
+          # because change outputs is not necessary. Transactions needs one output at least.
+          # At that time, set DUST_LIMIT to target_amount to get more value so that it created at least one output
+          # to the burn tx.
           tx, fee, sum_tpc, provided_utxos = UtxoProvider.instance.fill_inputs(
             tx,
             target_amount: burn_all_amount ? DUST_LIMIT : 0,
