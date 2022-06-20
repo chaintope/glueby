@@ -391,6 +391,18 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
         expect(subject.outputs[0].colored?).to be_falsy
       end
     end
+
+    context 'if `auto` fee estimator is specified' do
+      let(:fee_estimator) { Glueby::Contract::FeeEstimator::Auto.new(fee_rate: 1_000) }
+      let(:amount) { 0 }
+
+      it do
+        expect(subject.outputs.size).to eq 1
+        # tx fee should be calculated from (dummy) tx size(467 bytes)
+        expect(subject.outputs[0].value).to eq 99999533
+        expect(subject.outputs[0].colored?).to be_falsy
+      end
+    end
   end
 
   describe '#add_split_output' do

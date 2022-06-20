@@ -234,7 +234,7 @@ module Glueby
         sender.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_burn_tx(funding_tx:nil, color_id:, sender:, amount: 0, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
+      def create_burn_tx(color_id:, sender:, amount: 0, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true, burn_all_amount: false)
         tx = Tapyrus::Tx.new
 
         utxos = sender.internal_wallet.list_unspent(only_finalized)
@@ -244,29 +244,25 @@ module Glueby
         fill_change_token(tx, sender, sum_token - amount, color_id) if amount.positive?
         fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
 
-        sum_tpc = if funding_tx
-          out_point = Tapyrus::OutPoint.from_txid(funding_tx.txid, 0)
-          tx.inputs << Tapyrus::TxIn.new(out_point: out_point)
-          funding_tx.outputs.first.value
+        provided_utxos = []
+        if Glueby.configuration.use_utxo_provider?
+          # When it burns all the amount of the color id, burn tx is not going to be have any output
+          # because change outputs is not necessary. Transactions needs one output at least.
+          # At that time, set DUST_LIMIT to target_amount to get more value so that it created at least one output
+          # to the burn tx.
+          tx, fee, sum_tpc, provided_utxos = UtxoProvider.instance.fill_inputs(
+            tx,
+            target_amount: burn_all_amount ? DUST_LIMIT : 0,
+            current_amount: 0,
+            fee_estimator: fee_estimator
+          )
         else
           sum_tpc, outputs = sender.internal_wallet.collect_uncolored_outputs(fee + DUST_LIMIT, nil, only_finalized)
           fill_input(tx, outputs)
-          sum_tpc
         end
-
         fill_change_tpc(tx, sender, sum_tpc - fee)
-        prev_txs = if funding_tx
-          output = funding_tx.outputs.first
-          [{
-            txid: funding_tx.txid,
-            vout: 0,
-            scriptPubKey: output.script_pubkey.to_hex,
-            amount: output.value
-          }]
-        else
-          []
-        end
-        sender.internal_wallet.sign_tx(tx, prev_txs)
+        UtxoProvider.instance.wallet.sign_tx(tx, provided_utxos) if Glueby.configuration.use_utxo_provider?
+        sender.internal_wallet.sign_tx(tx, provided_utxos)
       end
 
       def add_split_output(tx, amount, split, script_pubkey)
