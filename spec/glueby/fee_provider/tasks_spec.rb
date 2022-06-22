@@ -95,17 +95,17 @@ RSpec.describe Glueby::FeeProvider::Tasks, active_record: true do
             txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
             script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
             vout: 0,
-            amount: 10_100,
+            amount: 11_000,
             finalized: true
           }]
         end
-        let(:balance) { 10_100 }
+        let(:balance) { 11_000 }
 
         it 'creates 9 fee outputs' do
           expect(wallet).to receive(:broadcast) do |tx|
             expect(tx.outputs[0...9].map(&:value).uniq).to eq([1_000])
             # The change output's value should equal to <before amount> - <UTXO pool size> * <fixed fee> - <fee of the tx>
-            expect(tx.outputs[9].value).to eq(10_100 - 9 * 1_000 - 1_000)
+            expect(tx.outputs[9].value).to eq(11_000 - 9 * 1_000 - 1_000)
           end
           expect(tasks).to receive(:status)
           subject
@@ -178,17 +178,17 @@ RSpec.describe Glueby::FeeProvider::Tasks, active_record: true do
             txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
             script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
             vout: 0,
-            amount: 10_100,
+            amount: 11_000,
             finalized: true
           }] + pool_outputs
         end
-        let(:balance) { 10_100 }
+        let(:balance) { 11_000 }
 
         it 'creates 9 outputs' do
           expect(wallet).to receive(:broadcast) do |tx|
             expect(tx.outputs[0...9].map(&:value).uniq).to eq([1_000])
             # The change output's value should equal to <before amount> - <UTXO pool size> * <fixed fee> - <fee of the tx>
-            expect(tx.outputs[9].value).to eq(10_100 - 9 * 1_000 - 1_000)
+            expect(tx.outputs[9].value).to eq(11_000 - 9 * 1_000 - 1_000)
           end
           expect(tasks).to receive(:status)
           subject
