@@ -20,6 +20,17 @@ module Glueby
             table_options: table_options,
           )
         end
+
+        if self.class.migration_exists?(migration_dir, "create_reissuable_token")
+          ::Kernel.warn "Migration already exists: create_reissuable_token"
+        else
+          migration_template(
+            "reissuable_token_table.rb.erb",
+            "db/migrate/create_reissuable_token.rb",
+            migration_version: migration_version,
+            table_options: table_options,
+          )
+        end
       end
     end
   end

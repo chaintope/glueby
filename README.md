@@ -93,9 +93,9 @@ Or install it yourself as:
         $ rails g glueby:contract:block_syncer
         $ rails g glueby:contract:wallet_adapter
 
-    If you want to use reissuable token or timestamp, you need to do below generators.
+    If you want to use token or timestamp, you need to do below generators.
 
-        $ rails g glueby:contract:reissuable_token
+        $ rails g glueby:contract:token
         $ rails g glueby:contract:timestamp
 
     Then, run the migrations.
