@@ -9,6 +9,7 @@ module Glueby
       # Argument Errors
       class ArgumentError < ArgumentError; end
       class InvalidAmount < ArgumentError; end
+      class InvalidDigest < ArgumentError; end
       class InvalidSplit < ArgumentError; end
       class InvalidTokenType < ArgumentError; end
       class InvalidTimestampType < ArgumentError; end

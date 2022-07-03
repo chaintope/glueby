@@ -63,13 +63,49 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
   end
 
   describe '.issue!' do
-    subject { Glueby::Contract::Token.issue!(issuer: issuer, token_type: token_type, amount: amount, split: split) }
+    subject { Glueby::Contract::Token.issue!(issuer: issuer, token_type: token_type, amount: amount, split: split, content: content, digest: digest) }
 
     let(:issuer) { wallet }
     let(:token_type) { Tapyrus::Color::TokenTypes::REISSUABLE }
     let(:amount) { 1_000 }
     let(:split) { 1 }
+    let(:content) { nil }
+    let(:digest) { nil }
     
+    shared_examples 'when content is included, p2c address should be generated' do
+      context 'include content and digest' do
+        let(:content) { 'content' }
+        let(:digest) { :sha256 }
+        let(:wallet) { Glueby::Wallet.create }
+        let(:key) do
+          ar_wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet.id)
+          ar_wallet.keys.create(purpose: :receive)
+        end
+
+        before do
+          Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+          Glueby::Internal::Wallet::AR::Utxo.create(
+            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            index: 0,
+            script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+            key: key,
+            value: 100_000,
+            status: :finalized
+          )
+        end
+
+        it 'create metadata' do
+          expect { subject }.to change(Glueby::Contract::AR::TokenMetadata, :count).by(1)
+        end
+
+        it 'send tpc to p2c_address' do
+          token, txs = subject
+          metadata = Glueby::Contract::AR::TokenMetadata.last
+          expect(txs[0].outputs[0].script_pubkey.to_addr).to eq metadata.p2c_address
+        end
+      end
+    end
+
     context 'reissuable token' do
       it do
         expect {subject}.not_to raise_error
@@ -80,6 +116,8 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(subject[0].color_id.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find(1).color_id
         expect(subject[1][0].outputs.first.script_pubkey.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find_by(color_id: subject[0].color_id.to_hex).script_pubkey
       end
+
+      it_behaves_like 'when content is included, p2c address should be generated'
 
       context 'use utxo provider', active_record: true do
         let(:key) do
@@ -124,6 +162,8 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(subject[1][0].valid?).to be true
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
       end
+
+      it_behaves_like 'when content is included, p2c address should be generated'
 
       context 'use utxo provider', active_record: true do
         let(:key) do
@@ -170,6 +210,8 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
       end
 
+      it_behaves_like 'when content is included, p2c address should be generated'
+
       context 'use utxo provider', active_record: true do
         let(:key) do
           wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
@@ -213,6 +255,12 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       let(:token_type) { Tapyrus::Color::TokenTypes::NFT }
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::InvalidSplit }
+    end
+
+    context 'invalid digest' do
+      let(:digest) { :invalid }
+
+      it { expect { subject }.to raise_error Glueby::Contract::Errors::InvalidDigest }
     end
 
     context 'unsupported type' do
