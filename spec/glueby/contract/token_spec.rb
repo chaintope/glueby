@@ -63,18 +63,18 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
   end
 
   describe '.issue!' do
-    subject { Glueby::Contract::Token.issue!(issuer: issuer, token_type: token_type, amount: amount, split: split, content: content, digest: digest) }
+    subject { Glueby::Contract::Token.issue!(issuer: issuer, token_type: token_type, amount: amount, split: split, metadata: metadata, digest: digest) }
 
     let(:issuer) { wallet }
     let(:token_type) { Tapyrus::Color::TokenTypes::REISSUABLE }
     let(:amount) { 1_000 }
     let(:split) { 1 }
-    let(:content) { nil }
+    let(:metadata) { nil }
     let(:digest) { nil }
     
-    shared_examples 'when content is included, p2c address should be generated' do
-      context 'include content and digest' do
-        let(:content) { 'content' }
+    shared_examples 'when metadata is included, p2c address should be generated' do
+      context 'include metadata and digest' do
+        let(:metadata) { 'metadata' }
         let(:digest) { :sha256 }
         let(:wallet) { Glueby::Wallet.create }
         let(:key) do
@@ -117,7 +117,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(subject[1][0].outputs.first.script_pubkey.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find_by(color_id: subject[0].color_id.to_hex).script_pubkey
       end
 
-      it_behaves_like 'when content is included, p2c address should be generated'
+      it_behaves_like 'when metadata is included, p2c address should be generated'
 
       context 'use utxo provider', active_record: true do
         let(:key) do
@@ -163,7 +163,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
       end
 
-      it_behaves_like 'when content is included, p2c address should be generated'
+      it_behaves_like 'when metadata is included, p2c address should be generated'
 
       context 'use utxo provider', active_record: true do
         let(:key) do
@@ -210,7 +210,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
       end
 
-      it_behaves_like 'when content is included, p2c address should be generated'
+      it_behaves_like 'when metadata is included, p2c address should be generated'
 
       context 'use utxo provider', active_record: true do
         let(:key) do
