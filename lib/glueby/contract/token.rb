@@ -123,7 +123,7 @@ module Glueby
                 p2c_address: p2c_address,
                 payment_base: payment_base
               )
-              sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+              sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata, digest)
             end
             tx = issuer.internal_wallet.broadcast(tx)
             [[funding_tx, tx], color_id]
@@ -150,7 +150,7 @@ module Glueby
                 p2c_address: p2c_address,
                 payment_base: payment_base
               )
-              sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+              sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata, digest)
             end
             tx = issuer.internal_wallet.broadcast(tx)
 
@@ -182,7 +182,7 @@ module Glueby
                 p2c_address: p2c_address,
                 payment_base: payment_base
               )
-              sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+              sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata, digest)
             end
             tx = issuer.internal_wallet.broadcast(tx)
 
@@ -194,9 +194,10 @@ module Glueby
           end
         end
 
-        def sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+        def sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata, digest)
           utxo = { txid: funding_tx.txid, vout: 0, script_pubkey: funding_tx.outputs[0].script_pubkey.to_hex }
-          issuer.internal_wallet.sign_to_pay_to_contract_address(tx, utxo, payment_base, metadata)
+          content = digest_content(metadata, digest)
+          issuer.internal_wallet.sign_to_pay_to_contract_address(tx, utxo, payment_base, content)
         end
       end
 
