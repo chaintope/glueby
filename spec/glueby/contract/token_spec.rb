@@ -63,19 +63,17 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
   end
 
   describe '.issue!' do
-    subject { Glueby::Contract::Token.issue!(issuer: issuer, token_type: token_type, amount: amount, split: split, metadata: metadata, digest: digest) }
+    subject { Glueby::Contract::Token.issue!(issuer: issuer, token_type: token_type, amount: amount, split: split, metadata: metadata) }
 
     let(:issuer) { wallet }
     let(:token_type) { Tapyrus::Color::TokenTypes::REISSUABLE }
     let(:amount) { 1_000 }
     let(:split) { 1 }
     let(:metadata) { nil }
-    let(:digest) { nil }
     
     shared_examples 'when metadata is included, p2c address should be generated' do
-      context 'include metadata and digest' do
+      context 'include metadata' do
         let(:metadata) { 'metadata' }
-        let(:digest) { :sha256 }
         let(:wallet) { Glueby::Wallet.create }
         let(:key) do
           ar_wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet.id)
@@ -255,12 +253,6 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       let(:token_type) { Tapyrus::Color::TokenTypes::NFT }
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::InvalidSplit }
-    end
-
-    context 'invalid digest' do
-      let(:digest) { :invalid }
-
-      it { expect { subject }.to raise_error Glueby::Contract::Errors::InvalidDigest }
     end
 
     context 'unsupported type' do
