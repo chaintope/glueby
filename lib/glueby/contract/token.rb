@@ -110,7 +110,7 @@ module Glueby
 
             tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
             if metadata
-              Glueby::Contract::AR::TokenMetadata.create(
+              Glueby::Contract::AR::TokenMetadata.create!(
                 color_id: color_id.to_hex,
                 metadata: metadata,
                 p2c_address: p2c_address,
@@ -137,7 +137,7 @@ module Glueby
             out_point = tx.inputs.first.out_point
             color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
             if metadata
-              Glueby::Contract::AR::TokenMetadata.create(
+              Glueby::Contract::AR::TokenMetadata.create!(
                 color_id: color_id.to_hex,
                 metadata: metadata,
                 p2c_address: p2c_address,
@@ -169,7 +169,7 @@ module Glueby
             out_point = tx.inputs.first.out_point
             color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
             if metadata
-              Glueby::Contract::AR::TokenMetadata.create(
+              Glueby::Contract::AR::TokenMetadata.create!(
                 color_id: color_id.to_hex,
                 metadata: metadata,
                 p2c_address: p2c_address,
