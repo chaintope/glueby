@@ -79,6 +79,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           ar_wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet.id)
           ar_wallet.keys.create(purpose: :receive)
         end
+        let(:utxos) { 21 } # pool size of UtxoProvider
 
         before do
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
@@ -118,10 +119,11 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       it_behaves_like 'when metadata is included, p2c address should be generated'
 
       context 'use utxo provider', active_record: true do
-        let(:key) do
+        let(:provider_key) do
           wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
           wallet.keys.create(purpose: :receive)
         end
+        let(:utxos) { 20 }
 
         before do
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
@@ -129,12 +131,12 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           privider = Glueby::UtxoProvider.instance
 
           # 20 Utxos are pooled.
-          (0...20).each do |i|
+          (0...utxos).each do |i|
             Glueby::Internal::Wallet::AR::Utxo.create(
               txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
               index: i,
               script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-              key: key,
+              key: provider_key,
               value: 1_000,
               status: :finalized
             )
@@ -147,6 +149,8 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           expect(subject[1][0].outputs.first.value).to eq 10_000 # FUNDING_TX_AMOUNT
           expect(subject[1][1].outputs.first.value).to eq 1_000 # Colored coin
         end
+
+        it_behaves_like 'when metadata is included, p2c address should be generated'
       end
     end
 
@@ -164,10 +168,11 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       it_behaves_like 'when metadata is included, p2c address should be generated'
 
       context 'use utxo provider', active_record: true do
-        let(:key) do
+        let(:provider_key) do
           wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
           wallet.keys.create(purpose: :receive)
         end
+        let(:utxos) { 20 }
 
         before do
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
@@ -175,12 +180,12 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           privider = Glueby::UtxoProvider.instance
 
           # 20 Utxos are pooled.
-          (0...20).each do |i|
+          (0...utxos).each do |i|
             Glueby::Internal::Wallet::AR::Utxo.create(
               txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
               index: i,
               script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-              key: key,
+              key: provider_key,
               value: 1_000,
               status: :finalized
             )
@@ -193,6 +198,8 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           expect(subject[1][0].outputs.first.value).to eq 10_000 # FUNDING_TX_AMOUNT
           expect(subject[1][1].outputs.first.value).to eq 1_000 # Colored coin
         end
+
+        it_behaves_like 'when metadata is included, p2c address should be generated'
       end
     end
 
@@ -211,22 +218,23 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       it_behaves_like 'when metadata is included, p2c address should be generated'
 
       context 'use utxo provider', active_record: true do
-        let(:key) do
+        let(:provider_key) do
           wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: Glueby::UtxoProvider::WALLET_ID)
           wallet.keys.create(purpose: :receive)
         end
+        let(:utxos) { 20 }
 
         before do
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
           Glueby.configuration.enable_utxo_provider!
           privider = Glueby::UtxoProvider.instance
 
-          (0...20).each do |i|
+          (0...utxos).each do |i|
             Glueby::Internal::Wallet::AR::Utxo.create(
               txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
               index: i,
               script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-              key: key,
+              key: provider_key,
               value: 1_000,
               status: :finalized
             )
@@ -239,6 +247,8 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           expect(subject[1][0].outputs.first.value).to eq 10_000 # FUNDING_TX_AMOUNT
           expect(subject[1][1].outputs.first.value).to eq 1 # Colored coin
         end
+
+        it_behaves_like 'when metadata is included, p2c address should be generated'
       end
     end
 
