@@ -24,29 +24,4 @@ RSpec.describe 'Glueby::Util::Digest' do
       it { expect(subject).to eq 'content' }
     end
   end
-
-  describe '#valid_digest?' do
-    subject { Test.new.valid_digest?(digest) }
-
-    let(:digest) { :sha256 }
-    it { expect(subject).to be_truthy }
-
-    context 'double_sha256' do
-      let(:digest) { :double_sha256 }
-
-      it { expect(subject).to be_truthy }
-    end
-
-    context 'none' do
-      let(:digest) { :none }
-
-      it { expect(subject).to be_truthy }
-    end
-
-    context 'others' do
-      let(:digest) { :invalid }
-
-      it { expect(subject).to be_falsy }
-    end
-  end
 end

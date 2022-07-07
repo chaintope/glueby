@@ -1,6 +1,11 @@
 module Glueby
   module Util
     module Digest
+      # Hash content with specified digest algorithm
+      #
+      # @param content [String] content to be hashed
+      # @param digest [Symbol] The symbol represents algorithm used for hashing. :sha256, :double_sha256, :none are available
+      # @return [String] hex string hashed from content
       def digest_content(content, digest)
         case digest&.downcase
         when :sha256
@@ -11,15 +16,6 @@ module Glueby
           content
         else
           raise Glueby::Contract::Errors::UnsupportedDigestType
-        end
-      end
-
-      def valid_digest?(digest)
-        case digest&.downcase
-        when :sha256, :double_sha256, :none
-          true
-        else
-          false
         end
       end
     end
