@@ -254,6 +254,18 @@ RSpec.describe 'Token Contract', functional: true do
         expect(sender.balances(false)['']).to be_nil
         expect(sender.balances(false)[token3.color_id.to_hex]).to eq(10_000)
 
+        # Specify metadata option
+        token4, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE,
+          amount: 10_000,
+          fee_estimator: Glueby::Contract::FeeEstimator::Auto.new,
+          metadata: 'metadata'
+        )
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token4.color_id.to_hex]).to eq(10_000)
+
         token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000)
         process_block
 
@@ -276,6 +288,12 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(sender.balances(false)['']).to be_nil
         expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+
+        token4.reissue!(issuer: sender, amount: 10_000, fee_estimator: Glueby::Contract::FeeEstimator::Auto.new)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token4.color_id.to_hex]).to eq(20_000)
       end
 
       it 'non-reissunable token' do
@@ -294,6 +312,17 @@ RSpec.describe 'Token Contract', functional: true do
         expect(sender.balances(false)['']).to be_nil
         expect(sender.balances(false)[token2.color_id.to_hex]).to eq(10_000)
         expect(sender.internal_wallet.list_unspent(false).select {|i| i[:color_id] == token2.color_id.to_hex}.size).to eq(100)
+
+        # Specify metadata option
+        token3, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE,
+          amount: 10_000,
+          fee_estimator: Glueby::Contract::FeeEstimator::Auto.new,
+          metadata: 'metadata'
+        )
+        process_block
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token3.color_id.to_hex]).to eq(10_000)
 
         token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address, amount: 5_000)
         process_block
@@ -315,6 +344,16 @@ RSpec.describe 'Token Contract', functional: true do
 
         expect(sender.balances(false)['']).to be_nil
         expect(sender.balances(false)[token.color_id.to_hex]).to eq(1)
+
+        # Specify metadata option
+        token2, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender, token_type: Tapyrus::Color::TokenTypes::NFT,
+          fee_estimator: Glueby::Contract::FeeEstimator::Auto.new,
+          metadata: 'metadata'
+        )
+        process_block
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token2.color_id.to_hex]).to eq(1)
 
         token.transfer!(sender: sender, receiver_address: receiver.internal_wallet.receive_address)
         process_block
