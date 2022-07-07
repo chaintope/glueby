@@ -86,6 +86,11 @@ module Glueby
           Glueby::AR::SystemInformation.use_only_finalized_utxo?
         end
 
+        def sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+          utxo = { txid: funding_tx.txid, vout: 0, script_pubkey: funding_tx.outputs[0].script_pubkey.to_hex }
+          issuer.internal_wallet.sign_to_pay_to_contract_address(tx, utxo, payment_base, metadata)
+        end
+
         private
 
         def create_p2c_address(wallet, metadata)
@@ -186,11 +191,6 @@ module Glueby
             end
           end
         end
-
-        def sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
-          utxo = { txid: funding_tx.txid, vout: 0, script_pubkey: funding_tx.outputs[0].script_pubkey.to_hex }
-          issuer.internal_wallet.sign_to_pay_to_contract_address(tx, utxo, payment_base, metadata)
-        end
       end
 
       attr_reader :color_id
@@ -209,11 +209,16 @@ module Glueby
       def reissue!(issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
-        raise Glueby::Contract::Errors::UnknownScriptPubkey unless validate_reissuer(wallet: issuer)
+
+        token_metadata = Glueby::Contract::AR::TokenMetadata.find_by(color_id: color_id.to_hex)
+        raise Glueby::Contract::Errors::UnknownScriptPubkey unless validate_reissuer(wallet: issuer, token_metadata: token_metadata)
 
         funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, only_finalized: only_finalized?)
         funding_tx = issuer.internal_wallet.broadcast(funding_tx)
         tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id, split: split, fee_estimator: fee_estimator)
+        if token_metadata
+          tx = Token.sign_to_p2c_output(issuer, tx, funding_tx, token_metadata.payment_base, token_metadata.metadata)
+        end
         tx = issuer.internal_wallet.broadcast(tx)
 
         [color_id, tx]
@@ -348,11 +353,17 @@ module Glueby
       end
 
       # Verify that wallet is the issuer of the reissuable token
-      #　reutrn [Boolean]
-      def validate_reissuer(wallet:)
+      # @param wallet [Glueby::Wallet]
+      # @param token_metadata [Glueby::Contract::AR::TokenMetadata] metadata to be stored in blockchain as p2c address
+      # @reutrn [Boolean] true if the wallet is the issuer of this token
+      def validate_reissuer(wallet:, token_metadata: nil)
         addresses = wallet.internal_wallet.get_addresses
         return false unless script_pubkey&.p2pkh?
-        pubkey_hash_from_script = Tapyrus::Script.parse_from_payload(script_pubkey.chunks[2])
+        pubkey_hash_from_script = if token_metadata
+            Tapyrus::Key.new(pubkey: token_metadata.payment_base).hash160
+          else
+            Tapyrus::Script.parse_from_payload(script_pubkey.chunks[2])
+          end
         addresses.each do |address|
           decoded_address = Tapyrus.decode_base58_address(address)
           pubkey_hash_from_address = decoded_address[0]

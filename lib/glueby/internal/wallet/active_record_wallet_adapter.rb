@@ -155,13 +155,17 @@ module Glueby
         end
 
         def create_pay_to_contract_address(wallet_id, contents)
+          pubkey = create_pubkey(wallet_id)
+          [pay_to_contract_key(wallet_id, pubkey, contents).to_p2pkh, pubkey.pubkey]
+        end
+
+        def pay_to_contract_key(wallet_id, pubkey, contents)
           # Calculate P + H(P || contents)G
           group = ECDSA::Group::Secp256k1
-          pubkey = create_pubkey(wallet_id)
           p = pubkey.to_point # P
           commitment = create_pay_to_contract_commitment(pubkey, contents)
           point = p + group.generator.multiply_by_scalar(commitment) # P + H(P || contents)G
-          [Tapyrus::Key.new(pubkey: point.to_hex(true)).to_p2pkh, pubkey.pubkey] # [p2c address, P]
+          Tapyrus::Key.new(pubkey: point.to_hex(true))
         end
 
         def sign_to_pay_to_contract_address(wallet_id, tx, utxo, payment_base, contents)
