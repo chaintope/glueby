@@ -116,7 +116,7 @@ module Glueby
                 p2c_address: p2c_address,
                 payment_base: payment_base
               )
-              sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
             end
             tx = issuer.internal_wallet.broadcast(tx)
             [[funding_tx, tx], color_id]
@@ -143,7 +143,7 @@ module Glueby
                 p2c_address: p2c_address,
                 payment_base: payment_base
               )
-              sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
             end
             tx = issuer.internal_wallet.broadcast(tx)
 
@@ -175,7 +175,7 @@ module Glueby
                 p2c_address: p2c_address,
                 payment_base: payment_base
               )
-              sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
             end
             tx = issuer.internal_wallet.broadcast(tx)
 
