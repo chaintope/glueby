@@ -43,6 +43,10 @@ module Glueby
     # token.amount(wallet: alice)
     # => 100
     #
+    # Issue with metadata / Get metadata
+    # token = Token.issue!(issuer: alice, amount: 100, metadata: 'metadata')
+    # token.metadata
+    # => "metadata"
     class Token
       include Glueby::Contract::TxBuilder
       extend Glueby::Contract::TxBuilder
@@ -308,6 +312,34 @@ module Glueby
         utxos = wallet.internal_wallet.list_unspent(only_finalized?)
         _, results = collect_colored_outputs(utxos, color_id)
         results.sum { |result| result[:amount] }
+      end
+
+      # Return metadata for this token
+      # @return [String] metadata. if token is not associated with metadata, return nil
+      def metadata
+        return @metadata if defined? @metadata
+        @metadata = token_metadata&.metadata
+      end
+
+      # Return pay to contract address
+      # @return [String] p2c_address. if token is not associated with metadata, return nil
+      def p2c_address
+        return @p2c_address if defined? @p2c_address
+        @p2c_address = token_metadata&.p2c_address
+      end
+
+      # Return public key used to generate pay to contract address
+      # @return [String] payment_base. if token is not associated with metadata, return nil
+      def payment_base
+        return @payment_base if defined? @payment_base
+        @payment_base = token_metadata&.payment_base
+      end
+
+      # Return Glueby::Contract::AR::TokenMetadata instance for this token
+      # @return [Glueby::Contract::AR::TokenMetadata]
+      def token_metadata
+        return @token_metadata if defined? @token_metadata
+        @token_metadata = Glueby::Contract::AR::TokenMetadata.find_by(color_id: color_id.to_hex)
       end
 
       # Return token type
