@@ -101,6 +101,11 @@ module Glueby
 
         def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
           script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
+
+          # For reissuable token, we need funding transaction for every issuance.
+          # To make it easier for API users to understand whether a transaction is a new issue or a reissue, 
+          # when Token.issue! is executed, a new address is created and tpc is sent to it to ensure that it is a new issue, 
+          # and a transaction is created using that UTXO as input to create a new color_id. 
           funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?)
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
