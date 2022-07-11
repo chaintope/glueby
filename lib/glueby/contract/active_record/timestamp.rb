@@ -3,7 +3,6 @@ module Glueby
     module AR
       class Timestamp < ::ActiveRecord::Base
         include Glueby::GluebyLogger
-        include Glueby::Util::Digest
 
         enum status: { init: 0, unconfirmed: 1, confirmed: 2 }
         enum timestamp_type: { simple: 0, trackable: 1 }
@@ -14,6 +13,21 @@ module Glueby
 
         validate :validate_prev
 
+        class << self
+          def digest_content(content, digest)
+            case digest&.downcase
+            when :sha256
+              Tapyrus.sha256(content).bth
+            when :double_sha256
+              Tapyrus.double_sha256(content).bth
+            when :none
+              content
+            else
+              raise Glueby::Contract::Errors::UnsupportedDigestType
+            end
+          end
+        end
+
         # @param [Hash] attributes attributes which consist of:
         # - wallet_id
         # - content
@@ -22,7 +36,7 @@ module Glueby
         # @raise [Glueby::ArgumentError] If the timestamp_type is not in :simple or :trackable
         def initialize(attributes = nil)
           # Set content_hash from :content attribute
-          content_hash = digest_content(attributes[:content], attributes[:digest] || :sha256)
+          content_hash = Timestamp.digest_content(attributes[:content], attributes[:digest] || :sha256)
           super(
             wallet_id: attributes[:wallet_id],
             content_hash: content_hash,
