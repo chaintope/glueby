@@ -67,7 +67,7 @@ module Glueby
         # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
         # @raise [InvalidAmount] if amount is not positive integer.
         # @raise [InvalidSplit] if split is greater than 1 for NFT token.
-        # @raise [UnspportedTokenType] if token is not supported.
+        # @raise [UnsupportedTokenType] if token is not supported.
         def issue!(issuer:, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 1, split: 1, fee_estimator: FeeEstimator::Fixed.new, metadata: nil)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
           raise Glueby::Contract::Errors::InvalidSplit if token_type == Tapyrus::Color::TokenTypes::NFT && split > 1
@@ -392,7 +392,7 @@ module Glueby
       # Verify that wallet is the issuer of the reissuable token
       # @param wallet [Glueby::Wallet]
       # @param token_metadata [Glueby::Contract::AR::TokenMetadata] metadata to be stored in blockchain as p2c address
-      # @reutrn [Boolean] true if the wallet is the issuer of this token
+      # @return [Boolean] true if the wallet is the issuer of this token
       def validate_reissuer(wallet:, token_metadata: nil)
         addresses = wallet.internal_wallet.get_addresses
         return false unless script_pubkey&.p2pkh?
