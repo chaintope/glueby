@@ -90,6 +90,14 @@ module Glueby
           Glueby::AR::SystemInformation.use_only_finalized_utxo?
         end
 
+        # Sign to pay-to-contract output.
+        #
+        # @param issuer [Glueby::Walelt] Issuer of the token
+        # @param tx [Tapyrus::Tx] The transaction to be signed with metadata
+        # @param funding_tx [Tapyrus::Tx] The funding transaction that has pay-to-contract output in its first output
+        # @param payment_base [String] The public key used to generate pay to contract public key
+        # @param metadata [String] Data that represents token metadata
+        # @return [Tapyrus::Tx] signed tx
         def sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
           utxo = { txid: funding_tx.txid, vout: 0, script_pubkey: funding_tx.outputs[0].script_pubkey.to_hex }
           issuer.internal_wallet.sign_to_pay_to_contract_address(tx, utxo, payment_base, metadata)
