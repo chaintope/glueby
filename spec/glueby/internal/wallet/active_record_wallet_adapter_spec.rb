@@ -384,4 +384,13 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       expect(subject.inputs[0].script_sig.to_hex).to eq '41c88a45a008be7bbdac85b400085ed24f30adf6f9c7c86556a794ffd3d5e2b7dda128dccc3dbe24e5b59793bf3e4ad5a00f98c408d736b166a334a3c8e2297e420121021d25c88f2cd16e317156b6bf9870b08f5e6d782ca653473cee9c7a6746cac58c'
     end
   end
+
+  describe '#has_address?' do
+    it do
+      address = adapter.receive_address(wallet.wallet_id)
+      adapter.receive_address(wallet.wallet_id, 'tracking')
+      expect(adapter.has_address?(wallet.wallet_id, address)).to be_truthy
+      expect(adapter.has_address?(wallet.wallet_id, '1LUMPgobnSdbaA4iaikHKjCDLHveWYUSt5')).to be_falsy
+    end
+  end
 end

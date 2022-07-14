@@ -178,6 +178,12 @@ module Glueby
           tx
         end
 
+        def has_address?(wallet_id, address)
+          script_pubkey = Tapyrus::Script.parse_from_addr(address)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
+          wallet.keys.exists?(script_pubkey: script_pubkey.to_hex)
+        end
+
         private
 
         # Calculate commitment = H(P || contents)

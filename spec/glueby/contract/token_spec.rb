@@ -111,7 +111,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         before do
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
           Glueby::Internal::Wallet::AR::Utxo.create(
-            txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+            txid: '0000000000000000000000000000000000000000000000000000000000000000',
             index: 0,
             script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
             key: key,
@@ -241,8 +241,32 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
     subject { token[0].reissue!(issuer: issuer, amount: amount) }
 
     let(:token) { Glueby::Contract::Token.issue!(issuer: issuer) }
-    let(:issuer) { wallet }
+    let(:issuer) { Glueby::Wallet.create }
     let(:amount) { 1_000 }
+    let(:key) do
+      ar_wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: issuer.id)
+      ar_wallet.keys.create(purpose: :receive)
+    end
+
+    before do
+      Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '0000000000000000000000000000000000000000000000000000000000000001',
+        index: 0,
+        script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+        key: key,
+        value: 100_000,
+        status: :finalized
+      )
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '0000000000000000000000000000000000000000000000000000000000000001',
+        index: 1,
+        script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+        key: key,
+        value: 100_000,
+        status: :finalized
+      )
+    end
 
     it { 
       expect { subject }.not_to raise_error
@@ -252,31 +276,6 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
     context 'when metadata exists' do
       let(:token) { Glueby::Contract::Token.issue!(issuer: issuer, metadata: 'metadata') }
-      let(:wallet) { Glueby::Wallet.create }
-      let(:key) do
-        ar_wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet.id)
-        ar_wallet.keys.create(purpose: :receive)
-      end
-
-      before do
-        Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
-        Glueby::Internal::Wallet::AR::Utxo.create(
-          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-          index: 0,
-          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-          key: key,
-          value: 100_000,
-          status: :finalized
-        )
-        Glueby::Internal::Wallet::AR::Utxo.create(
-          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-          index: 1,
-          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
-          key: key,
-          value: 100_000,
-          status: :finalized
-        )
-      end
 
       it do
         expect { subject }.not_to raise_error
@@ -287,6 +286,8 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
     context 'use utxo provider', active_record: true do
       include_context 'use utxo provider'
+
+      let(:utxos) { 42 }
 
       it do
         expect { subject }.not_to raise_error
@@ -314,46 +315,20 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
     end
 
     context 'does not have enough tpc' do
-      let(:unspents) { [] }
+      before { Glueby::Internal::Wallet::AR::Utxo.destroy_all }
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::InsufficientFunds }
     end
 
     context 'invalid reissuer' do
-      let(:issuer) { wallet }
-      let(:wallet) { TestWallet.new(internal_wallet) }
-      let(:internal_wallet) do
-        class TestInternalWallet < Glueby::Internal::Wallet
-          def get_addresses(label = nil)
-            [
-              '191arn68nSLRiNJXD8srnmw4bRykBkVv6o', 
-              '1QDN1JzVYKRuscrPdWE6AUvTxev6TP1cF4', 
-              '1GKVcitjqJDjs7yEy19FSGZMu81xyey62J'
-            ]
-          end
-        end
-        TestInternalWallet.new
-      end
+      subject { token[0].reissue!(issuer: reissuer, amount: amount) }
+
+      let(:reissuer) { Glueby::Wallet.create }
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::UnknownScriptPubkey }
     end
 
     context 'invalid color id' do
-      let(:issuer) { wallet }
-      let(:wallet) { TestWallet.new(internal_wallet) }
-      let(:internal_wallet) do
-        class TestInternalWallet < Glueby::Internal::Wallet
-          def get_addresses(label = nil)
-            [
-              '191arn68nSLRiNJXD8srnmw4bRykBkVv6o',
-              '1QDN1JzVYKRuscrPdWE6AUvTxev6TP1cF4',
-              '1GKVcitjqJDjs7yEy19FSGZMu81xyey62J'
-            ]
-          end
-        end
-        TestInternalWallet.new
-      end
-
       let(:token) { [Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376'.htb)] }
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::UnknownScriptPubkey }

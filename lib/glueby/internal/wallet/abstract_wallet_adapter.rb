@@ -182,6 +182,14 @@ module Glueby
         def sign_to_pay_to_contract_address(wallet_id, tx, utxo, payment_base, contents, sighashtype: Tapyrus::SIGHASH_TYPE[:all])
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
+
+        # Return if wallet has the address
+        # @param wallet_id [String] The wallet id that is offered by `create_wallet()` method.
+        # @param address [String] address
+        # @return [Boolean] true if the wallet has an address, false otherwise
+        def has_address?(wallet_id, address)
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
       end
     end
   end

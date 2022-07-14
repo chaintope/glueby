@@ -228,7 +228,7 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
 
         token_metadata = Glueby::Contract::AR::TokenMetadata.find_by(color_id: color_id.to_hex)
-        raise Glueby::Contract::Errors::UnknownScriptPubkey unless validate_reissuer(wallet: issuer, token_metadata: token_metadata)
+        raise Glueby::Contract::Errors::UnknownScriptPubkey unless valid_reissuer?(wallet: issuer, token_metadata: token_metadata)
 
         funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, only_finalized: only_finalized?)
         funding_tx = issuer.internal_wallet.broadcast(funding_tx)
@@ -401,22 +401,15 @@ module Glueby
       # @param wallet [Glueby::Wallet]
       # @param token_metadata [Glueby::Contract::AR::TokenMetadata] metadata to be stored in blockchain as p2c address
       # @return [Boolean] true if the wallet is the issuer of this token
-      def validate_reissuer(wallet:, token_metadata: nil)
-        addresses = wallet.internal_wallet.get_addresses
+      def valid_reissuer?(wallet:, token_metadata: nil)
         return false unless script_pubkey&.p2pkh?
-        pubkey_hash_from_script = if token_metadata
-            Tapyrus::Key.new(pubkey: token_metadata.payment_base).hash160
+        address = if token_metadata
+            payment_base = Tapyrus::Key.new(pubkey: token_metadata.payment_base)
+            payment_base.to_p2pkh
           else
-            Tapyrus::Script.parse_from_payload(script_pubkey.chunks[2])
+            script_pubkey.to_addr
           end
-        addresses.each do |address|
-          decoded_address = Tapyrus.decode_base58_address(address)
-          pubkey_hash_from_address = decoded_address[0]
-          if pubkey_hash_from_address == pubkey_hash_from_script.to_s
-            return true
-          end
-        end
-        false
+        wallet.internal_wallet.has_address?(address)
       end
     end
   end

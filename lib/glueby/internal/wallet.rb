@@ -169,6 +169,10 @@ module Glueby
         wallet_adapter.sign_to_pay_to_contract_address(id, tx, utxo, payment_base, contents)
       end
 
+      def has_address?(address)
+        wallet_adapter.has_address?(id, address)
+      end
+
       private
 
       def wallet_adapter
