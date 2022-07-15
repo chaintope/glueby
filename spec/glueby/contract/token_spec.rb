@@ -129,6 +129,25 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           metadata = Glueby::Contract::AR::TokenMetadata.last
           expect(txs[0].outputs[0].script_pubkey.to_addr).to eq metadata.p2c_address
         end
+
+        context 'failed to broadcast tx' do
+          before do
+            first = true
+            allow(rpc).to receive(:sendrawtransaction) do
+              if first
+                first = false
+                '00' * 32 # txid for funding transaction
+              else
+                # failed to broadcast issue transaction
+                raise RuntimeError
+              end
+            end
+          end
+
+          it 'does not create metadata' do
+            expect { subject }.to raise_error(RuntimeError).and change(Glueby::Contract::AR::TokenMetadata, :count).by(0)
+          end
+        end
       end
     end
 
