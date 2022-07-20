@@ -325,22 +325,19 @@ module Glueby
       # Return metadata for this token
       # @return [String] metadata. if token is not associated with metadata, return nil
       def metadata
-        return @metadata if defined? @metadata
-        @metadata = token_metadata&.metadata
+        token_metadata&.metadata
       end
 
       # Return pay to contract address
       # @return [String] p2c_address. if token is not associated with metadata, return nil
       def p2c_address
-        return @p2c_address if defined? @p2c_address
-        @p2c_address = token_metadata&.p2c_address
+        token_metadata&.p2c_address
       end
 
       # Return public key used to generate pay to contract address
       # @return [String] payment_base. if token is not associated with metadata, return nil
       def payment_base
-        return @payment_base if defined? @payment_base
-        @payment_base = token_metadata&.payment_base
+        token_metadata&.payment_base
       end
 
       # Return Glueby::Contract::AR::TokenMetadata instance for this token

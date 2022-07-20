@@ -133,10 +133,10 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         context 'failed to broadcast tx' do
           before do
             first = true
-            allow(rpc).to receive(:sendrawtransaction) do
+            allow(rpc).to receive(:sendrawtransaction) do |raw|
               if first
                 first = false
-                '00' * 32 # txid for funding transaction
+                '11' * 32 # txid for funding transaction
               else
                 # failed to broadcast issue transaction
                 raise RuntimeError
@@ -145,7 +145,9 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           end
 
           it 'does not create metadata' do
-            expect { subject }.to raise_error(RuntimeError).and change(Glueby::Contract::AR::TokenMetadata, :count).by(0)
+            expect { subject }.to raise_error(RuntimeError)
+              .and change(Glueby::Contract::AR::TokenMetadata, :count).by(0)
+              .and change { Glueby::Internal::Wallet::AR::Utxo.where(status: :finalized).count }.by(-1 * used_utxos)
           end
         end
       end
@@ -162,7 +164,9 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(subject[1][0].outputs.first.script_pubkey.to_hex).to eq Glueby::Contract::AR::ReissuableToken.find_by(color_id: subject[0].color_id.to_hex).script_pubkey
       end
 
-      it_behaves_like 'when metadata is included, p2c address should be generated'
+      it_behaves_like 'when metadata is included, p2c address should be generated' do
+        let(:used_utxos) { 1 }
+      end
 
       context 'use utxo provider', active_record: true do
         include_context 'use utxo provider'
@@ -173,7 +177,9 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           expect(subject[1][1].outputs.first.value).to eq 1_000 # Colored coin
         end
 
-        it_behaves_like 'when metadata is included, p2c address should be generated'
+        it_behaves_like 'when metadata is included, p2c address should be generated' do
+          let(:used_utxos) { 20 }
+        end
       end
     end
 
@@ -188,7 +194,9 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
       end
 
-      it_behaves_like 'when metadata is included, p2c address should be generated'
+      it_behaves_like 'when metadata is included, p2c address should be generated' do
+        let(:used_utxos) { 1 }
+      end
 
       context 'use utxo provider', active_record: true do
         include_context 'use utxo provider'
@@ -199,7 +207,9 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           expect(subject[1][1].outputs.first.value).to eq 1_000 # Colored coin
         end
 
-        it_behaves_like 'when metadata is included, p2c address should be generated'
+        it_behaves_like 'when metadata is included, p2c address should be generated' do
+          let(:used_utxos) { 20 }
+        end
       end
     end
 
@@ -215,7 +225,9 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq 0
       end
 
-      it_behaves_like 'when metadata is included, p2c address should be generated'
+      it_behaves_like 'when metadata is included, p2c address should be generated' do
+        let(:used_utxos) { 1 }
+      end
 
       context 'use utxo provider', active_record: true do
         include_context 'use utxo provider'
@@ -226,7 +238,9 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           expect(subject[1][1].outputs.first.value).to eq 1 # Colored coin
         end
 
-        it_behaves_like 'when metadata is included, p2c address should be generated'
+        it_behaves_like 'when metadata is included, p2c address should be generated' do
+          let(:used_utxos) { 20 }
+        end
       end
     end
 
