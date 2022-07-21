@@ -161,8 +161,16 @@ module Glueby
         wallet_adapter.create_pay_to_contract_address(id, contents)
       end
 
+      def pay_to_contract_key(payment_base, contents)
+        wallet_adapter.pay_to_contract_key(id, payment_base, contents)
+      end
+
       def sign_to_pay_to_contract_address(tx, utxo, payment_base, contents)
         wallet_adapter.sign_to_pay_to_contract_address(id, tx, utxo, payment_base, contents)
+      end
+
+      def has_address?(address)
+        wallet_adapter.has_address?(id, address)
       end
 
       private

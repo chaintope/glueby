@@ -125,6 +125,15 @@ def setup_database
     t.timestamps
   end
   connection.add_index :glueby_reissuable_tokens, [:color_id], unique: true
+
+  connection.create_table :glueby_token_metadata, force: true do |t|
+    t.text     :metadata, null: false
+    t.string   :color_id, null: false
+    t.string   :p2c_address, null: false
+    t.string   :payment_base, null: false
+    t.timestamps
+  end
+  connection.add_index :glueby_token_metadata, [:color_id], unique: true
 end
 
 def teardown_database
@@ -135,6 +144,7 @@ def teardown_database
   connection.drop_table :glueby_timestamps, if_exists: true
   connection.drop_table :glueby_system_informations, if_exists: true
   connection.drop_table :glueby_reissuable_tokens, if_exists: true
+  connection.drop_table :glueby_token_metadata, if_exists: true
 end
 
 class TapyrusCoreContainer

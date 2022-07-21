@@ -157,6 +157,15 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
+        # Create pay to contract key
+        # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [Tapyrus::Key] payment_base - The public key used to generate pay to contract public key
+        # @param [String] contents - The data to be used for generating pay-to-contract address
+        # @return [Tapyrus::Key] Key for pay to contract 
+        def pay_to_contract_key(wallet_id, payment_base, contents)
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
+
         # Sign to the pay to contract input
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @param [Tapyrus::Tx] tx - The tx that has pay to contract input in the inputs list
@@ -171,6 +180,14 @@ module Glueby
         # @return [Tapyrus::Tx]
         # @raise [Glueby::Internal::Wallet::Errors::InvalidSighashType] when the specified sighashtype is invalid
         def sign_to_pay_to_contract_address(wallet_id, tx, utxo, payment_base, contents, sighashtype: Tapyrus::SIGHASH_TYPE[:all])
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
+
+        # Return if wallet has the address
+        # @param wallet_id [String] The wallet id that is offered by `create_wallet()` method.
+        # @param address [String] address
+        # @return [Boolean] true if the wallet has an address, false otherwise
+        def has_address?(wallet_id, address)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
       end

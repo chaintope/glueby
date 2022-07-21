@@ -1,0 +1,13 @@
+class CreateTokenMetadata < ActiveRecord::Migration<%= migration_version %>
+  def change
+    create_table :glueby_token_metadata<%= table_options %> do |t|
+      t.text     :metadata, null: false
+      t.string   :color_id, null: false
+      t.string   :p2c_address, null: false
+      t.string   :payment_base, null: false
+      t.timestamps
+    end
+
+    add_index :glueby_token_metadata, [:color_id], unique: true
+  end
+end

@@ -1,6 +1,6 @@
 module Glueby
   module Contract
-    class ReissuableTokenGenerator < Rails::Generators::Base
+    class TokenGenerator < Rails::Generators::Base
       include ::Rails::Generators::Migration
       include Glueby::Generator::MigrateGenerator
       extend Glueby::Generator::MigrateGenerator::ClassMethod
@@ -9,6 +9,17 @@ module Glueby
 
       def create_migration_file
         migration_dir = File.expand_path("db/migrate")
+
+        if self.class.migration_exists?(migration_dir, "create_token_metadata")
+          ::Kernel.warn "Migration already exists: create_token_metadata"
+        else
+          migration_template(
+            "token_metadata_table.rb.erb",
+            "db/migrate/create_token_metadata.rb",
+            migration_version: migration_version,
+            table_options: table_options,
+          )
+        end
 
         if self.class.migration_exists?(migration_dir, "create_reissuable_token")
           ::Kernel.warn "Migration already exists: create_reissuable_token"

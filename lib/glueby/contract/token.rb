@@ -43,6 +43,10 @@ module Glueby
     # token.amount(wallet: alice)
     # => 100
     #
+    # Issue with metadata / Get metadata
+    # token = Token.issue!(issuer: alice, amount: 100, metadata: 'metadata')
+    # token.metadata
+    # => "metadata"
     class Token
       include Glueby::Contract::TxBuilder
       extend Glueby::Contract::TxBuilder
@@ -58,22 +62,23 @@ module Glueby
         # @param amount [Integer]
         # @param split [Integer] The tx outputs should be split by specified number.
         # @param fee_estimator [Glueby::Contract::FeeEstimator]
+        # @param metadata [String] The data to be stored in blockchain.
         # @return [Array<token, Array<tx>>] Tuple of tx array and token object
         # @raise [InsufficientFunds] if wallet does not have enough TPC to send transaction.
         # @raise [InvalidAmount] if amount is not positive integer.
         # @raise [InvalidSplit] if split is greater than 1 for NFT token.
-        # @raise [UnspportedTokenType] if token is not supported.
-        def issue!(issuer:, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 1, split: 1, fee_estimator: FeeEstimator::Fixed.new)
+        # @raise [UnsupportedTokenType] if token is not supported.
+        def issue!(issuer:, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 1, split: 1, fee_estimator: FeeEstimator::Fixed.new, metadata: nil)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
           raise Glueby::Contract::Errors::InvalidSplit if token_type == Tapyrus::Color::TokenTypes::NFT && split > 1
 
           txs, color_id = case token_type
                          when Tapyrus::Color::TokenTypes::REISSUABLE
-                           issue_reissuable_token(issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
+                           issue_reissuable_token(issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator, metadata: metadata)
                          when Tapyrus::Color::TokenTypes::NON_REISSUABLE
-                           issue_non_reissuable_token(issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
+                           issue_non_reissuable_token(issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator, metadata: metadata)
                          when Tapyrus::Color::TokenTypes::NFT
-                           issue_nft_token(issuer: issuer)
+                           issue_nft_token(issuer: issuer, metadata: metadata)
                          else
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
@@ -85,10 +90,35 @@ module Glueby
           Glueby::AR::SystemInformation.use_only_finalized_utxo?
         end
 
+        # Sign to pay-to-contract output.
+        #
+        # @param issuer [Glueby::Walelt] Issuer of the token
+        # @param tx [Tapyrus::Tx] The transaction to be signed with metadata
+        # @param funding_tx [Tapyrus::Tx] The funding transaction that has pay-to-contract output in its first output
+        # @param payment_base [String] The public key used to generate pay to contract public key
+        # @param metadata [String] Data that represents token metadata
+        # @return [Tapyrus::Tx] signed tx
+        def sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+          utxo = { txid: funding_tx.txid, vout: 0, script_pubkey: funding_tx.outputs[0].script_pubkey.to_hex }
+          issuer.internal_wallet.sign_to_pay_to_contract_address(tx, utxo, payment_base, metadata)
+        end
+
         private
 
-        def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:)
-          funding_tx = create_funding_tx(wallet: issuer, only_finalized: only_finalized?)
+        def create_p2c_address(wallet, metadata)
+          p2c_address, payment_base = wallet.internal_wallet.create_pay_to_contract_address(metadata)
+          script = Tapyrus::Script.parse_from_addr(p2c_address)
+          [script, p2c_address, payment_base]
+        end
+
+        def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
+          script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
+
+          # For reissuable token, we need funding transaction for every issuance.
+          # To make it easier for API users to understand whether a transaction is a new issue or a reissue, 
+          # when Token.issue! is executed, a new address is created and tpc is sent to it to ensure that it is a new issue, 
+          # and a transaction is created using that UTXO as input to create a new color_id. 
+          funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?)
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
 
@@ -101,40 +131,81 @@ module Glueby
             Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
 
             tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
+            if metadata
+              Glueby::Contract::AR::TokenMetadata.create!(
+                color_id: color_id.to_hex,
+                metadata: metadata,
+                p2c_address: p2c_address,
+                payment_base: payment_base
+              )
+              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+            end
             tx = issuer.internal_wallet.broadcast(tx)
             [[funding_tx, tx], color_id]
           end
         end
 
-        def issue_non_reissuable_token(issuer:, amount:, split: 1, fee_estimator:)
-          funding_tx = create_funding_tx(wallet: issuer, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
-          funding_tx = issuer.internal_wallet.broadcast(funding_tx) if funding_tx
-
-          tx = create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
-          tx = issuer.internal_wallet.broadcast(tx)
-
-          out_point = tx.inputs.first.out_point
-          color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
+        def issue_non_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
+          script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
+          funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider? || script
           if funding_tx
-            [[funding_tx, tx], color_id]
-          else
-            [[tx], color_id]
+            ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+              funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+            end
+          end
+
+          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+            tx = create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
+            out_point = tx.inputs.first.out_point
+            color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
+            if metadata
+              Glueby::Contract::AR::TokenMetadata.create!(
+                color_id: color_id.to_hex,
+                metadata: metadata,
+                p2c_address: p2c_address,
+                payment_base: payment_base
+              )
+              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+            end
+            tx = issuer.internal_wallet.broadcast(tx)
+
+            if funding_tx
+              [[funding_tx, tx], color_id]
+            else
+              [[tx], color_id]
+            end
           end
         end
 
-        def issue_nft_token(issuer:)
-          funding_tx = create_funding_tx(wallet: issuer, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider?
-          funding_tx = issuer.internal_wallet.broadcast(funding_tx) if funding_tx
-
-          tx = create_issue_tx_for_nft_token(funding_tx: funding_tx, issuer: issuer)
-          tx = issuer.internal_wallet.broadcast(tx)
-
-          out_point = tx.inputs.first.out_point
-          color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
+        def issue_nft_token(issuer:, metadata: nil)
+          script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
+          funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider? || script
           if funding_tx
-            [[funding_tx, tx], color_id]
-          else
-            [[tx], color_id]
+            ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+              funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+            end
+          end
+
+          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+            tx = create_issue_tx_for_nft_token(funding_tx: funding_tx, issuer: issuer)
+            out_point = tx.inputs.first.out_point
+            color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
+            if metadata
+              Glueby::Contract::AR::TokenMetadata.create!(
+                color_id: color_id.to_hex,
+                metadata: metadata,
+                p2c_address: p2c_address,
+                payment_base: payment_base
+              )
+              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
+            end
+            tx = issuer.internal_wallet.broadcast(tx)
+
+            if funding_tx
+              [[funding_tx, tx], color_id]
+            else
+              [[tx], color_id]
+            end
           end
         end
       end
@@ -155,11 +226,16 @@ module Glueby
       def reissue!(issuer:, amount:, split: 1, fee_estimator: FeeEstimator::Fixed.new)
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
-        raise Glueby::Contract::Errors::UnknownScriptPubkey unless validate_reissuer(wallet: issuer)
+
+        token_metadata = Glueby::Contract::AR::TokenMetadata.find_by(color_id: color_id.to_hex)
+        raise Glueby::Contract::Errors::UnknownScriptPubkey unless valid_reissuer?(wallet: issuer, token_metadata: token_metadata)
 
         funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, only_finalized: only_finalized?)
         funding_tx = issuer.internal_wallet.broadcast(funding_tx)
         tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id, split: split, fee_estimator: fee_estimator)
+        if token_metadata
+          tx = Token.sign_to_p2c_output(issuer, tx, funding_tx, token_metadata.payment_base, token_metadata.metadata)
+        end
         tx = issuer.internal_wallet.broadcast(tx)
 
         [color_id, tx]
@@ -246,6 +322,31 @@ module Glueby
         results.sum { |result| result[:amount] }
       end
 
+      # Return metadata for this token
+      # @return [String] metadata. if token is not associated with metadata, return nil
+      def metadata
+        token_metadata&.metadata
+      end
+
+      # Return pay to contract address
+      # @return [String] p2c_address. if token is not associated with metadata, return nil
+      def p2c_address
+        token_metadata&.p2c_address
+      end
+
+      # Return public key used to generate pay to contract address
+      # @return [String] payment_base. if token is not associated with metadata, return nil
+      def payment_base
+        token_metadata&.payment_base
+      end
+
+      # Return Glueby::Contract::AR::TokenMetadata instance for this token
+      # @return [Glueby::Contract::AR::TokenMetadata]
+      def token_metadata
+        return @token_metadata if defined? @token_metadata
+        @token_metadata = Glueby::Contract::AR::TokenMetadata.find_by(color_id: color_id.to_hex)
+      end
+
       # Return token type
       # @return [Tapyrus::Color::TokenTypes]
       def token_type
@@ -294,19 +395,18 @@ module Glueby
       end
 
       # Verify that wallet is the issuer of the reissuable token
-      #　reutrn [Boolean]
-      def validate_reissuer(wallet:)
-        addresses = wallet.internal_wallet.get_addresses
+      # @param wallet [Glueby::Wallet]
+      # @param token_metadata [Glueby::Contract::AR::TokenMetadata] metadata to be stored in blockchain as p2c address
+      # @return [Boolean] true if the wallet is the issuer of this token
+      def valid_reissuer?(wallet:, token_metadata: nil)
         return false unless script_pubkey&.p2pkh?
-        pubkey_hash_from_script = Tapyrus::Script.parse_from_payload(script_pubkey.chunks[2])
-        addresses.each do |address|
-          decoded_address = Tapyrus.decode_base58_address(address)
-          pubkey_hash_from_address = decoded_address[0]
-          if pubkey_hash_from_address == pubkey_hash_from_script.to_s
-            return true
+        address = if token_metadata
+            payment_base = Tapyrus::Key.new(pubkey: token_metadata.payment_base)
+            payment_base.to_p2pkh
+          else
+            script_pubkey.to_addr
           end
-        end
-        false
+        wallet.internal_wallet.has_address?(address)
       end
     end
   end
