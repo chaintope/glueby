@@ -366,7 +366,7 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
     context 'if type is trackable and update existing timestamps', active_record: true do
       let(:contract) do
         Glueby::Contract::Timestamp.new(
-          wallet: wallet,
+          wallet: updater,
           content: 'updated',
           prefix: 'foo',
           digest: :none,
@@ -388,6 +388,7 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
       let(:active_record_wallet) { Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet.id) }
       let(:key) { active_record_wallet.keys.create(purpose: :receive) }
       let(:wallet) { Glueby::Wallet.create }
+      let(:updater) { wallet }
 
       before do
         Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
@@ -417,6 +418,30 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
         expect(contract.tx.outputs[1].value).to eq 99_990_000
         expect(contract.p2c_address).not_to be_nil
         expect(contract.payment_base).not_to be_nil
+      end
+
+      context 'when 3rd-party is trying to update timestamp' do
+        let(:updater) { Glueby::Wallet.create }
+        let(:another_active_record_wallet) { Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: updater.id) }
+        let(:another_key) { another_active_record_wallet.keys.create(purpose: :receive) }
+
+        before do
+          # Utxo for fee (in another wallet)
+          2.times do |i|
+            Glueby::Internal::Wallet::AR::Utxo.create(
+              txid: '0000000000000000000000000000000000000000000000000000000000000001',
+              index: i,
+              value: 100_000_000,
+              script_pubkey: another_key.to_p2pkh.to_hex,
+              status: :finalized,
+              key: another_key
+            )
+          end
+        end
+
+        it 'can not sign transaction' do
+          expect { subject }.to raise_error Glueby::Internal::Wallet::Errors::InvalidSigner,  "The wallet don't have any private key of the specified payment_base"
+        end
       end
     end
   end

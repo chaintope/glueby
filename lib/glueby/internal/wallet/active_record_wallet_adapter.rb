@@ -190,10 +190,13 @@ module Glueby
         # @param [String] payment_base The public key hex string
         # @param [String] contents
         # @return [Tapyrus::Key] pay to contract private key
+        # @raise [Errors::InvalidSigner] raises when the wallet don't have any private key of the specified payment_base
         def create_pay_to_contract_private_key(wallet_id, payment_base, contents)
           group = ECDSA::Group::Secp256k1
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           ar_key = wallet.keys.where(public_key: payment_base).first
+          raise Errors::InvalidSigner, "The wallet don't have any private key of the specified payment_base" unless ar_key
+
           key = Tapyrus::Key.new(pubkey: payment_base)
           commitment = create_pay_to_contract_commitment(key, contents)
           Tapyrus::Key.new(priv_key: ((ar_key.private_key.to_i(16) + commitment) % group.order).to_even_length_hex) # K + commitment
