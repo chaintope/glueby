@@ -8,16 +8,16 @@ module Glueby
       end
 
       # Create new public key, and new transaction that sends TPC to it
-      def create_funding_tx(wallet:, script: nil, fee_estimator: FeeEstimator::Fixed.new, need_value_for_change_output: false, only_finalized: true)
+      def create_funding_tx(wallet:, script: nil, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         if Glueby.configuration.use_utxo_provider?
           utxo_provider = UtxoProvider.instance
           script_pubkey = script ? script : Tapyrus::Script.parse_from_addr(wallet.internal_wallet.receive_address)
-          funding_tx, _index = utxo_provider.get_utxo(script_pubkey, funding_tx_amount(need_value_for_change_output: need_value_for_change_output))
+          funding_tx, _index = utxo_provider.get_utxo(script_pubkey, funding_tx_amount)
           utxo_provider.wallet.sign_tx(funding_tx)
         else
           txb = Tapyrus::TxBuilder.new
           fee = fee_estimator.fee(FeeEstimator.dummy_tx(txb.build))
-          amount = fee + funding_tx_amount(need_value_for_change_output: need_value_for_change_output)
+          amount = fee + funding_tx_amount
           sum, outputs = wallet.internal_wallet.collect_uncolored_outputs(amount, nil, only_finalized)
           outputs.each do |utxo|
             txb.add_utxo({
@@ -235,7 +235,7 @@ module Glueby
         sender.internal_wallet.sign_tx(tx, prev_txs)
       end
 
-      def create_burn_tx(color_id:, sender:, amount: 0, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true, burn_all_amount: false)
+      def create_burn_tx(color_id:, sender:, amount: 0, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         tx = Tapyrus::Tx.new
 
         utxos = sender.internal_wallet.list_unspent(only_finalized)
@@ -247,13 +247,13 @@ module Glueby
 
         provided_utxos = []
         if Glueby.configuration.use_utxo_provider?
-          # When it burns all the amount of the color id, burn tx is not going to be have any output
-          # because change outputs is not necessary. Transactions needs one output at least.
-          # At that time, set DUST_LIMIT to target_amount to get more value so that it created at least one output
-          # to the burn tx.
+          # When it burns all the amount of the color id, burn tx is not going to have any output
+          # because change outputs are not necessary, though such a transaction is not 'standard' and would be rejected by the Tapyrus node.
+          # UtxoProvider#fill_inputs method provides an extra output with a DUST_LIMIT value in this case
+          # , so that it created at least one output to the burn tx.
           tx, fee, sum_tpc, provided_utxos = UtxoProvider.instance.fill_inputs(
             tx,
-            target_amount: burn_all_amount ? DUST_LIMIT : 0,
+            target_amount: 0,
             current_amount: 0,
             fee_estimator: fee_estimator
           )
@@ -337,14 +337,8 @@ module Glueby
       # The amount of output in funding tx
       # It returns same amount with FeeEstimator::Fixed's fixed fee. Because it is enough for paying fee for consumer
       # transactions of the funding transactions.
-      #
-      # @option [Boolean] need_value_for_change_output If it is true, adds more value than the fee for producing change output.
-      def funding_tx_amount(need_value_for_change_output: false)
-        if need_value_for_change_output
-          FeeEstimator::Fixed.new.fixed_fee + DUST_LIMIT
-        else
-          FeeEstimator::Fixed.new.fixed_fee
-        end
+      def funding_tx_amount
+        FeeEstimator::Fixed.new.fixed_fee
       end
     end
   end
