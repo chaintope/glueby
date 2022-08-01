@@ -191,9 +191,10 @@ module Glueby
         # @param [String] contents
         # @return Integer
         def create_pay_to_contract_commitment(pubkey, contents)
+          contents = (+contents).force_encoding('binary')
           group = ECDSA::Group::Secp256k1
           p = pubkey.to_point # P
-          Tapyrus.sha256(p.to_hex(true).htb + contents).bth.to_i(16) % group.order # H(P || contents)
+          Tapyrus.sha256(p.to_hex(true).htb + contents).bth.to_i(16) % group.order # H(P || contents) 
         end
 
         # @param [String] wallet_id
