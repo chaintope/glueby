@@ -566,6 +566,22 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         end
       end
 
+      context 'If the token amount and fee is equal to value in utxos' do
+        let(:amount) { 100_000 }
+        let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 401) }
+
+        it 'has one output for to be a standard tx' do
+          expect(internal_wallet).to receive(:broadcast).once do |tx|
+            # Need 1_001 tapyrus at least, that means 401 tapyrus for tx fee, and 600 tapyrus to avoiding "dust limit error"
+            # 1 colored input(100_000 token), 2 uncolored inputs(1_000 * 2 tapyrus)
+            expect(tx.inputs.count).to eq 3
+            expect(tx.outputs.count).to eq(1)
+            expect(tx.outputs[0].value).to eq(1_599)
+          end
+          subject
+        end
+      end
+
       context 'use Auto fee estimator' do
         let(:fee_estimator) { Glueby::Contract::FeeEstimator::Auto.new }
 
