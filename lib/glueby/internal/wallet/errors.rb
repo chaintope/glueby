@@ -8,6 +8,7 @@ module Glueby
         class WalletAlreadyCreated < Error; end
         class WalletNotFound < Error; end
         class InvalidSighashType < Error; end
+        class InvalidSigner < Error; end
       end
     end
   end

@@ -179,6 +179,7 @@ module Glueby
         # @param [Integer] sighashtype - The sighash flag for each signature that would be produced here.
         # @return [Tapyrus::Tx]
         # @raise [Glueby::Internal::Wallet::Errors::InvalidSighashType] when the specified sighashtype is invalid
+        # @raise [Glueby::Internal::Wallet::Errors::InvalidSigner] when the wallet don't have any private key of the specified payment_base
         def sign_to_pay_to_contract_address(wallet_id, tx, utxo, payment_base, contents, sighashtype: Tapyrus::SIGHASH_TYPE[:all])
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
