@@ -349,9 +349,19 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
   describe '#create_pay_to_contract_address' do
     subject { adapter.create_pay_to_contract_address(wallet.wallet_id, 'contents') }
 
+    let(:contents) { 'contents' }
+
     it { expect { subject }.to change { wallet.keys.where(purpose: :receive).count }.from(0).to(1) }
     it { expect { subject }.not_to change { wallet.keys.where(purpose: :change).count } }
     it { expect { Tapyrus.decode_base58_address(subject[0]) }.not_to raise_error }
+
+    context 'when content is UTF-8 string' do
+      let(:contents) { 'あいうえお' }
+
+      it do
+        expect { subject }.not_to raise_error
+      end
+    end
   end
 
   describe '#sign_to_pay_to_contract_address' do
@@ -382,6 +392,14 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
 
     it do
       expect(subject.inputs[0].script_sig.to_hex).to eq '41c88a45a008be7bbdac85b400085ed24f30adf6f9c7c86556a794ffd3d5e2b7dda128dccc3dbe24e5b59793bf3e4ad5a00f98c408d736b166a334a3c8e2297e420121021d25c88f2cd16e317156b6bf9870b08f5e6d782ca653473cee9c7a6746cac58c'
+    end
+
+    context 'when content is UTF-8 string' do
+      let(:contents) { 'あいうえお' }
+
+      it do
+        expect { subject }.not_to raise_error
+      end
     end
   end
 
