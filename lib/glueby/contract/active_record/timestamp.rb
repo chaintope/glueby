@@ -205,6 +205,12 @@ module Glueby
             errors.add(:prev_id, message)
             raise Errors::PrevTimestampAlreadyUpdated, message
           end
+
+          if prev.wallet_id != wallet_id
+            message = "The previous timestamp(id: #{prev_id}) was created by the different user"
+            errors.add(:prev_id, message)
+            raise Errors::InvalidWallet, message
+          end
         end
       end
     end
