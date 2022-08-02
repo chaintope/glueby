@@ -332,6 +332,27 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
               expect { subject }.to raise_error(Glueby::Contract::Errors::PrevTimestampIsNotTrackable, /The previous timestamp\(id: [0-9]+\) type must be trackable/)
             end
           end
+
+          context 'previous timestamp is not created by different user' do
+            before do
+              allow(Glueby::Wallet).to receive(:load).with(another_wallet.internal_wallet.id).and_return(another_wallet)
+            end
+
+            let(:prev) do
+              Glueby::Contract::AR::Timestamp.create(
+                wallet_id: another_wallet.internal_wallet.id,
+                content: "\xFF\xFF\xFF",
+                prefix: 'app',
+                timestamp_type: :trackable
+              )
+            end
+            let(:prev_id) { prev.id }
+            let(:another_wallet) { Glueby::Wallet.create }
+
+            it do
+              expect { subject }.to raise_error(Glueby::Contract::Errors::InvalidWallet, /The previous timestamp\(id: [0-9]+\) was created by the different user/)
+            end
+          end
         end
       end
     end
