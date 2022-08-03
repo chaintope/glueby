@@ -350,7 +350,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
             let(:another_wallet) { Glueby::Wallet.create }
 
             it do
-              expect { subject }.to raise_error(Glueby::Contract::Errors::InvalidWallet, /The previous timestamp\(id: [0-9]+\) was created by the different user/)
+              expect { subject }.to raise_error(Glueby::Contract::Errors::FailedToBroadcast, /failed to broadcast \(id=, reason=The previous timestamp\(id: [0-9]+\) was created by the different user/)
             end
           end
         end
