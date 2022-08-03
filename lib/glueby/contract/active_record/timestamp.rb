@@ -121,6 +121,7 @@ module Glueby
         rescue Tapyrus::RPC::Error,
                Internal::Wallet::Errors::WalletAlreadyLoaded,
                Internal::Wallet::Errors::WalletNotFound,
+               Glueby::Internal::Wallet::Errors::InvalidSigner,
                Errors::InsufficientFunds => e
           errors.add(:base, "failed to broadcast (id=#{id}, reason=#{e.message})")
           raise Errors::FailedToBroadcast, "failed to broadcast (id=#{id}, reason=#{e.message})"
@@ -209,7 +210,7 @@ module Glueby
           if prev.wallet_id != wallet_id
             message = "The previous timestamp(id: #{prev_id}) was created by the different user"
             errors.add(:prev_id, message)
-            raise Errors::InvalidWallet, message
+            raise Glueby::Internal::Wallet::Errors::InvalidSigner, message
           end
         end
       end

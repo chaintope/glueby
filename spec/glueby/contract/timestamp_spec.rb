@@ -439,8 +439,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           end
         end
 
-        it 'can not sign transaction' do
-          expect { subject }.to raise_error Glueby::Internal::Wallet::Errors::InvalidSigner,  "The wallet don't have any private key of the specified payment_base"
+        it 'can not broadcast transaction' do
+          expect { subject }.to raise_error(Glueby::Contract::Errors::FailedToBroadcast, /failed to broadcast \(id=, reason=The previous timestamp\(id: [0-9]+\) was created by the different user/)
         end
       end
     end

@@ -12,7 +12,6 @@ module Glueby
       class InvalidSplit < ArgumentError; end
       class InvalidTokenType < ArgumentError; end
       class InvalidTimestampType < ArgumentError; end
-      class InvalidWallet < ArgumentError; end
       class UnsupportedTokenType < ArgumentError; end
       class UnknownScriptPubkey < ArgumentError; end
       class UnsupportedDigestType < ArgumentError; end
