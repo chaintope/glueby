@@ -38,10 +38,13 @@ module Glueby
 
         fee_outputs_count_to_be_created.times do
           txb.pay(address, fee_provider.fixed_fee)
+          sum -= fee_provider.fixed_fee
         end
+        fee = fee_provider.fixed_fee
+        fee += (sum - fee) if sum - fee < DUST_LIMIT
 
         tx = txb.change_address(address)
-                .fee(fee_provider.fixed_fee)
+                .fee(fee)
                 .build
         tx = wallet.sign_tx(tx)
         wallet.broadcast(tx, without_fee_provider: true)

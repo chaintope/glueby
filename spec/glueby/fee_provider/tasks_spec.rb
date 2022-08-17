@@ -111,6 +111,34 @@ RSpec.describe Glueby::FeeProvider::Tasks, active_record: true do
           subject
         end
       end
+
+      context 'change output is dust' do
+        let(:unspents) do
+          [{
+            txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
+            script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+            vout: 0,
+            amount: 10_000,
+            finalized: true
+          }, {
+            txid: '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5',
+            script_pubkey: '76a914234113b860822e68f9715d1957af28b8f5117ee288ac',
+            vout: 1,
+            amount: 11_500,
+            finalized: true
+          }]
+        end
+        let(:balance) { 21_500 }
+
+        it 'removes change output from transaction' do
+          # amount of change output is 21,500 - 20 * 1,000 - 1,000 = 500(tapyrus), which is `dust` output
+          expect(wallet).to receive(:broadcast) do |tx|
+            expect(tx.outputs.count).to eq(20) # default pool size
+            expect(tx.outputs[0...20].map(&:value).uniq).to eq([1_000]) # a change output is removed
+          end
+          subject
+        end
+      end
     end
 
     context 'The UTXO pool has some outputs but it is not full' do
