@@ -46,6 +46,8 @@ module Glueby
         return if added_outputs == 0
 
         fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(txb.build))
+        fee += (sum - fee) if sum - fee < DUST_LIMIT
+
         tx = txb.change_address(utxo_provider.address)
                 .fee(fee)
                 .build
