@@ -25,5 +25,12 @@ namespace :glueby do
         puts "success in synchronization (block height=#{height})"
       end
     end
+
+    desc 'Update the block height in Glueby::AR::SystemInformation and do not run Glueby::BlockSyncer. This task is intended to skip the synchronization process until the latest block height.'
+    task :update_height, [] => [:environment] do |_, _|
+      new_height = Glueby::Internal::RPC.client.getblockcount
+      synced_block = Glueby::AR::SystemInformation.synced_block_height
+      synced_block.update(info_value: new_height.to_s)
+    end
   end
 end
