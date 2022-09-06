@@ -8,6 +8,7 @@ module Glueby
           belongs_to :key
 
           validates :txid, uniqueness: { scope: :index, case_sensitive: false }
+          validate :check_dust_output
 
           enum status: { init: 0, broadcasted: 1, finalized: 2 }
 
@@ -42,6 +43,14 @@ module Glueby
                 status: status,
                 key: key
               )
+            end
+          end
+
+        private
+
+          def check_dust_output
+            if !color_id && value < DUST_LIMIT
+              errors.add(:value, "is less than dust limit(#{DUST_LIMIT})")
             end
           end
         end
