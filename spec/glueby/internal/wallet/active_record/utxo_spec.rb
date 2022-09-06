@@ -68,6 +68,30 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
 
       it { is_expected.to be_valid }
     end
+
+    context 'for tpc output' do
+      let(:utxo) do
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+          index: 0,
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          value: value,
+          status: :init
+        )
+      end
+
+      context 'output value is DUST_LIMIT' do
+        let(:value) { 600 }
+
+        it { is_expected.to be_valid }
+      end
+
+      context 'output is less than the DUST_LIMIT' do
+        let(:value) { 599 }
+
+        it { is_expected.to be_invalid }
+      end
+    end
   end
 
   describe '.destroy_for_inputs' do
@@ -113,7 +137,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
 
     let(:tx) do
       Tapyrus::Tx.new.tap do |tx|
-        tx.outputs << Tapyrus::TxOut.new(value: 1, script_pubkey: Tapyrus::Script.parse_from_payload('76a91457dd450aed53d4e35d3555a24ae7dbf3e08a78ec88ac'.htb))
+        tx.outputs << Tapyrus::TxOut.new(value: 600, script_pubkey: Tapyrus::Script.parse_from_payload('76a91457dd450aed53d4e35d3555a24ae7dbf3e08a78ec88ac'.htb))
         tx.outputs << Tapyrus::TxOut.new(value: 1, script_pubkey: Tapyrus::Script.parse_from_payload('21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91457dd450aed53d4e35d3555a24ae7dbf3e08a78ec88ac'.htb))
       end
     end

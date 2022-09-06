@@ -368,7 +368,6 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         Glueby.configuration.enable_utxo_provider!
         Glueby::UtxoProvider.instance
 
-
         # 20 Utxos are pooled.
         (0...21).each do |i|
           Glueby::Internal::Wallet::AR::Utxo.create(

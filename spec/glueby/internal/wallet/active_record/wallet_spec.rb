@@ -24,7 +24,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000000',
         index: 0,
-        value: 1,
+        value: 600,
         script_pubkey: key1.to_p2pkh.to_hex,
         status: :init,
         key: key1
@@ -32,7 +32,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '1111111111111111111111111111111111111111111111111111111111111111',
         index: 0,
-        value: 1,
+        value: 600,
         script_pubkey: key2.to_p2pkh.to_hex,
         status: :init,
         key: key2
@@ -74,7 +74,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
             txid: '33' * 32,
             vout: 0,
             scriptPubKey: key1.to_p2pkh.to_hex,
-            amount: 1
+            amount: 600
           }
         ]
       end
@@ -94,7 +94,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
             txid: '33' * 32,
             vout: 0,
             scriptPubKey: key1.to_p2pkh.to_hex,
-            amount: 1
+            amount: 600
           }
         ]
       end
