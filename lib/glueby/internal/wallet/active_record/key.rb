@@ -20,7 +20,7 @@ module Glueby
           end
 
           def sign(data)
-            Tapyrus::Key.new(priv_key: self.private_key).sign(data, algo: :schnorr)
+            Tapyrus::Key.new(priv_key: self.private_key, key_type: Tapyrus::Key::TYPES[:compressed]).sign(data, algo: :schnorr)
           end
 
           def address
@@ -54,7 +54,7 @@ module Glueby
 
           def generate_key
             key = if private_key
-              Tapyrus::Key.new(priv_key: private_key)
+              Tapyrus::Key.new(priv_key: private_key, key_type: Tapyrus::Key::TYPES[:compressed])
             else
               Tapyrus::Key.generate
             end

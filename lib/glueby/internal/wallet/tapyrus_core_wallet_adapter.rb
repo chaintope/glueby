@@ -149,7 +149,7 @@ module Glueby
           perform_as(wallet_id) do |client|
             address = client.getnewaddress('')
             info = client.getaddressinfo(address)
-            Tapyrus::Key.new(pubkey: info['pubkey'])
+            Tapyrus::Key.new(pubkey: info['pubkey'], key_type: Tapyrus::Key::TYPES[:compressed])
           end
         end
 
