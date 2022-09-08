@@ -399,7 +399,7 @@ module Glueby
       def valid_reissuer?(wallet:, token_metadata: nil)
         return false unless script_pubkey&.p2pkh?
         address = if token_metadata
-            payment_base = Tapyrus::Key.new(pubkey: token_metadata.payment_base)
+            payment_base = Tapyrus::Key.new(pubkey: token_metadata.payment_base, key_type: Tapyrus::Key::TYPES[:compressed])
             payment_base.to_p2pkh
           else
             script_pubkey.to_addr

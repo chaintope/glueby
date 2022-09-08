@@ -144,7 +144,7 @@ module Glueby
         def create_pubkey(wallet_id)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           key = wallet.keys.create(purpose: :receive)
-          Tapyrus::Key.new(pubkey: key.public_key)
+          Tapyrus::Key.new(pubkey: key.public_key, key_type: Tapyrus::Key::TYPES[:compressed])
         end
 
         def get_addresses(wallet_id, label = nil)
@@ -165,7 +165,7 @@ module Glueby
           p = pubkey.to_point # P
           commitment = create_pay_to_contract_commitment(pubkey, contents)
           point = p + group.generator.multiply_by_scalar(commitment) # P + H(P || contents)G
-          Tapyrus::Key.new(pubkey: point.to_hex(true))
+          Tapyrus::Key.new(pubkey: point.to_hex(true), key_type: Tapyrus::Key::TYPES[:compressed])
         end
 
         def sign_to_pay_to_contract_address(wallet_id, tx, utxo, payment_base, contents)
@@ -208,9 +208,9 @@ module Glueby
           ar_key = wallet.keys.where(public_key: payment_base).first
           raise Errors::InvalidSigner, "The wallet don't have any private key of the specified payment_base" unless ar_key
 
-          key = Tapyrus::Key.new(pubkey: payment_base)
+          key = Tapyrus::Key.new(pubkey: payment_base, key_type: Tapyrus::Key::TYPES[:compressed])
           commitment = create_pay_to_contract_commitment(key, contents)
-          Tapyrus::Key.new(priv_key: ((ar_key.private_key.to_i(16) + commitment) % group.order).to_even_length_hex) # K + commitment
+          Tapyrus::Key.new(priv_key: ((ar_key.private_key.to_i(16) + commitment) % group.order).to_even_length_hex, key_type: Tapyrus::Key::TYPES[:compressed]) # K + commitment
         end
       end
     end
