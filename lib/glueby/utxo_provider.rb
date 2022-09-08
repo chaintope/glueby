@@ -159,12 +159,13 @@ module Glueby
           !excludes.find { |i| i[:txid] == o[:txid] && i[:vout] == o[:vout] }
       end
       utxos.shuffle!
-
+      
       utxos.inject([0, []]) do |(sum, outputs), output|
-        sum += output[:amount]
-        outputs << output
-        return [sum, outputs] if sum >= amount
-
+        if wallet.lock_unspent(output)
+          sum += output[:amount]
+          outputs << output
+          return [sum, outputs] if sum >= amount
+        end
         [sum, outputs]
       end
       raise Glueby::Contract::Errors::InsufficientFunds

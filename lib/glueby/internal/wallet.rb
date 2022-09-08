@@ -93,6 +93,10 @@ module Glueby
         wallet_adapter.list_unspent(id, only_finalized, label)
       end
 
+      def lock_unspent(utxo)
+        wallet_adapter.lock_unspent(id, utxo)
+      end
+
       def delete
         wallet_adapter.delete_wallet(id)
       end
