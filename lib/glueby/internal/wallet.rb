@@ -31,6 +31,7 @@ module Glueby
       autoload :AR, 'glueby/internal/wallet/active_record'
       autoload :TapyrusCoreWalletAdapter, 'glueby/internal/wallet/tapyrus_core_wallet_adapter'
       autoload :ActiveRecordWalletAdapter, 'glueby/internal/wallet/active_record_wallet_adapter'
+      autoload :MySQLWalletAdapter, 'glueby/internal/wallet/mysql_wallet_adapter'
       autoload :Errors, 'glueby/internal/wallet/errors'
 
       include GluebyLogger

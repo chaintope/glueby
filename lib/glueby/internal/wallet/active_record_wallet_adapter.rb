@@ -116,11 +116,7 @@ module Glueby
         end
 
         def lock_unspent(wallet_id, utxo)
-          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-            record = AR::Utxo.lock("FOR UPDATE SKIP LOCKED").find_by(txid: utxo[:txid], index: utxo[:vout])
-            record&.update!(status: :spending)
-            record
-          end
+          true
         end
 
         def sign_tx(wallet_id, tx, prevtxs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
