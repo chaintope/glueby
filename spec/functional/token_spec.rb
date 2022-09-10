@@ -433,7 +433,7 @@ RSpec.describe 'Token Contract', functional: true do
       threads.map { |t| t.value }
     end
 
-    it do
+    it 'broadast transactions with no error on multi thread' do
       expect(Glueby::UtxoProvider.instance.current_utxo_pool_size).to eq utxo_pool_size
       tokens = issue_on_multi_thread(count)
       process_block

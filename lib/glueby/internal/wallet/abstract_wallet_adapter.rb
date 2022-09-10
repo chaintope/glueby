@@ -91,7 +91,7 @@ module Glueby
         # @param wallet_id [String] The wallet id that is offered by `create_wallet()` method.
         # @param utxo [Hash] The utxo hash object
         def lock_unspent(wallet_id, utxo)
-          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+          true
         end
 
         # Sign to the transaction with a key in the wallet.

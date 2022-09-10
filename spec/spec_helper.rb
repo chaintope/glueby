@@ -29,13 +29,13 @@ RSpec.configure do |config|
       Glueby.configuration.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12382, user: 'user', password: 'pass' }
       TapyrusCoreContainer.setup
       TapyrusCoreContainer.start
-    end
 
-    if example.metadata[:mysql]
-      Glueby.configuration.wallet_adapter = :mysql
-      MySQLContainer.setup
-      MySQLContainer.start
-      setup_database(config: MySQLContainer.config)
+      if example.metadata[:mysql]
+        Glueby.configuration.wallet_adapter = :mysql
+        MySQLContainer.setup
+        MySQLContainer.start
+        setup_database(config: MySQLContainer.config)
+      end
     end
   end
 
@@ -47,11 +47,11 @@ RSpec.configure do |config|
     if example.metadata[:functional]
       Tapyrus.chain_params = :prod
       TapyrusCoreContainer.teardown
-    end
 
-    if example.metadata[:mysql]
-      Glueby::Internal::Wallet.wallet_adapter = nil
-      MySQLContainer.teardown
+      if example.metadata[:mysql]
+        Glueby::Internal::Wallet.wallet_adapter = nil
+        MySQLContainer.teardown
+      end
     end
 
     # Reset Glueby::UtxoProvider singleton instance
@@ -241,6 +241,10 @@ class TestInternalWallet < Glueby::Internal::Wallet
 
   def list_unspent(only_finalized = true, label = nil)
     []
+  end
+
+  def lock_unspent(utxo)
+    true
   end
 
   def change_address
