@@ -115,10 +115,6 @@ module Glueby
           end
         end
 
-        def lock_unspent(wallet_id, utxo)
-          true
-        end
-
         def sign_tx(wallet_id, tx, prevtxs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           wallet.sign(tx, prevtxs, sighashtype: sighashtype)
