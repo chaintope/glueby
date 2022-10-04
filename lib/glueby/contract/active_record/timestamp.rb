@@ -176,7 +176,7 @@ module Glueby
         def validate_prev
           validate_prev!
           true
-        rescue Errors::ArgumentError
+        rescue Errors::ArgumentError, Glueby::Internal::Wallet::Errors::InvalidSigner
           false
         end
 

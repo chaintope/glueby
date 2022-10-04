@@ -129,6 +129,22 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         end
       end
 
+      context 'the prev timestamp is created by the different user' do
+        let!(:prev) do
+          Glueby::Contract::AR::Timestamp.create!({
+            wallet_id: '11111111111111111111111111111111',
+            content: "\xFF\xFF\xFF",
+            prefix: 'app',
+            timestamp_type: 'trackable'
+          })
+        end
+
+        it 'error' do
+          expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(prev_id: prev.id)) }
+            .to raise_error(ActiveRecord::RecordInvalid, /Validation failed: Prev The previous timestamp\(id: [0-9]+\) was created by the different user/)
+        end
+      end
+
       context 'prev is simple timestamp' do
         let!(:prev) do
           Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(timestamp_type: :simple))
