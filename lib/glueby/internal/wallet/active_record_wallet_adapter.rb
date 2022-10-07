@@ -85,15 +85,22 @@ module Glueby
         def balance(wallet_id, only_finalized = true)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.utxos
-          utxos = utxos.where(status: :finalized) if only_finalized
+          utxos = if only_finalized
+            utxos.where(status: :finalized)
+          else
+            utxos.where(status: [:finalized, :broadcasted])
+          end
           utxos.sum(&:value)
         end
 
         def list_unspent(wallet_id, only_finalized = true, label = nil)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.utxos
-          utxos = utxos.where(status: :finalized) if only_finalized
-
+          utxos = if only_finalized
+            utxos.where(status: :finalized)
+          else
+            utxos.where(status: [:finalized, :broadcasted])
+          end
           if [:unlabeled, nil].include?(label)
             utxos = utxos.where(label: nil)
           elsif label && (label != :all)
