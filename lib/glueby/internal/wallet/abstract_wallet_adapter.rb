@@ -86,7 +86,7 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
-        # Attempt to lock a specified utxo and update status to 'spending'
+        # Attempt to lock a specified utxo and update lock_at field
         #
         # @param wallet_id [String] The wallet id that is offered by `create_wallet()` method.
         # @param utxo [Hash] The utxo hash object

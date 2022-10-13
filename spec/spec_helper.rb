@@ -107,6 +107,7 @@ def setup_database(config: sqlite3_config)
     t.string     :script_pubkey
     t.string     :label, index: true
     t.integer    :status
+    t.datetime   :locked_at
     t.belongs_to :key, null: true
     t.timestamps
   end
