@@ -25,6 +25,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
       Glueby.configuration.enable_utxo_provider!
       Glueby::Internal::Wallet.wallet_adapter = wallet_adapter
       allow(wallet_adapter).to receive(:load_wallet)
+      allow(wallet_adapter).to receive(:lock_unspent).and_return(true)
       allow_any_instance_of(Glueby::UtxoProvider).to receive(:wallet).and_return(utxo_provider_wallet)
       allow(utxo_provider_wallet).to receive(:list_unspent).and_return(pool_outputs)
     end

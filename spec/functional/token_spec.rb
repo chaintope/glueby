@@ -408,4 +408,42 @@ RSpec.describe 'Token Contract', functional: true do
       end
     end
   end
+
+  context 'use mysql', mysql: true do
+    include_context 'setup utxo provider'
+    let(:utxo_pool_size) { 40 }
+
+    let(:sender) { Glueby::Wallet.create }
+    let(:receiver) { Glueby::Wallet.create }
+    let(:before_balance) { sender.balances(false)[''] }
+    let(:count) { 20 }
+
+    def issue_on_multi_thread(count)
+      threads = count.times.map do |i|
+        Thread.new do
+          token, _txs = Glueby::Contract::Token.issue!(
+            issuer: sender,
+            token_type: Tapyrus::Color::TokenTypes::REISSUABLE,
+            amount: 10_000
+          )
+          token
+        end
+      end
+      # Each value is Token object
+      threads.map { |t| t.value }
+    end
+
+    it 'broadast transactions with no error on multi thread' do
+      expect(Glueby::UtxoProvider.instance.current_utxo_pool_size).to eq utxo_pool_size
+      tokens = issue_on_multi_thread(count)
+      process_block
+
+      expect(sender.balances(false)['']).to eq(before_balance)
+      tokens.each do |token|
+        expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
+      end
+
+      expect(Glueby::UtxoProvider.instance.current_utxo_pool_size).to eq utxo_pool_size - count
+    end
+  end
 end

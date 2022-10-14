@@ -1,13 +1,17 @@
 # frozen_string_literal: true
 
 RSpec.shared_context 'setup utxo provider' do
+  let(:default_fixed_fee) { 2_000 }
+  let(:default_value) { 4_000 }
+  let(:utxo_pool_size) { 20 }
+
   before do
-    Glueby::Contract::FeeEstimator::Fixed.default_fixed_fee = 2000
+    Glueby::Contract::FeeEstimator::Fixed.default_fixed_fee = default_fixed_fee
     Glueby.configure do |config|
       config.enable_utxo_provider!
       config.utxo_provider_config = {
-        default_value: 4_000,
-        utxo_pool_size: 20
+        default_value: default_value,
+        utxo_pool_size: utxo_pool_size
       }
     end
     # create UTXOs in the UTXO pool

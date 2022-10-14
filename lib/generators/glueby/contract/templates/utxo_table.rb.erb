@@ -7,6 +7,7 @@ class CreateUtxo < ActiveRecord::Migration<%= migration_version %>
       t.string     :script_pubkey
       t.string     :label, index: true
       t.integer    :status
+      t.datetime   :locked_at
       t.belongs_to :key, null: true
       t.timestamps
     end

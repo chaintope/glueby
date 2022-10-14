@@ -29,6 +29,13 @@ RSpec.configure do |config|
       Glueby.configuration.rpc_config = { schema: 'http', host: '127.0.0.1', port: 12382, user: 'user', password: 'pass' }
       TapyrusCoreContainer.setup
       TapyrusCoreContainer.start
+
+      if example.metadata[:mysql]
+        Glueby.configuration.wallet_adapter = :mysql
+        MySQLContainer.setup
+        MySQLContainer.start
+        setup_database(config: MySQLContainer.config)
+      end
     end
   end
 
@@ -40,6 +47,11 @@ RSpec.configure do |config|
     if example.metadata[:functional]
       Tapyrus.chain_params = :prod
       TapyrusCoreContainer.teardown
+
+      if example.metadata[:mysql]
+        Glueby::Internal::Wallet.wallet_adapter = nil
+        MySQLContainer.teardown
+      end
     end
 
     # Reset Glueby::UtxoProvider singleton instance
@@ -58,11 +70,16 @@ RSpec.configure do |config|
   end
 end
 
+require_relative 'support/mysql'
 require_relative 'support/setup_fee_provider'
 require_relative 'support/setup_utxo_provider'
 
-def setup_database
-  config = { adapter: 'sqlite3', database: File.join(Dir.tmpdir, 'glueby-test-db') }
+def sqlite3_config
+  { adapter: 'sqlite3', database: File.join(Dir.tmpdir, 'glueby-test-db') }
+end
+
+def setup_database(config: sqlite3_config)
+  
   ::ActiveRecord::Base.establish_connection(config)
   connection = ::ActiveRecord::Base.connection
   connection.create_table :glueby_wallets do |t|
@@ -90,6 +107,7 @@ def setup_database
     t.string     :script_pubkey
     t.string     :label, index: true
     t.integer    :status
+    t.datetime   :locked_at
     t.belongs_to :key, null: true
     t.timestamps
   end
@@ -158,7 +176,12 @@ class TapyrusCoreContainer
   attr_reader :container
 
   def setup
-    Docker::Image.get("tapyrus/tapyrusd:#{TAPYRUSD_VERSION}")
+    begin
+      Docker::Image.get("tapyrus/tapyrusd:#{TAPYRUSD_VERSION}")
+    rescue Docker::Error::NotFoundError => e
+      Docker::Image.create(fromImage: "tapyrus/tapyrusd:#{TAPYRUSD_VERSION}")
+    end
+
     @container = Docker::Container.create({
       name: TAPYRUSD_CONTAINER_NAME,
       "Image"=>"tapyrus/tapyrusd:#{TAPYRUSD_VERSION}",
@@ -219,6 +242,10 @@ class TestInternalWallet < Glueby::Internal::Wallet
 
   def list_unspent(only_finalized = true, label = nil)
     []
+  end
+
+  def lock_unspent(utxo)
+    true
   end
 
   def change_address
