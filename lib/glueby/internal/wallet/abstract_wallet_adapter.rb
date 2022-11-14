@@ -135,6 +135,15 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
+        # Returns information for the addresses
+        #
+        # @param [String] address - The p2pkh address to get information about
+        # @return [Array<Hash>] The array of hash instance which has keys wallet_id, label and purpose.
+        #                       Returns blank array if the key correspond with the address is not exist.
+        def get_addresses_info(addresses)
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
+
         # Returns a new public key.
         #
         # This method is expected to returns a new public key. The key would generate internally. This key is provided

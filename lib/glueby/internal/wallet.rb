@@ -73,6 +73,10 @@ module Glueby
           @wallet_adapter or
             raise Errors::ShouldInitializeWalletAdapter, 'You should initialize wallet adapter using `Glueby::Internal::Wallet.wallet_adapter = some wallet adapter instance`.'
         end
+
+        def get_addresses_info(addresses)
+          @wallet_adapter.get_addresses_info(addresses)
+        end
       end
 
       attr_reader :id
