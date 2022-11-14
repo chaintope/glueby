@@ -153,6 +153,30 @@ module Glueby
           keys.map(&:address)
         end
 
+        def get_addresses_info(addresses)
+          unless addresses.is_a?(Array)
+            addresses = [addresses]
+          end
+
+          script_pubkeys = addresses.map do |address|
+            Tapyrus::Script.parse_from_addr(address).to_hex
+          rescue ::ArgumentError => e
+            raise Glueby::ArgumentError, "\"#{address}\" is invalid address. #{e.message}"
+          end
+
+          keys = AR::Key.where(script_pubkey: script_pubkeys)
+          keys.map do |key|
+            {
+              address: key.address,
+              public_key: key.public_key,
+              wallet_id: key.wallet.wallet_id,
+              label: key.label,
+              purpose: key.purpose,
+              script_pubkey: key.script_pubkey
+            }
+          end
+        end
+
         def create_pay_to_contract_address(wallet_id, contents)
           pubkey = create_pubkey(wallet_id)
           [pay_to_contract_key(wallet_id, pubkey, contents).to_p2pkh, pubkey.pubkey]
