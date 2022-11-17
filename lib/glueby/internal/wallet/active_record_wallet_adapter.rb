@@ -162,6 +162,12 @@ module Glueby
             Tapyrus::Script.parse_from_addr(address).to_hex
           rescue ::ArgumentError => e
             raise Glueby::ArgumentError, "\"#{address}\" is invalid address. #{e.message}"
+          rescue RuntimeError => e
+            if e.message == 'Invalid version bytes.' || e.message == 'Invalid address.'
+              raise Glueby::ArgumentError, "\"#{address}\" is invalid address. #{e.message}"
+            else
+              raise e
+            end
           end
 
           keys = AR::Key.where(script_pubkey: script_pubkeys)
