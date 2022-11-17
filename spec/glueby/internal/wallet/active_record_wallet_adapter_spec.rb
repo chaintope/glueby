@@ -398,6 +398,11 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       it { expect { subject }.to raise_error(Glueby::ArgumentError, '"invalidaddress1FnbjGaaHaitz9FwTpDq4Ss8AkeKpLB5YY" is invalid address. Value passed not a valid Base58 String.') }
     end
 
+    context 'invalid version byte address' do
+      let(:addresses) { ['mp4Gq7bucHRNkD52L8wa2Q57MiEZSGsw2a'] }
+      it { expect { subject }.to raise_error(Glueby::ArgumentError, '"mp4Gq7bucHRNkD52L8wa2Q57MiEZSGsw2a" is invalid address. Invalid version bytes.') }
+    end
+
     context 'the addresses are not managed in the wallet' do
       let(:addresses) { ["1Dc9f6MvAKB4L3xhzD61YMgd12JdsGUg6N", "17i5rxVcXsujjFZnEv6JkDK88Y8VsSXZ12"] }
       it { expect(subject).to eq([]) }
