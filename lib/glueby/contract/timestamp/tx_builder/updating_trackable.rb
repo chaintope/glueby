@@ -8,11 +8,12 @@ module Glueby
             @prev_payment_base = payment_base
             @prev_prefix = prefix
             @prev_data = data
-            @txb.add_utxo(to_tapyrusrb_utxo_hash(@prev_timestamp_utxo))
+            @txb.add_utxo(@prev_timestamp_utxo)
           end
 
-          def sign_tx
+          def build
             tx = super
+
             # Generates signature for the remain p2c input.
             @wallet.internal_wallet.sign_to_pay_to_contract_address(
               tx,
