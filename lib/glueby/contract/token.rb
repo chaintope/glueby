@@ -112,34 +112,54 @@ module Glueby
         end
 
         def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
-          script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
+          txb = Internal::TxBuilder
+                  .new
+                  .set_fee_estimator(fee_estimator)
+                  .set_signer_wallet(issuer)
 
-          # For reissuable token, we need funding transaction for every issuance.
-          # To make it easier for API users to understand whether a transaction is a new issue or a reissue, 
-          # when Token.issue! is executed, a new address is created and tpc is sent to it to ensure that it is a new issue, 
-          # and a transaction is created using that UTXO as input to create a new color_id. 
-          funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?)
+          if metadata
+            txb.add_p2c_utxo_to(
+              metadata: metadata,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+          else
+            txb.add_utxo_to(
+              address: issuer.internal_wallet.receive_address,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+          end
+
+          funding_tx = txb.prev_txs.first
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-            funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+            issuer.internal_wallet.broadcast(funding_tx)
           end
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
             # Store the script_pubkey for reissue the token.
-            Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
+            Glueby::Contract::AR::ReissuableToken.create!(
+              color_id: color_id.to_hex,
+              script_pubkey: script_pubkey.to_hex
+            )
 
-            tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
             if metadata
+              p2c_utxo = txb.p2c_utxos.first
               Glueby::Contract::AR::TokenMetadata.create!(
                 color_id: color_id.to_hex,
                 metadata: metadata,
-                p2c_address: p2c_address,
-                payment_base: payment_base
+                p2c_address: p2c_utxo[:p2c_address],
+                payment_base: p2c_utxo[:payment_base]
               )
-              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
             end
+
+            tx = txb.reissuable_split(script_pubkey, issuer.internal_wallet.receive_address, amount, split: split)
+                    .build
             tx = issuer.internal_wallet.broadcast(tx)
             [[funding_tx, tx], color_id]
           end

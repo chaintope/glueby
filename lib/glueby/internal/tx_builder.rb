@@ -3,13 +3,14 @@ module Glueby
     class TxBuilder
       extend Forwardable
 
-      attr_reader :fee_estimator, :signer_wallet, :prev_txs
+      attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos
 
       def_delegators :@txb, :pay, :data
 
       def initialize
         @txb = Tapyrus::TxBuilder.new
         @utxos = []
+        @p2c_utxos = []
         @prev_txs = []
       end
 
@@ -32,9 +33,24 @@ module Glueby
         self
       end
 
+      # Issue reissuable token to the split outputs
+      # @param [Tapyrus::Script] script_pubkey The color id is generate from this script pubkey
+      # @param [String] address The address that is the token is sent to
+      # @param [Integer] value The issue amount of the token
+      # @param [Integer] split The number of the split outputs
+      def reissuable_split(script_pubkey, address, value, split: 1)
+        if value < split
+          split = value
+          split_value = 1
+        else
+          split_value = (value / split).to_i
+        end
+        (split - 1).times { @txb.reissuable(script_pubkey, address, split_value) }
+        @txb.reissuable(script_pubkey, address, value - split_value * (split - 1))
+      end
+
       # Add utxo to the transaction
       def add_utxo(utxo)
-        @utxos << to_sign_tx_utxo_hash(utxo)
         @txb.add_utxo(to_tapyrusrb_utxo_hash(utxo))
         self
       end
@@ -43,22 +59,65 @@ module Glueby
       # If the configuration is set to use UTXO provider, the UTXO is provided by the UTXO provider.
       # Otherwise, the UTXO is provided by the wallet. In this case, the address parameter is ignored.
       # @param [String] address The address that is the UTXO is sent to
-      def add_utxo_to(address:, amount:, utxo_provider: nil)
+      # @param [Integer] amount The amount of the UTXO
+      # @param [Glueby::Internal::UtxoProvider] utxo_provider The UTXO provider
+      # @param [Boolean] only_finalized If true, the UTXO is provided from the finalized UTXO set. It is ignored if the configuration is set to use UTXO provider.
+      # @param [Glueby::Contract::FeeEstimator] fee_estimator It estimate fee for prev tx. It is ignored if the configuration is set to use UTXO provider.
+      def add_utxo_to(address:, amount:, utxo_provider: nil, only_finalized: true, fee_estimator: nil)
+        tx, index = nil
+
         if Glueby.configuration.use_utxo_provider? || utxo_provider
+          utxo_provider ||= UtxoProvider.instance
           script_pubkey = Tapyrus::Script.parse_from_addr(address)
           tx, index = utxo_provider.get_utxo(script_pubkey, amount)
-
-          @prev_txs << tx
-
-          add_utxo({
-            script_pubkey: tx.outputs[index].script_pubkey.to_hex,
-            txid: tx.txid,
-            vout: index,
-            amount: tx.outputs[index].value
-          })
         else
-          raise NotImplementedError, 'Not implemented yet'
+          fee_estimator ||= @fee_estimator
+          txb = Tapyrus::TxBuilder.new
+          fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(txb.build))
+          _sum, utxos = signer_wallet
+                         .internal_wallet
+                         .collect_uncolored_outputs(fee + amount, nil, only_finalized)
+          utxos.each { |utxo| txb.add_utxo(to_tapyrusrb_utxo_hash(utxo)) }
+          tx = txb.pay(address, amount)
+                  .change_address(signer_wallet.internal_wallet.change_address)
+                  .fee(fee)
+                  .build
+          signer_wallet.internal_wallet.sign_tx(tx)
+          index = 0
         end
+
+        @prev_txs << tx
+
+        add_utxo({
+          script_pubkey: tx.outputs[index].script_pubkey.to_hex,
+          txid: tx.txid,
+          vout: index,
+          amount: tx.outputs[index].value
+        })
+        self
+      end
+
+      # Add an UTXO which is sent to the pay-to-contract address
+      # @param [String] metadata The metadata of the pay-to-contract address
+      # @param [Integer] amount The amount of the UTXO
+      # @param [Boolean] only_finalized If true, the UTXO is provided from the finalized UTXO set. It is ignored if the configuration is set to use UTXO provider.
+      # @param [Glueby::Contract::FeeEstimator] fee_estimator It estimate fee for prev tx. It is ignored if the configuration is set to use UTXO provider.
+      def add_p2c_utxo_to(metadata:, amount:, only_finalized: true, fee_estimator: nil)
+        p2c_address, payment_base = signer_wallet
+                                      .internal_wallet
+                                      .create_pay_to_contract_address(metadata)
+        add_utxo_to(
+          address: p2c_address,
+          amount: amount,
+          only_finalized: only_finalized,
+          fee_estimator: fee_estimator
+        )
+        @p2c_utxos << to_sign_tx_utxo_hash(@txb.utxos.last)
+                        .merge({
+                          p2c_address: p2c_address,
+                          payment_base: payment_base,
+                          metadata: metadata
+                        })
         self
       end
 
@@ -69,7 +128,7 @@ module Glueby
         fill_change_output
 
         tx = @txb.build
-        signer_wallet.internal_wallet.sign_tx(tx, @utxos)
+        sign(tx)
       end
 
       def dummy_fee
@@ -77,6 +136,18 @@ module Glueby
       end
 
       private
+
+      def sign(tx)
+        utxos = @utxos.map { |u| to_sign_tx_utxo_hash(u) }
+        tx = signer_wallet.internal_wallet.sign_tx(tx, utxos)
+
+        @p2c_utxos.each do |utxo|
+          tx = signer_wallet
+                 .internal_wallet
+                 .sign_to_pay_to_contract_address(tx, utxo, utxo[:payment_base], utxo[:metadata])
+        end
+        tx
+      end
 
       def fill_change_output
         if Glueby.configuration.use_utxo_provider?
@@ -108,16 +179,16 @@ module Glueby
         }
       end
 
-      # @param utxo
+      # @param utxo The return value of #to_tapyrusrb_utxo_hash
       # @option utxo [String] :txid The txid
-      # @option utxo [Integer] :vout The index of the output in the tx
+      # @option utxo [Integer] :index The index of the output in the tx
       # @option utxo [Integer] :amount The value of the output
       # @option utxo [String] :script_pubkey The hex string of the script pubkey
       def to_sign_tx_utxo_hash(utxo)
         {
           scriptPubKey: utxo[:script_pubkey],
           txid: utxo[:txid],
-          vout: utxo[:vout],
+          vout: utxo[:index],
           amount: utxo[:amount]
         }
       end
