@@ -111,12 +111,19 @@ module Glueby
       # Add an UTXO which is sent to the pay-to-contract address
       # @param [String] metadata The metadata of the pay-to-contract address
       # @param [Integer] amount The amount of the UTXO
+      # @param [String] p2c_address The pay-to-contract address. You can use this parameter if you want to create an
+      #                             UTXO to before created address. It must be use with payment_base parameter.
+      # @param [String] payment_base The payment base of the pay-to-contract address. It should be compressed public
+      #                              key format. It must be use with p2c_address parameter.
       # @param [Boolean] only_finalized If true, the UTXO is provided from the finalized UTXO set. It is ignored if the configuration is set to use UTXO provider.
       # @param [Glueby::Contract::FeeEstimator] fee_estimator It estimate fee for prev tx. It is ignored if the configuration is set to use UTXO provider.
-      def add_p2c_utxo_to(metadata:, amount:, only_finalized: true, fee_estimator: nil)
-        p2c_address, payment_base = signer_wallet
-                                      .internal_wallet
-                                      .create_pay_to_contract_address(metadata)
+      def add_p2c_utxo_to(metadata:, amount:, p2c_address: nil, payment_base: nil, only_finalized: true, fee_estimator: nil)
+        if p2c_address.nil? || payment_base.nil?
+          p2c_address, payment_base = signer_wallet
+                                        .internal_wallet
+                                        .create_pay_to_contract_address(metadata)
+        end
+
         add_utxo_to(
           address: p2c_address,
           amount: amount,

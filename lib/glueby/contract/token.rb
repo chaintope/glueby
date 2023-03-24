@@ -313,12 +313,34 @@ module Glueby
         token_metadata = Glueby::Contract::AR::TokenMetadata.find_by(color_id: color_id.to_hex)
         raise Glueby::Contract::Errors::UnknownScriptPubkey unless valid_reissuer?(wallet: issuer, token_metadata: token_metadata)
 
-        funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, only_finalized: only_finalized?)
-        funding_tx = issuer.internal_wallet.broadcast(funding_tx)
-        tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id, split: split, fee_estimator: fee_estimator)
+        txb = Internal::TxBuilder
+                .new
+                .set_signer_wallet(issuer)
+
         if token_metadata
-          tx = Token.sign_to_p2c_output(issuer, tx, funding_tx, token_metadata.payment_base, token_metadata.metadata)
+          txb.add_p2c_utxo_to(
+            metadata: metadata,
+            amount: FeeEstimator::Fixed.new.fixed_fee,
+            p2c_address: token_metadata.p2c_address,
+            payment_base: token_metadata.payment_base,
+            only_finalized: only_finalized?,
+            fee_estimator: Contract::FeeEstimator::Fixed.new
+          )
+        else
+          txb.add_utxo_to(
+            address: @script_pubkey.to_addr,
+            amount: FeeEstimator::Fixed.new.fixed_fee,
+            only_finalized: only_finalized?,
+            fee_estimator: Contract::FeeEstimator::Fixed.new
+          )
         end
+
+        funding_tx = txb.prev_txs.first
+        issuer.internal_wallet.broadcast(funding_tx)
+
+        tx = txb.reissuable_split(@script_pubkey, issuer.internal_wallet.receive_address, amount, split)
+                .build
+
         tx = issuer.internal_wallet.broadcast(tx)
 
         [color_id, tx]
