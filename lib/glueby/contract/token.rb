@@ -229,26 +229,58 @@ module Glueby
         end
 
         def issue_nft_token(issuer:, metadata: nil)
-          script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
-          funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider? || script
+          fee_estimator = FeeEstimator::Fixed.new
+          txb = Internal::TxBuilder
+                  .new
+                  .set_fee_estimator(fee_estimator)
+                  .set_signer_wallet(issuer)
+
+          funding_tx = nil
+
+          if metadata
+            txb.add_p2c_utxo_to(
+              metadata: metadata,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+            funding_tx = txb.prev_txs.first
+          elsif Glueby.configuration.use_utxo_provider?
+            txb.add_utxo_to(
+              address: issuer.internal_wallet.receive_address,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+            funding_tx = txb.prev_txs.first
+          else
+            # It does not create funding tx if metadata is not given and utxo provider is not used.
+            fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
+            _, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee, nil, true)
+            outputs.each { |utxo| txb.add_utxo(utxo) }
+          end
+
+          utxo = txb.utxos.first
+          out_point = Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:index])
+          color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
+          tx = txb.nft(out_point, issuer.internal_wallet.receive_address)
+                  .build
+
           if funding_tx
             ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-              funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+              issuer.internal_wallet.broadcast(funding_tx)
             end
           end
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-            tx = create_issue_tx_for_nft_token(funding_tx: funding_tx, issuer: issuer)
-            out_point = tx.inputs.first.out_point
-            color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
             if metadata
+              p2c_utxo = txb.p2c_utxos.first
               Glueby::Contract::AR::TokenMetadata.create!(
                 color_id: color_id.to_hex,
                 metadata: metadata,
-                p2c_address: p2c_address,
-                payment_base: payment_base
+                p2c_address: p2c_utxo[:p2c_address],
+                payment_base: p2c_utxo[:payment_base]
               )
-              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
             end
             tx = issuer.internal_wallet.broadcast(tx)
 

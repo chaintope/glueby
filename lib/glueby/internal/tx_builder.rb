@@ -5,7 +5,7 @@ module Glueby
 
       attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos
 
-      def_delegators :@txb, :pay, :data, :utxos
+      def_delegators :@txb, :pay, :data, :utxos, :reissuable, :non_reissuable, :nft
 
       def initialize
         @txb = Tapyrus::TxBuilder.new
