@@ -158,7 +158,7 @@ module Glueby
               )
             end
 
-            tx = txb.reissuable_split(script_pubkey, issuer.internal_wallet.receive_address, amount, split: split)
+            tx = txb.reissuable_split(script_pubkey, issuer.internal_wallet.receive_address, amount, split)
                     .build
             tx = issuer.internal_wallet.broadcast(tx)
             [[funding_tx, tx], color_id]
@@ -166,26 +166,57 @@ module Glueby
         end
 
         def issue_non_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
-          script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
-          funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider? || script
+          txb = Internal::TxBuilder
+                  .new
+                  .set_fee_estimator(fee_estimator)
+                  .set_signer_wallet(issuer)
+
+          funding_tx = nil
+
+          if metadata
+            txb.add_p2c_utxo_to(
+              metadata: metadata,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+            funding_tx = txb.prev_txs.first
+          elsif Glueby.configuration.use_utxo_provider?
+            txb.add_utxo_to(
+              address: issuer.internal_wallet.receive_address,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+            funding_tx = txb.prev_txs.first
+          else
+            # It does not create funding tx if metadata is not given and utxo provider is not used.
+            fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
+            _, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee, nil, true)
+            outputs.each { |utxo| txb.add_utxo(utxo) }
+          end
+
+          utxo = txb.utxos.first
+          out_point = Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:index])
+          color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
+          tx = txb.non_reissuable_split(out_point, issuer.internal_wallet.receive_address, amount, split)
+                  .build
+
           if funding_tx
             ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-              funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+              issuer.internal_wallet.broadcast(funding_tx)
             end
           end
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-            tx = create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
-            out_point = tx.inputs.first.out_point
-            color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
             if metadata
+              p2c_utxo = txb.p2c_utxos.first
               Glueby::Contract::AR::TokenMetadata.create!(
                 color_id: color_id.to_hex,
                 metadata: metadata,
-                p2c_address: p2c_address,
-                payment_base: payment_base
+                p2c_address: p2c_utxo[:p2c_address],
+                payment_base: p2c_utxo[:payment_base]
               )
-              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
             end
             tx = issuer.internal_wallet.broadcast(tx)
 
@@ -425,6 +456,14 @@ module Glueby
             script_pubkey.to_addr
           end
         wallet.internal_wallet.has_address?(address)
+      end
+
+      # Add dummy inputs and outputs to tx for issue non-reissuable transaction and nft transaction
+      def dummy_issue_tx_from_out_point
+        tx = Tapyrus::Tx.new
+        receiver_colored_script = Tapyrus::Script.parse_from_payload('21c20000000000000000000000000000000000000000000000000000000000000000bc76a914000000000000000000000000000000000000000088ac'.htb)
+        tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: receiver_colored_script)
+        FeeEstimator.dummy_tx(tx)
       end
     end
   end

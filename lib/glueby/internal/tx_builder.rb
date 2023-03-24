@@ -5,7 +5,7 @@ module Glueby
 
       attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos
 
-      def_delegators :@txb, :pay, :data
+      def_delegators :@txb, :pay, :data, :utxos
 
       def initialize
         @txb = Tapyrus::TxBuilder.new
@@ -38,7 +38,7 @@ module Glueby
       # @param [String] address The address that is the token is sent to
       # @param [Integer] value The issue amount of the token
       # @param [Integer] split The number of the split outputs
-      def reissuable_split(script_pubkey, address, value, split: 1)
+      def reissuable_split(script_pubkey, address, value, split)
         if value < split
           split = value
           split_value = 1
@@ -47,6 +47,17 @@ module Glueby
         end
         (split - 1).times { @txb.reissuable(script_pubkey, address, split_value) }
         @txb.reissuable(script_pubkey, address, value - split_value * (split - 1))
+      end
+
+      def non_reissuable_split(out_point, address, value, split)
+        if value < split
+          split = value
+          split_value = 1
+        else
+          split_value = (value / split).to_i
+        end
+        (split - 1).times { @txb.non_reissuable(out_point, address, split_value) }
+        @txb.non_reissuable(out_point, address, value - split_value * (split - 1))
       end
 
       # Add utxo to the transaction
