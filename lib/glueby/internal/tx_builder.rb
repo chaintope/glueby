@@ -1,17 +1,13 @@
 module Glueby
   module Internal
-    class TxBuilder
-      extend Forwardable
-
+    class TxBuilder < Tapyrus::TxBuilder
       attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos
 
-      def_delegators :@txb, :pay, :data, :utxos, :reissuable, :non_reissuable, :nft
 
       def initialize
-        @txb = Tapyrus::TxBuilder.new
-        @utxos = []
         @p2c_utxos = []
         @prev_txs = []
+        super
       end
 
       # Set fee estimator
@@ -45,8 +41,9 @@ module Glueby
         else
           split_value = (value / split).to_i
         end
-        (split - 1).times { @txb.reissuable(script_pubkey, address, split_value) }
-        @txb.reissuable(script_pubkey, address, value - split_value * (split - 1))
+        (split - 1).times { reissuable(script_pubkey, address, split_value) }
+        reissuable(script_pubkey, address, value - split_value * (split - 1))
+        self
       end
 
       def non_reissuable_split(out_point, address, value, split)
@@ -56,13 +53,14 @@ module Glueby
         else
           split_value = (value / split).to_i
         end
-        (split - 1).times { @txb.non_reissuable(out_point, address, split_value) }
-        @txb.non_reissuable(out_point, address, value - split_value * (split - 1))
+        (split - 1).times { non_reissuable(out_point, address, split_value) }
+        non_reissuable(out_point, address, value - split_value * (split - 1))
+        self
       end
 
       # Add utxo to the transaction
       def add_utxo(utxo)
-        @txb.add_utxo(to_tapyrusrb_utxo_hash(utxo))
+        super(to_tapyrusrb_utxo_hash(utxo))
         self
       end
 
@@ -130,7 +128,7 @@ module Glueby
           only_finalized: only_finalized,
           fee_estimator: fee_estimator
         )
-        @p2c_utxos << to_sign_tx_utxo_hash(@txb.utxos.last)
+        @p2c_utxos << to_p2c_sign_tx_utxo_hash(@utxos.last)
                         .merge({
                           p2c_address: p2c_address,
                           payment_base: payment_base,
@@ -139,18 +137,17 @@ module Glueby
         self
       end
 
-      def build(dummy: false)
-        return @txb.build if dummy
-
-        @txb.fee(dummy_fee)
+      alias_method :original_build, :build
+      def build
+        fee(dummy_fee)
         fill_change_output
 
-        tx = @txb.build
+        tx = super
         sign(tx)
       end
 
       def dummy_fee
-        fee_estimator.fee(Contract::FeeEstimator.dummy_tx(build(dummy: true)))
+        fee_estimator.fee(Contract::FeeEstimator.dummy_tx(original_build))
       end
 
       private
@@ -169,9 +166,9 @@ module Glueby
 
       def fill_change_output
         if Glueby.configuration.use_utxo_provider?
-          @txb.change_address(UtxoProvider.instance.wallet.change_address)
+          change_address(UtxoProvider.instance.wallet.change_address)
         else
-          @txb.change_address(@signer_wallet.internal_wallet.change_address)
+          change_address(@signer_wallet.internal_wallet.change_address)
         end
       end
 
@@ -183,6 +180,7 @@ module Glueby
         [:fixed, :auto].include?(fee_estimator)
       end
 
+      # The UTXO format that is used in Tapyrus::TxBuilder
       # @param utxo
       # @option utxo [String] :txid The txid
       # @option utxo [Integer] :vout The index of the output in the tx
@@ -197,6 +195,7 @@ module Glueby
         }
       end
 
+      # The UTXO format that is used in AbstractWalletAdapter#sign_tx
       # @param utxo The return value of #to_tapyrusrb_utxo_hash
       # @option utxo [String] :txid The txid
       # @option utxo [Integer] :index The index of the output in the tx
@@ -204,7 +203,22 @@ module Glueby
       # @option utxo [String] :script_pubkey The hex string of the script pubkey
       def to_sign_tx_utxo_hash(utxo)
         {
-          scriptPubKey: utxo[:script_pubkey],
+          scriptPubKey: utxo[:script_pubkey].to_hex,
+          txid: utxo[:txid],
+          vout: utxo[:index],
+          amount: utxo[:amount]
+        }
+      end
+
+      # The UTXO format that is used in AbstractWalletAdapter#sign_to_pay_to_contract_address
+      # @param utxo The return value of #to_tapyrusrb_utxo_hash
+      # @option utxo [String] :txid The txid
+      # @option utxo [Integer] :index The index of the output in the tx
+      # @option utxo [Integer] :amount The value of the output
+      # @option utxo [String] :script_pubkey The hex string of the script pubkey
+      def to_p2c_sign_tx_utxo_hash(utxo)
+        {
+          script_pubkey: utxo[:script_pubkey].to_hex,
           txid: utxo[:txid],
           vout: utxo[:index],
           amount: utxo[:amount]

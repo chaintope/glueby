@@ -316,6 +316,7 @@ module Glueby
         txb = Internal::TxBuilder
                 .new
                 .set_signer_wallet(issuer)
+                .set_fee_estimator(fee_estimator)
 
         if token_metadata
           txb.add_p2c_utxo_to(
