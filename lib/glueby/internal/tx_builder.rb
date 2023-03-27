@@ -1,13 +1,29 @@
 module Glueby
   module Internal
     class TxBuilder < Tapyrus::TxBuilder
-      attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos
+      attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fee
 
-
+      # TODO: signer_wallet と fee_estimator を引数にする。fee_estimator は :auto をデフォルトにする。
       def initialize
         @p2c_utxos = []
         @prev_txs = []
         super
+      end
+
+      # If call this method, inputs are automatically added to fulfill the fee.
+      # The TPC for the fee is supply from the signer_wallet or UtxoProvider and it is selected automatically from
+      # configuration. If using the UTXO Provider is enabled, it uses UTXO Provider.
+      # If not call this method, an user of TxBuilder need to add UTXOs to pay the fee manually.
+      # This behavior works independently of the FeeProvider.
+      def use_auto_fee!
+        @use_auto_fee = true
+        self
+      end
+
+      # If call this method, The TxBuilder use unfinalized UTXO that is not included in the block in its inputs.
+      def use_unfinalized_utxo!
+        @use_unfinalized_utxo = true
+        self
       end
 
       # Set fee estimator
@@ -67,12 +83,20 @@ module Glueby
       # Add an UTXO which is sent to the address
       # If the configuration is set to use UTXO provider, the UTXO is provided by the UTXO provider.
       # Otherwise, the UTXO is provided by the wallet. In this case, the address parameter is ignored.
+      # This method creates and broadcasts a transaction that sends the amount to the address and add the UTXO
+      # to the transaction.
       # @param [String] address The address that is the UTXO is sent to
       # @param [Integer] amount The amount of the UTXO
       # @param [Glueby::Internal::UtxoProvider] utxo_provider The UTXO provider
       # @param [Boolean] only_finalized If true, the UTXO is provided from the finalized UTXO set. It is ignored if the configuration is set to use UTXO provider.
       # @param [Glueby::Contract::FeeEstimator] fee_estimator It estimate fee for prev tx. It is ignored if the configuration is set to use UTXO provider.
-      def add_utxo_to(address:, amount:, utxo_provider: nil, only_finalized: true, fee_estimator: nil)
+      def add_utxo_to(
+        address:,
+        amount:,
+        utxo_provider: nil,
+        only_finalized: use_only_finalized_utxo,
+        fee_estimator: nil
+      )
         tx, index = nil
 
         if Glueby.configuration.use_utxo_provider? || utxo_provider
@@ -95,6 +119,12 @@ module Glueby
           index = 0
         end
 
+        ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+          # Here needs to use the return tx from Internal::Wallet#broadcast because the txid
+          # is changed if you enable FeeProvider.
+          tx = signer_wallet.internal_wallet.broadcast(tx)
+        end
+
         @prev_txs << tx
 
         add_utxo({
@@ -115,7 +145,14 @@ module Glueby
       #                              key format. It must be use with p2c_address parameter.
       # @param [Boolean] only_finalized If true, the UTXO is provided from the finalized UTXO set. It is ignored if the configuration is set to use UTXO provider.
       # @param [Glueby::Contract::FeeEstimator] fee_estimator It estimate fee for prev tx. It is ignored if the configuration is set to use UTXO provider.
-      def add_p2c_utxo_to(metadata:, amount:, p2c_address: nil, payment_base: nil, only_finalized: true, fee_estimator: nil)
+      def add_p2c_utxo_to(
+        metadata:,
+        amount:,
+        p2c_address: nil,
+        payment_base: nil,
+        only_finalized: use_only_finalized_utxo,
+        fee_estimator: nil
+      )
         if p2c_address.nil? || payment_base.nil?
           p2c_address, payment_base = signer_wallet
                                         .internal_wallet
@@ -139,10 +176,19 @@ module Glueby
 
       alias_method :original_build, :build
       def build
-        fee(dummy_fee)
-        fill_change_output
+        tx = if @use_auto_fee && Glueby.configuration.use_utxo_provider?
+               auto_fee_with_utxo_provider(super)
+             elsif @use_auto_fee
+               fee(dummy_fee)
+               auto_fee_with_signer_wallet
+               fill_change_output
+               super
+             else
+               fee(dummy_fee)
+               fill_change_output
+               super
+             end
 
-        tx = super
         sign(tx)
       end
 
@@ -178,6 +224,35 @@ module Glueby
 
       def valid_fee_estimator?(fee_estimator)
         [:fixed, :auto].include?(fee_estimator)
+      end
+
+      def auto_fee_with_utxo_provider(tx)
+        utxo_provider = UtxoProvider.instance
+        tx, fee, tpc_amount, provided_utxos = utxo_provider.fill_inputs(
+          tx,
+          target_amount: 0,
+          current_amount: @incomings[Tapyrus::Color::ColorIdentifier.default],
+          fee_estimator: fee_estimator
+        )
+
+        if tpc_amount - fee > 0
+          change_script = Tapyrus::Script.parse_from_addr(utxo_provider.wallet.change_address)
+          tx.outputs << Tapyrus::TxOut.new(value: tpc_amount - fee, script_pubkey: change_script)
+        end
+
+        utxo_provider.wallet.sign_tx(tx, provided_utxos)
+      end
+
+      def auto_fee_with_signer_wallet
+        # TODO: Support the case of increasing fee by adding multiple inputs
+        _, outputs = signer_wallet
+                       .internal_wallet
+                       .collect_uncolored_outputs(estimated_fee, nil, use_only_finalized_utxo)
+        outputs.each { |o| add_utxo(o) }
+      end
+
+      def use_only_finalized_utxo
+        !use_unfinalized_utxo
       end
 
       # The UTXO format that is used in Tapyrus::TxBuilder

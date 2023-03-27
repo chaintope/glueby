@@ -117,6 +117,11 @@ module Glueby
                   .set_fee_estimator(fee_estimator)
                   .set_signer_wallet(issuer)
 
+          # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+          if Glueby.configuration.use_utxo_provider?
+            txb.use_auto_fee!
+          end
+
           if metadata
             txb.add_p2c_utxo_to(
               metadata: metadata,
@@ -136,10 +141,6 @@ module Glueby
           funding_tx = txb.prev_txs.first
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
-
-          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-            issuer.internal_wallet.broadcast(funding_tx)
-          end
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
             # Store the script_pubkey for reissue the token.
@@ -170,6 +171,11 @@ module Glueby
                   .new
                   .set_fee_estimator(fee_estimator)
                   .set_signer_wallet(issuer)
+
+          # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+          if Glueby.configuration.use_utxo_provider?
+            txb.use_auto_fee!
+          end
 
           funding_tx = nil
 
@@ -202,12 +208,6 @@ module Glueby
           tx = txb.non_reissuable_split(out_point, issuer.internal_wallet.receive_address, amount, split)
                   .build
 
-          if funding_tx
-            ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-              issuer.internal_wallet.broadcast(funding_tx)
-            end
-          end
-
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
             if metadata
               p2c_utxo = txb.p2c_utxos.first
@@ -234,6 +234,11 @@ module Glueby
                   .new
                   .set_fee_estimator(fee_estimator)
                   .set_signer_wallet(issuer)
+
+          # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+          if Glueby.configuration.use_utxo_provider?
+            txb.use_auto_fee!
+          end
 
           funding_tx = nil
 
@@ -265,12 +270,6 @@ module Glueby
           color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
           tx = txb.nft(out_point, issuer.internal_wallet.receive_address)
                   .build
-
-          if funding_tx
-            ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-              issuer.internal_wallet.broadcast(funding_tx)
-            end
-          end
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
             if metadata
@@ -318,6 +317,11 @@ module Glueby
                 .set_signer_wallet(issuer)
                 .set_fee_estimator(fee_estimator)
 
+        # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+        if Glueby.configuration.use_utxo_provider?
+          txb.use_auto_fee!
+        end
+
         if token_metadata
           txb.add_p2c_utxo_to(
             metadata: metadata,
@@ -335,9 +339,6 @@ module Glueby
             fee_estimator: Contract::FeeEstimator::Fixed.new
           )
         end
-
-        funding_tx = txb.prev_txs.first
-        issuer.internal_wallet.broadcast(funding_tx)
 
         tx = txb.reissuable_split(@script_pubkey, issuer.internal_wallet.receive_address, amount, split)
                 .build

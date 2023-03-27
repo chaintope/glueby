@@ -99,9 +99,6 @@ module Glueby
           funding_tx, tx, p2c_address, payment_base = create_txs(fee_estimator, utxo_provider)
 
           if funding_tx
-            ::ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-              wallet.internal_wallet.broadcast(funding_tx)
-            end
             logger.info("funding tx was broadcasted(id=#{id}, funding_tx.txid=#{funding_tx.txid})")
           end
           ::ActiveRecord::Base.transaction(joinable: false, requires_new: true) do

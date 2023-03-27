@@ -309,7 +309,7 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
         after { Glueby::Internal::Wallet.wallet_adapter = nil }
 
         it 'broadcast 2 transactions' do
-          expect(internal_wallet).to receive(:broadcast).twice
+          expect(internal_wallet).to receive(:broadcast).twice { |tx| tx }
           subject
         end
       end
