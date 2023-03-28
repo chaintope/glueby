@@ -3,46 +3,29 @@ module Glueby
     class TxBuilder < Tapyrus::TxBuilder
       attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fee
 
-      # TODO: signer_wallet と fee_estimator を引数にする。fee_estimator は :auto をデフォルトにする。
-      def initialize
+      # @param [Glueby::Internal::Wallet] signer_wallet The wallet that is used to sign the transaction.
+      # @param [Symbol|Glueby::Contract::FeeEstimator] fee_estimator :auto or :fixed
+      # @param [Boolean] use_auto_fee If it's true, inputs are automatically added to fulfill the fee.
+      #                               The TPC for the fee is supply from the signer_wallet or UtxoProvider
+      #                               and it is selected automatically from configuration. If using the UTXO
+      #                               Provider is enabled, it uses UTXO Provider. If it's false, an user of
+      #                               TxBuilder need to add UTXOs to pay the fee manually. This behavior
+      #                               works independently of the FeeProvider.
+      # @param [Boolean] use_unfinalized_utxo If it's true, The TxBuilder use unfinalized UTXO that is not
+      #                                       included in the block in its inputs.
+      def initialize(
+        signer_wallet:,
+        fee_estimator: :auto,
+        use_auto_fee: false,
+        use_unfinalized_utxo: false
+      )
+        @signer_wallet = signer_wallet
+        set_fee_estimator(fee_estimator)
+        @use_auto_fee = use_auto_fee
+        @use_unfinalized_utxo = use_unfinalized_utxo
         @p2c_utxos = []
         @prev_txs = []
-        super
-      end
-
-      # If call this method, inputs are automatically added to fulfill the fee.
-      # The TPC for the fee is supply from the signer_wallet or UtxoProvider and it is selected automatically from
-      # configuration. If using the UTXO Provider is enabled, it uses UTXO Provider.
-      # If not call this method, an user of TxBuilder need to add UTXOs to pay the fee manually.
-      # This behavior works independently of the FeeProvider.
-      def use_auto_fee!
-        @use_auto_fee = true
-        self
-      end
-
-      # If call this method, The TxBuilder use unfinalized UTXO that is not included in the block in its inputs.
-      def use_unfinalized_utxo!
-        @use_unfinalized_utxo = true
-        self
-      end
-
-      # Set fee estimator
-      # @param [Symbol|Glueby::Contract::FeeEstimator] fee_estimator :auto or :fixed
-      def set_fee_estimator(fee_estimator)
-        if fee_estimator.is_a?(Symbol)
-          raise Glueby::ArgumentError, 'fee_estiamtor can be :fixed or :auto' unless valid_fee_estimator?(fee_estimator)
-          @fee_estimator = get_fee_estimator(fee_estimator)
-        else
-          @fee_estimator = fee_estimator
-        end
-        self
-      end
-
-      # Set signer wallet. It is used to sign the transaction.
-      # @param [Glueby::Wallet] wallet
-      def set_signer_wallet(wallet)
-        @signer_wallet = wallet
-        self
+        super()
       end
 
       # Issue reissuable token to the split outputs
@@ -108,21 +91,20 @@ module Glueby
           txb = Tapyrus::TxBuilder.new
           fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(txb.build))
           _sum, utxos = signer_wallet
-                         .internal_wallet
                          .collect_uncolored_outputs(fee + amount, nil, only_finalized)
           utxos.each { |utxo| txb.add_utxo(to_tapyrusrb_utxo_hash(utxo)) }
           tx = txb.pay(address, amount)
-                  .change_address(signer_wallet.internal_wallet.change_address)
+                  .change_address(signer_wallet.change_address)
                   .fee(fee)
                   .build
-          signer_wallet.internal_wallet.sign_tx(tx)
+          signer_wallet.sign_tx(tx)
           index = 0
         end
 
         ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
           # Here needs to use the return tx from Internal::Wallet#broadcast because the txid
           # is changed if you enable FeeProvider.
-          tx = signer_wallet.internal_wallet.broadcast(tx)
+          tx = signer_wallet.broadcast(tx)
         end
 
         @prev_txs << tx
@@ -155,7 +137,6 @@ module Glueby
       )
         if p2c_address.nil? || payment_base.nil?
           p2c_address, payment_base = signer_wallet
-                                        .internal_wallet
                                         .create_pay_to_contract_address(metadata)
         end
 
@@ -200,11 +181,10 @@ module Glueby
 
       def sign(tx)
         utxos = @utxos.map { |u| to_sign_tx_utxo_hash(u) }
-        tx = signer_wallet.internal_wallet.sign_tx(tx, utxos)
+        tx = signer_wallet.sign_tx(tx, utxos)
 
         @p2c_utxos.each do |utxo|
           tx = signer_wallet
-                 .internal_wallet
                  .sign_to_pay_to_contract_address(tx, utxo, utxo[:payment_base], utxo[:metadata])
         end
         tx
@@ -214,7 +194,7 @@ module Glueby
         if Glueby.configuration.use_utxo_provider?
           change_address(UtxoProvider.instance.wallet.change_address)
         else
-          change_address(@signer_wallet.internal_wallet.change_address)
+          change_address(@signer_wallet.change_address)
         end
       end
 
@@ -246,13 +226,24 @@ module Glueby
       def auto_fee_with_signer_wallet
         # TODO: Support the case of increasing fee by adding multiple inputs
         _, outputs = signer_wallet
-                       .internal_wallet
                        .collect_uncolored_outputs(estimated_fee, nil, use_only_finalized_utxo)
         outputs.each { |o| add_utxo(o) }
       end
 
       def use_only_finalized_utxo
         !use_unfinalized_utxo
+      end
+
+      # Set fee estimator
+      # @param [Symbol|Glueby::Contract::FeeEstimator] fee_estimator :auto or :fixed
+      def set_fee_estimator(fee_estimator)
+        if fee_estimator.is_a?(Symbol)
+          raise Glueby::ArgumentError, 'fee_estiamtor can be :fixed or :auto' unless valid_fee_estimator?(fee_estimator)
+          @fee_estimator = get_fee_estimator(fee_estimator)
+        else
+          @fee_estimator = fee_estimator
+        end
+        self
       end
 
       # The UTXO format that is used in Tapyrus::TxBuilder

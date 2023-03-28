@@ -8,10 +8,10 @@ module Glueby
             @wallet = wallet
             @fee_estimator = fee_estimator
 
-            @txb = Internal::TxBuilder
-                     .new
-                     .set_signer_wallet(@wallet)
-                     .set_fee_estimator(@fee_estimator)
+            @txb = Internal::TxBuilder.new(
+              signer_wallet: @wallet.internal_wallet,
+              fee_estimator: @fee_estimator
+            )
           end
 
           def build

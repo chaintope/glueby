@@ -112,15 +112,11 @@ module Glueby
         end
 
         def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
-          txb = Internal::TxBuilder
-                  .new
-                  .set_fee_estimator(fee_estimator)
-                  .set_signer_wallet(issuer)
-
-          # FIXME: Use the auto fee feature even if it does not use the utxo provider.
-          if Glueby.configuration.use_utxo_provider?
-            txb.use_auto_fee!
-          end
+          txb = Internal::TxBuilder.new(
+            signer_wallet: issuer.internal_wallet,
+            fee_estimator: fee_estimator,
+            use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+          )
 
           if metadata
             txb.add_p2c_utxo_to(
@@ -167,15 +163,11 @@ module Glueby
         end
 
         def issue_non_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
-          txb = Internal::TxBuilder
-                  .new
-                  .set_fee_estimator(fee_estimator)
-                  .set_signer_wallet(issuer)
-
-          # FIXME: Use the auto fee feature even if it does not use the utxo provider.
-          if Glueby.configuration.use_utxo_provider?
-            txb.use_auto_fee!
-          end
+          txb = Internal::TxBuilder.new(
+            signer_wallet: issuer.internal_wallet,
+            fee_estimator: fee_estimator,
+            use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+          )
 
           funding_tx = nil
 
@@ -230,15 +222,11 @@ module Glueby
 
         def issue_nft_token(issuer:, metadata: nil)
           fee_estimator = FeeEstimator::Fixed.new
-          txb = Internal::TxBuilder
-                  .new
-                  .set_fee_estimator(fee_estimator)
-                  .set_signer_wallet(issuer)
-
-          # FIXME: Use the auto fee feature even if it does not use the utxo provider.
-          if Glueby.configuration.use_utxo_provider?
-            txb.use_auto_fee!
-          end
+          txb = Internal::TxBuilder.new(
+            signer_wallet: issuer.internal_wallet,
+            fee_estimator: fee_estimator,
+            use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+          )
 
           funding_tx = nil
 
@@ -312,15 +300,11 @@ module Glueby
         token_metadata = Glueby::Contract::AR::TokenMetadata.find_by(color_id: color_id.to_hex)
         raise Glueby::Contract::Errors::UnknownScriptPubkey unless valid_reissuer?(wallet: issuer, token_metadata: token_metadata)
 
-        txb = Internal::TxBuilder
-                .new
-                .set_signer_wallet(issuer)
-                .set_fee_estimator(fee_estimator)
-
-        # FIXME: Use the auto fee feature even if it does not use the utxo provider.
-        if Glueby.configuration.use_utxo_provider?
-          txb.use_auto_fee!
-        end
+        txb = Internal::TxBuilder.new(
+          signer_wallet: issuer.internal_wallet,
+          fee_estimator: fee_estimator,
+          use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+        )
 
         if token_metadata
           txb.add_p2c_utxo_to(

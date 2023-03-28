@@ -33,10 +33,10 @@ module Glueby
         def transfer(sender:, receiver_address:, amount:, fee_estimator: FeeEstimator::Fixed.new)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-          txb = Internal::TxBuilder
-                  .new
-                  .set_fee_estimator(fee_estimator)
-                  .set_signer_wallet(sender)
+          txb = Internal::TxBuilder.new(
+            signer_wallet: sender.internal_wallet,
+            fee_estimator: fee_estimator
+          )
 
           _sum, outputs = sender.internal_wallet.collect_uncolored_outputs(txb.dummy_fee + amount)
           outputs.each do |utxo|
