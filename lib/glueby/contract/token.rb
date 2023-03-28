@@ -343,18 +343,13 @@ module Glueby
       # @raise [InsufficientTokens] if wallet does not have enough token to send.
       # @raise [InvalidAmount] if amount is not positive integer.
       def transfer!(sender:, receiver_address:, amount: 1, fee_estimator: FeeEstimator::Fixed.new)
-        raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
-
-        tx = create_transfer_tx(
-          color_id: color_id,
+        multi_transfer!(
           sender: sender,
-          receiver_address: receiver_address,
-          amount: amount,
-          only_finalized: only_finalized?,
-          fee_estimator: fee_estimator
-        )
-        sender.internal_wallet.broadcast(tx)
-        [color_id, tx]
+          receivers: [{
+            address: receiver_address,
+            amount: amount
+          }],
+          fee_estimator: fee_estimator)
       end
 
       # Send the tokens to multiple wallets
@@ -371,14 +366,21 @@ module Glueby
           raise Glueby::Contract::Errors::InvalidAmount unless r[:amount].positive?
         end
 
-        tx = create_multi_transfer_tx(
-          color_id: color_id,
-          sender: sender,
-          receivers: receivers,
-          only_finalized: only_finalized?,
-          fee_estimator: fee_estimator
-        )
-        sender.internal_wallet.broadcast(tx)
+        txb = Internal::TxBuilder
+                .new(
+                  signer_wallet: sender.internal_wallet,
+                  fee_estimator: fee_estimator,
+                  use_unfinalized_utxo: !only_finalized?,
+                  use_auto_fee: true,
+                  use_auto_fulfill_inputs: true
+                )
+                .change_address(sender.internal_wallet.receive_address, color_id)
+
+        receivers.each do |r|
+          txb.pay(r[:address], r[:amount].to_i, color_id)
+        end
+
+        tx = sender.internal_wallet.broadcast(txb.build)
         [color_id, tx]
       end
 

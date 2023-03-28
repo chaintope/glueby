@@ -1,7 +1,8 @@
 module Glueby
   module Internal
     class TxBuilder < Tapyrus::TxBuilder
-      attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fee
+      attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fee,
+                  :use_auto_fulfill_inputs
 
       # @param [Glueby::Internal::Wallet] signer_wallet The wallet that is used to sign the transaction.
       # @param [Symbol|Glueby::Contract::FeeEstimator] fee_estimator :auto or :fixed
@@ -11,20 +12,27 @@ module Glueby
       #                               Provider is enabled, it uses UTXO Provider. If it's false, an user of
       #                               TxBuilder need to add UTXOs to pay the fee manually. This behavior
       #                               works independently of the FeeProvider.
+      # @param [Boolean] use_auto_fulfill_inputs If it's true, inputs for payments are automatically added to fulfill
+      #                                          from the signer_wallet. If you create an colored coin issue
+      #                                          transaction, you must set this to false or it try to add inputs up
+      #                                          to the issue amount. The default value is false.
       # @param [Boolean] use_unfinalized_utxo If it's true, The TxBuilder use unfinalized UTXO that is not
       #                                       included in the block in its inputs.
       def initialize(
         signer_wallet:,
         fee_estimator: :auto,
         use_auto_fee: false,
+        use_auto_fulfill_inputs: false,
         use_unfinalized_utxo: false
       )
         @signer_wallet = signer_wallet
         set_fee_estimator(fee_estimator)
         @use_auto_fee = use_auto_fee
+        @use_auto_fulfill_inputs = use_auto_fulfill_inputs
         @use_unfinalized_utxo = use_unfinalized_utxo
         @p2c_utxos = []
         @prev_txs = []
+        @change_script_pubkeys = {}
         super()
       end
 
@@ -157,20 +165,34 @@ module Glueby
 
       alias_method :original_build, :build
       def build
+        auto_fulfill_inputs_from_signer_wallet if use_auto_fulfill_inputs
+
         tx = if @use_auto_fee && Glueby.configuration.use_utxo_provider?
-               auto_fee_with_utxo_provider(super)
+               tx = add_change_for_colored_coin(super)
+               auto_fee_with_utxo_provider(tx)
              elsif @use_auto_fee
                fee(dummy_fee)
                auto_fee_with_signer_wallet
-               fill_change_output
+               set_tpc_change_address
                super
              else
                fee(dummy_fee)
-               fill_change_output
+               set_tpc_change_address
                super
              end
 
         sign(tx)
+      end
+
+      def change_address(address, color_id = Tapyrus::Color::ColorIdentifier.default)
+        if color_id.default?
+          super(address)
+        else
+          script_pubkey = Tapyrus::Script.parse_from_addr(address)
+          raise ArgumentError, 'invalid address' if !script_pubkey.p2pkh? && !script_pubkey.p2sh?
+          @change_script_pubkeys[color_id] = script_pubkey.add_color(color_id)
+        end
+        self
       end
 
       def dummy_fee
@@ -190,11 +212,39 @@ module Glueby
         tx
       end
 
-      def fill_change_output
+      def set_tpc_change_address
         if Glueby.configuration.use_utxo_provider?
           change_address(UtxoProvider.instance.wallet.change_address)
         else
           change_address(@signer_wallet.change_address)
+        end
+      end
+
+      def add_change_for_colored_coin(tx)
+        @incomings.each do |color_id, in_amount|
+          next if color_id.default?
+
+          out_amount = @outgoings[color_id] || 0
+          change = in_amount - out_amount
+          next if change <= 0
+
+          unless @change_script_pubkeys[color_id]
+            raise Glueby::ArgumentError, "The change address for color_id #{color_id.to_hex} must be set."
+          end
+          tx.outputs << Tapyrus::TxOut.new(script_pubkey: @change_script_pubkeys[color_id], value: change)
+        end
+        tx
+      end
+
+      # Automatically add UTXO to fulfill the amount of inputs from the signer_wallet.
+      def auto_fulfill_inputs_from_signer_wallet
+        @outgoings.each do |color_id, outgoing_amount|
+          target_amount = outgoing_amount - (@incomings[color_id] || 0)
+          next if target_amount <= 0
+
+          @signer_wallet
+            .collect_colored_outputs(color_id, target_amount, nil, use_only_finalized_utxo, true)[1]
+            .each { |utxo| add_utxo(utxo) }
         end
       end
 
@@ -211,7 +261,7 @@ module Glueby
         tx, fee, tpc_amount, provided_utxos = utxo_provider.fill_inputs(
           tx,
           target_amount: 0,
-          current_amount: @incomings[Tapyrus::Color::ColorIdentifier.default],
+          current_amount: @incomings[Tapyrus::Color::ColorIdentifier.default] || 0,
           fee_estimator: fee_estimator
         )
 
@@ -253,11 +303,17 @@ module Glueby
       # @option utxo [Integer] :amount The value of the output
       # @option utxo [String] :script_pubkey The hex string of the script pubkey
       def to_tapyrusrb_utxo_hash(utxo)
+        color_id = if utxo[:color_id]
+                     Tapyrus::Color::ColorIdentifier.parse_from_payload(utxo[:color_id].htb)
+                   else
+                     Tapyrus::Color::ColorIdentifier.default
+                   end
         {
           script_pubkey: Tapyrus::Script.parse_from_payload(utxo[:script_pubkey].htb),
           txid: utxo[:txid],
           index: utxo[:vout],
-          value: utxo[:amount]
+          value: utxo[:amount],
+          color_id: color_id
         }
       end
 
