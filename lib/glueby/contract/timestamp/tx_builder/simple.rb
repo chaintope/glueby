@@ -38,7 +38,10 @@ module Glueby
                 utxo_provider: utxo_provider
               )
             else
-              _, outputs = @wallet.internal_wallet.collect_uncolored_outputs(@txb.dummy_fee)
+              fee = @txb.dummy_fee
+              return self if fee == 0
+
+              _, outputs = @wallet.internal_wallet.collect_uncolored_outputs(fee)
               outputs.each { |utxo| @txb.add_utxo(utxo) }
             end
             self

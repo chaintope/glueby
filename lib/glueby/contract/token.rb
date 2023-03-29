@@ -160,65 +160,28 @@ module Glueby
         end
 
         def issue_non_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
-          txb = Internal::TxBuilder.new(
-            signer_wallet: issuer.internal_wallet,
+          issue_token_from_out_point(
+            Tapyrus::Color::TokenTypes::NON_REISSUABLE,
+            issuer: issuer,
+            amount: amount,
+            split: split,
             fee_estimator: fee_estimator,
-            use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+            metadata: metadata
           )
-
-          funding_tx = nil
-
-          if metadata
-            txb.add_p2c_utxo_to(
-              metadata: metadata,
-              amount: FeeEstimator::Fixed.new.fixed_fee,
-              only_finalized: only_finalized?,
-              fee_estimator: Contract::FeeEstimator::Fixed.new
-            )
-            funding_tx = txb.prev_txs.first
-          elsif Glueby.configuration.use_utxo_provider?
-            txb.add_utxo_to(
-              address: issuer.internal_wallet.receive_address,
-              amount: FeeEstimator::Fixed.new.fixed_fee,
-              only_finalized: only_finalized?,
-              fee_estimator: Contract::FeeEstimator::Fixed.new
-            )
-            funding_tx = txb.prev_txs.first
-          else
-            # It does not create funding tx if metadata is not given and utxo provider is not used.
-            fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
-            _, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee, nil, true)
-            outputs.each { |utxo| txb.add_utxo(utxo) }
-          end
-
-          utxo = txb.utxos.first
-          out_point = Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:index])
-          color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
-          tx = txb.non_reissuable_split(out_point, issuer.internal_wallet.receive_address, amount, split)
-                  .build
-
-          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-            if metadata
-              p2c_utxo = txb.p2c_utxos.first
-              Glueby::Contract::AR::TokenMetadata.create!(
-                color_id: color_id.to_hex,
-                metadata: metadata,
-                p2c_address: p2c_utxo[:p2c_address],
-                payment_base: p2c_utxo[:payment_base]
-              )
-            end
-            tx = issuer.internal_wallet.broadcast(tx)
-
-            if funding_tx
-              [[funding_tx, tx], color_id]
-            else
-              [[tx], color_id]
-            end
-          end
         end
 
         def issue_nft_token(issuer:, metadata: nil)
-          fee_estimator = FeeEstimator::Fixed.new
+          issue_token_from_out_point(
+            Tapyrus::Color::TokenTypes::NFT,
+            issuer: issuer,
+            amount: 1,
+            split: 1,
+            fee_estimator: Contract::FeeEstimator::Fixed.new,
+            metadata: metadata
+          )
+        end
+
+        def issue_token_from_out_point(token_type, issuer:, amount:, split: 1, fee_estimator: , metadata: nil)
           txb = Internal::TxBuilder.new(
             signer_wallet: issuer.internal_wallet,
             fee_estimator: fee_estimator,
@@ -246,15 +209,25 @@ module Glueby
           else
             # It does not create funding tx if metadata is not given and utxo provider is not used.
             fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
-            _, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee, nil, true)
+
+            # FIXME: It is enough to add just one UTXO here. Funding for fee should care by use_auto_fee feature. But, here add all UTXOs in issuer's wallet, if fee provider is enabled.
+            _, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee == 0 ? nil : fee, nil, true)
             outputs.each { |utxo| txb.add_utxo(utxo) }
           end
 
           utxo = txb.utxos.first
           out_point = Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:index])
-          color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
-          tx = txb.nft(out_point, issuer.internal_wallet.receive_address)
-                  .build
+
+          case token_type
+          when Tapyrus::Color::TokenTypes::NON_REISSUABLE
+            color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
+            tx = txb.non_reissuable_split(out_point, issuer.internal_wallet.receive_address, amount, split)
+                    .build
+          when Tapyrus::Color::TokenTypes::NFT
+            color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
+            tx = txb.nft(out_point, issuer.internal_wallet.receive_address)
+                    .build
+          end
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
             if metadata

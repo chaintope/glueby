@@ -185,6 +185,17 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::InsufficientFunds }
     end
+
+    context 'amount is nil' do
+      let(:amount) { nil }
+      let(:only_finalized) { false }
+
+      it 'returns one output' do
+        expect(internal_wallet).to receive(:list_unspent).with(false, nil).and_return(unspents)
+        expect(subject[0]).to eq 250_000_000
+        expect(subject[1].size).to eq 3
+      end
+    end
   end
 
   describe '#collect_colored_outputs' do
@@ -227,6 +238,15 @@ RSpec.describe 'Glueby::Internal::Wallet' do
       let(:amount) { 200_001 }
 
       it { expect { subject }.to raise_error Glueby::Contract::Errors::InsufficientTokens }
+    end
+
+    context 'amount is nil' do
+      let(:amount) { nil }
+
+      it 'returns one output' do
+        expect(subject[0]).to eq 200_000
+        expect(subject[1].size).to eq 2
+      end
     end
   end
 end

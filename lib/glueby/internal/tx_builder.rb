@@ -265,6 +265,9 @@ module Glueby
       end
 
       def auto_fee_with_utxo_provider(tx)
+        # If fee_provider_bears is true, estimated_fee is 0.
+        return if estimated_fee == 0
+
         utxo_provider = UtxoProvider.instance
         tx, fee, tpc_amount, provided_utxos = utxo_provider.fill_inputs(
           tx,
@@ -282,9 +285,12 @@ module Glueby
       end
 
       def auto_fee_with_signer_wallet
+        # FIXME: If fee is 0, here add all TPC UTXOs in the issuer wallet. If the estimated_fee is zero, here should do nothing.
+        amount = estimated_fee == 0 ? nil : estimated_fee
+
         # TODO: Support the case of increasing fee by adding multiple inputs
         _, outputs = signer_wallet
-                       .collect_uncolored_outputs(estimated_fee, nil, use_only_finalized_utxo)
+                       .collect_uncolored_outputs(amount, nil, use_only_finalized_utxo)
         outputs.each { |o| add_utxo(o) }
       end
 
