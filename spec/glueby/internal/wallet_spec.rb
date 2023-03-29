@@ -208,6 +208,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
     context 'it needs more amounts' do
       let(:amount) { 101_000 }
+
       it 'returns one output' do
         expect(subject[0]).to eq 200_000
         expect(subject[1].size).to eq 2
@@ -216,6 +217,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
     context 'amount is negative' do
       let(:amount) { -1 }
+
       it 'returns one output' do
         expect { subject }.to raise_error Glueby::ArgumentError
       end
