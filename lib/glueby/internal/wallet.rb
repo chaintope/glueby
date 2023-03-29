@@ -164,6 +164,7 @@ module Glueby
 
       # TODO: Add unit test
       def collect_colored_outputs(color_id, amount, label = nil, only_finalized = true, shuffle = false)
+        raise Glueby::ArgumentError, 'amount must be positive' unless amount.positive?
         utxos = list_unspent(only_finalized, label)
         utxos.shuffle! if shuffle
 
@@ -172,11 +173,11 @@ module Glueby
 
           new_sum = sum[0] + output[:amount]
           new_outputs = sum[1] << output
-          return [new_sum, new_outputs] if new_sum >= amount && amount.positive?
+          return [new_sum, new_outputs] if new_sum >= amount
 
           [new_sum, new_outputs]
         end
-        raise Glueby::Contract::Errors::InsufficientTokens if amount.positive?
+        raise Glueby::Contract::Errors::InsufficientTokens
       end
 
       def get_addresses(label = nil)
