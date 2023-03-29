@@ -146,37 +146,28 @@ module Glueby
         wallet_adapter.create_pubkey(id)
       end
 
+      # Collect TPC UTXOs up to the specified amount.
+      # @param [Integer] amount The amount of colored token to collect
+      # @param [String] label The label of UTXO to collect
+      # @param [Boolean] only_finalized The flag to collect only finalized UTXO
+      # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
       def collect_uncolored_outputs(amount, label = nil, only_finalized = true, shuffle = false)
-        utxos = list_unspent(only_finalized, label)
-        utxos.shuffle! if shuffle
-
-        utxos.inject([0, []]) do |sum, output|
-          next sum if output[:color_id]
-
-          new_sum = sum[0] + output[:amount]
-          new_outputs = sum[1] << output
-          return [new_sum, new_outputs] if new_sum >= amount
-
-          [new_sum, new_outputs]
+        collect_utxos(amount, label, only_finalized, shuffle) do |output|
+          output[:color_id].nil?
         end
-        raise Glueby::Contract::Errors::InsufficientFunds
       end
 
-      # TODO: Add unit test
+      # Collect colored coin UTXOs up to the specified amount.
+      # @param [Tapyrus::Color::ColorIdentifier] color_id The color identifier of colored token
+      # @param [Integer] amount The amount of colored token to collect
+      # @param [String] label The label of UTXO to collect
+      # @param [Boolean] only_finalized The flag to collect only finalized UTXO
+      # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
       def collect_colored_outputs(color_id, amount, label = nil, only_finalized = true, shuffle = false)
-        raise Glueby::ArgumentError, 'amount must be positive' unless amount.positive?
-        utxos = list_unspent(only_finalized, label)
-        utxos.shuffle! if shuffle
-
-        utxos.inject([0, []]) do |sum, output|
-          next sum unless output[:color_id] == color_id.to_hex
-
-          new_sum = sum[0] + output[:amount]
-          new_outputs = sum[1] << output
-          return [new_sum, new_outputs] if new_sum >= amount
-
-          [new_sum, new_outputs]
+        collect_utxos(amount, label, only_finalized, shuffle) do |output|
+          output[:color_id] == color_id.to_hex
         end
+      rescue Glueby::Contract::Errors::InsufficientFunds
         raise Glueby::Contract::Errors::InsufficientTokens
       end
 
@@ -204,6 +195,23 @@ module Glueby
 
       def wallet_adapter
         self.class.wallet_adapter
+      end
+
+      def collect_utxos(amount, label, only_finalized, shuffle)
+        raise Glueby::ArgumentError, 'amount must be positive' unless amount.positive?
+        utxos = list_unspent(only_finalized, label)
+        utxos.shuffle! if shuffle
+
+        utxos.inject([0, []]) do |sum, output|
+          next sum unless yield(output)
+
+          new_sum = sum[0] + output[:amount]
+          new_outputs = sum[1] << output
+          return [new_sum, new_outputs] if new_sum >= amount
+
+          [new_sum, new_outputs]
+        end
+        raise Glueby::Contract::Errors::InsufficientFunds
       end
     end
   end
