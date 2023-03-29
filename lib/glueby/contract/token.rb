@@ -386,6 +386,7 @@ module Glueby
                   use_auto_fulfill_inputs: true
                 )
                 .burn(amount, color_id)
+                .change_address(sender.internal_wallet.receive_address, color_id)
                 .build
 
         sender.internal_wallet.broadcast(tx)
@@ -395,10 +396,10 @@ module Glueby
       # @param wallet [Glueby::Wallet]
       # @return [Integer] amount of utxo value associated with this token.
       def amount(wallet:)
-        # collect utxo associated with this address
-        utxos = wallet.internal_wallet.list_unspent(only_finalized?)
-        _, results = collect_colored_outputs(utxos, color_id)
-        results.sum { |result| result[:amount] }
+        amount, _utxos = wallet
+                           .internal_wallet
+                           .collect_colored_outputs(color_id, nil, nil, only_finalized?)
+        amount
       end
 
       # Return metadata for this token
