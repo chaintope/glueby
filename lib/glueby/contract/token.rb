@@ -48,9 +48,6 @@ module Glueby
     # token.metadata
     # => "metadata"
     class Token
-      include Glueby::Contract::TxBuilder
-      extend Glueby::Contract::TxBuilder
-
       class << self
         # Issue new token with specified amount and token type.
         # REISSUABLE token can be reissued with #reissue! method, and
@@ -277,6 +274,14 @@ module Glueby
               [[tx], color_id]
             end
           end
+        end
+
+        # Add dummy inputs and outputs to tx for issue non-reissuable transaction and nft transaction
+        def dummy_issue_tx_from_out_point
+          tx = Tapyrus::Tx.new
+          receiver_colored_script = Tapyrus::Script.parse_from_payload('21c20000000000000000000000000000000000000000000000000000000000000000bc76a914000000000000000000000000000000000000000088ac'.htb)
+          tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: receiver_colored_script)
+          FeeEstimator.dummy_tx(tx)
         end
       end
 
@@ -508,14 +513,6 @@ module Glueby
             script_pubkey.to_addr
           end
         wallet.internal_wallet.has_address?(address)
-      end
-
-      # Add dummy inputs and outputs to tx for issue non-reissuable transaction and nft transaction
-      def dummy_issue_tx_from_out_point
-        tx = Tapyrus::Tx.new
-        receiver_colored_script = Tapyrus::Script.parse_from_payload('21c20000000000000000000000000000000000000000000000000000000000000000bc76a914000000000000000000000000000000000000000088ac'.htb)
-        tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: receiver_colored_script)
-        FeeEstimator.dummy_tx(tx)
       end
     end
   end

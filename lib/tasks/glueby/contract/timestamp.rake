@@ -3,7 +3,6 @@ module Glueby
     module Task
       module Timestamp
         module_function
-        extend Glueby::Contract::TxBuilder
 
         def create
           timestamps = Glueby::Contract::AR::Timestamp.where(status: :init)
