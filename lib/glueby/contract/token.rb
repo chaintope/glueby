@@ -399,7 +399,17 @@ module Glueby
         raise Glueby::Contract::Errors::InsufficientTokens unless balance
         raise Glueby::Contract::Errors::InsufficientTokens if balance < amount
 
-        tx = create_burn_tx(color_id: color_id, sender: sender, amount: amount, only_finalized: only_finalized?, fee_estimator: fee_estimator)
+        tx = Internal::TxBuilder
+                .new(
+                  signer_wallet: sender.internal_wallet,
+                  fee_estimator: fee_estimator,
+                  use_unfinalized_utxo: !only_finalized?,
+                  use_auto_fee: true,
+                  use_auto_fulfill_inputs: true
+                )
+                .burn(amount, color_id)
+                .build
+
         sender.internal_wallet.broadcast(tx)
       end
 

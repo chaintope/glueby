@@ -65,6 +65,14 @@ module Glueby
         self
       end
 
+      def burn(value, color_id)
+        raise Glueby::ArgumentError, 'Burn TPC is not supported.' if color_id.default?
+
+        @outgoings[color_id] ||= 0
+        @outgoings[color_id] += value
+        self
+      end
+
       # Add utxo to the transaction
       def add_utxo(utxo)
         super(to_tapyrusrb_utxo_hash(utxo))
