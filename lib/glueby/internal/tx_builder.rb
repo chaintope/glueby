@@ -59,6 +59,10 @@ module Glueby
         end
       end
 
+      # Burn token
+      # @param [Integer] value The burn amount of the token
+      # @param [Tapyrus::Color::ColorIdentifier] color_id The color id of the token
+      # @raise [Glueby::ArgumentError] If the color_id is default color id
       def burn(value, color_id)
         raise Glueby::ArgumentError, 'Burn TPC is not supported.' if color_id.default?
 
@@ -68,6 +72,12 @@ module Glueby
       end
 
       # Add utxo to the transaction
+      # @param [Hash] utxo The utxo to add
+      # @option utxo [String] :txid The txid
+      # @option utxo [Integer] :vout The index of the output in the tx
+      # @option utxo [Integer] :amount The value of the output
+      # @option utxo [String] :script_pubkey The hex string of the script pubkey
+      # @option utxo [String] :color_id The color id hex string of the output
       def add_utxo(utxo)
         super(to_tapyrusrb_utxo_hash(utxo))
         self
@@ -128,7 +138,7 @@ module Glueby
         self
       end
 
-      # Add an UTXO which is sent to the pay-to-contract address
+      # Add an UTXO which is sent to the pay-to-contract address which is generated from the metadata
       # @param [String] metadata The metadata of the pay-to-contract address
       # @param [Integer] amount The amount of the UTXO
       # @param [String] p2c_address The pay-to-contract address. You can use this parameter if you want to create an
@@ -350,7 +360,7 @@ module Glueby
           scriptPubKey: utxo[:script_pubkey].to_hex,
           txid: utxo[:txid],
           vout: utxo[:index],
-          amount: utxo[:amount]
+          amount: utxo[:value]
         }
       end
 
@@ -365,7 +375,7 @@ module Glueby
           script_pubkey: utxo[:script_pubkey].to_hex,
           txid: utxo[:txid],
           vout: utxo[:index],
-          amount: utxo[:amount]
+          amount: utxo[:value]
         }
       end
     end
