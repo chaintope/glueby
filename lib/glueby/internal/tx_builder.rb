@@ -18,6 +18,7 @@ module Glueby
       #                                          to the issue amount. The default value is false.
       # @param [Boolean] use_unfinalized_utxo If it's true, The TxBuilder use unfinalized UTXO that is not
       #                                       included in the block in its inputs.
+      # @raise [Glueby::ArgumentError] If the fee_estimator is not :auto or :fixed
       def initialize(
         signer_wallet:,
         fee_estimator: :auto,
@@ -42,27 +43,20 @@ module Glueby
       # @param [Integer] value The issue amount of the token
       # @param [Integer] split The number of the split outputs
       def reissuable_split(script_pubkey, address, value, split)
-        if value < split
-          split = value
-          split_value = 1
-        else
-          split_value = (value / split).to_i
+        split_value(value, split) do |value|
+          reissuable(script_pubkey, address, value)
         end
-        (split - 1).times { reissuable(script_pubkey, address, split_value) }
-        reissuable(script_pubkey, address, value - split_value * (split - 1))
-        self
       end
 
+      # Issue non-reissuable token to the split outputs
+      # @param [Tapyrus::OutPoint] out_point The outpoint of the reissuable token
+      # @param [String] address The address that is the token is sent to
+      # @param [Integer] value The issue amount of the token
+      # @param [Integer] split The number of the split outputs
       def non_reissuable_split(out_point, address, value, split)
-        if value < split
-          split = value
-          split_value = 1
-        else
-          split_value = (value / split).to_i
+        split_value(value, split) do |value|
+          non_reissuable(out_point, address, value)
         end
-        (split - 1).times { non_reissuable(out_point, address, split_value) }
-        non_reissuable(out_point, address, value - split_value * (split - 1))
-        self
       end
 
       def burn(value, color_id)
@@ -307,6 +301,20 @@ module Glueby
         else
           @fee_estimator = fee_estimator
         end
+        self
+      end
+
+      # Split the value into the number of split. The last value is added the remainder of the division.
+      # It call the block with the value of each split.
+      def split_value(value, split)
+        if value < split
+          split = value
+          split_value = 1
+        else
+          split_value = (value / split).to_i
+        end
+        (split - 1).times { yield(split_value) }
+        yield(value - split_value * (split - 1))
         self
       end
 
