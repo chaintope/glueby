@@ -55,6 +55,18 @@ RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
         expect(instance.outputs.map(&:value)).to eq([100, 100, 100, 100, 100, 100, 100, 100, 100, 100])
       end
     end
+
+    context 'split count is bigger than value' do
+      let(:split) { 11 }
+      let(:value) { 10 }
+
+      it 'split up to value amount' do
+        expect { subject }
+          .to change { instance.instance_variable_get('@outgoings')[color_id] }.from(nil).to(10)
+          .and change { instance.outputs.size }.from(0).to(10)
+        expect(instance.outputs.map(&:value)).to eq([1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+      end
+    end
   end
 
   describe '#reissuable_split' do
