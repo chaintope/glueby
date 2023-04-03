@@ -334,6 +334,7 @@ module Glueby
       # @option utxo [Integer] :vout The index of the output in the tx
       # @option utxo [Integer] :amount The value of the output
       # @option utxo [String] :script_pubkey The hex string of the script pubkey
+      # @option utxo [String] :color_id The hex string of the color id
       def to_tapyrusrb_utxo_hash(utxo)
         color_id = if utxo[:color_id]
                      Tapyrus::Color::ColorIdentifier.parse_from_payload(utxo[:color_id].htb)

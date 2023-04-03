@@ -83,6 +83,7 @@ module Glueby
         # - amount: [Integer] Amount of the UTXO as tapyrus unit
         # - finalized: [Boolean] Whether the UTXO is finalized
         # - color_id: [String] Color id of the UTXO. If it is TPC UTXO, color_id is nil.
+        # - script_pubkey: [String] Script pubkey of the UTXO
         def list_unspent(wallet_id, only_finalized = true, label = nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end

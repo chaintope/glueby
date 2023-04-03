@@ -151,6 +151,15 @@ module Glueby
       # @param [String] label The label of UTXO to collect
       # @param [Boolean] only_finalized The flag to collect only finalized UTXO
       # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
+      # @return [Array<Hash>] The array of UTXO
+      #
+      # ## The UTXO structure
+      #
+      # - txid: [String] Transaction id
+      # - vout: [Integer] Output index
+      # - amount: [Integer] Amount of the UTXO as tapyrus unit
+      # - finalized: [Boolean] Whether the UTXO is finalized
+      # - script_pubkey: [String] ScriptPubkey of the UTXO
       def collect_uncolored_outputs(amount = nil, label = nil, only_finalized = true, shuffle = false)
         collect_utxos(amount, label, only_finalized, shuffle) do |output|
           output[:color_id].nil?
@@ -163,6 +172,15 @@ module Glueby
       # @param [String] label The label of UTXO to collect
       # @param [Boolean] only_finalized The flag to collect only finalized UTXO
       # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
+      # @return [Array<Hash>] The array of UTXO
+      #
+      # ## The UTXO structure
+      #
+      # - txid: [String] Transaction id
+      # - vout: [Integer] Output index
+      # - amount: [Integer] Amount of the UTXO as tapyrus unit
+      # - finalized: [Boolean] Whether the UTXO is finalized
+      # - script_pubkey: [String] ScriptPubkey of the UTXO
       def collect_colored_outputs(color_id, amount = nil, label = nil, only_finalized = true, shuffle = false)
         collect_utxos(amount, label, only_finalized, shuffle) do |output|
           output[:color_id] == color_id.to_hex
