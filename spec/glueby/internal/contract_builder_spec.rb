@@ -1,3 +1,5 @@
+require_relative '../../support/tx_builder_test_support'
+
 RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
   let(:instance) do
     described_class.new(
@@ -134,24 +136,6 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
         script_pubkey: valid_script_pubkey,
         color_id: valid_reissuable_color_id
       })
-    end
-  end
-
-  # Create fund to the wallet
-  # @param [Glueby::Internal::Wallet] wallet
-  def fund_to_wallet(wallet)
-    ar_wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet.id)
-    ar_key = ar_wallet.keys.create!(purpose: :receive)
-    txid = Tapyrus::sha256(wallet.id).bth # dummy txid
-    20.times do |i|
-      Glueby::Internal::Wallet::AR::Utxo.create!(
-        txid: txid,
-        index: i,
-        script_pubkey: valid_script_pubkey.to_hex,
-        key: ar_key,
-        value: 1_000,
-        status: :finalized
-      )
     end
   end
 

@@ -178,7 +178,7 @@ module Glueby
 
       alias_method :original_build, :build
       def build
-        auto_fulfill_inputs_from_sender_wallet if use_auto_fulfill_inputs
+        auto_fulfill_inputs if use_auto_fulfill_inputs
 
         tx = if @use_auto_fee && Glueby.configuration.use_utxo_provider?
                tx = add_change_for_colored_coin(super)
@@ -249,16 +249,43 @@ module Glueby
         tx
       end
 
-      # Automatically add UTXO to fulfill the amount of inputs from the sender_wallet.
-      def auto_fulfill_inputs_from_sender_wallet
+      def auto_fulfill_inputs
         @outgoings.each do |color_id, outgoing_amount|
           target_amount = outgoing_amount - (@incomings[color_id] || 0)
           next if target_amount <= 0
 
-          @sender_wallet
-            .collect_colored_outputs(color_id, target_amount, nil, use_only_finalized_utxo, true)[1]
-            .each { |utxo| add_utxo(utxo) }
+          utxos = if color_id.default?
+                    auto_fulfill_inputs_utxos_for_tpc(target_amount)
+                  else
+                    auto_fulfill_inputs_utxos_for_color(color_id, target_amount)
+                  end
+
+          utxos.each { |utxo| add_utxo(utxo) }
         end
+      end
+
+      def auto_fulfill_inputs_utxos_for_tpc(target_amount)
+        wallet = if Glueby.configuration.use_utxo_provider?
+                   Glueby::UtxoProvider.instance.wallet
+                 else
+                   @sender_wallet
+                 end
+        wallet.collect_uncolored_outputs(
+          target_amount,
+          nil,
+          use_only_finalized_utxo,
+          true
+        )[1]
+      end
+
+      def auto_fulfill_inputs_utxos_for_color(color_id, target_amount)
+        @sender_wallet.collect_colored_outputs(
+          color_id,
+          target_amount,
+          nil,
+          use_only_finalized_utxo,
+          true
+        )[1]
       end
 
       def get_fee_estimator(fee_estimator_name)
@@ -274,16 +301,19 @@ module Glueby
         return if estimated_fee == 0
 
         utxo_provider = UtxoProvider.instance
+        target_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
         tx, fee, tpc_amount, provided_utxos = utxo_provider.fill_inputs(
           tx,
-          target_amount: 0,
+          target_amount: target_amount,
           current_amount: @incomings[Tapyrus::Color::ColorIdentifier.default] || 0,
           fee_estimator: fee_estimator
         )
 
-        if tpc_amount - fee > 0
+        change = tpc_amount - target_amount - fee
+
+        if change >= DUST_LIMIT
           change_script = Tapyrus::Script.parse_from_addr(utxo_provider.wallet.change_address)
-          tx.outputs << Tapyrus::TxOut.new(value: tpc_amount - fee, script_pubkey: change_script)
+          tx.outputs << Tapyrus::TxOut.new(value: change, script_pubkey: change_script)
         end
 
         utxo_provider.wallet.sign_tx(tx, provided_utxos)
