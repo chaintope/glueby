@@ -1,14 +1,14 @@
 RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
   let(:instance) do
     described_class.new(
-      signer_wallet: signer_wallet,
+      sender_wallet: sender_wallet,
       fee_estimator: fee_estimator,
       use_auto_fee: use_auto_fee,
       use_auto_fulfill_inputs: use_auto_fulfill_inputs,
       use_unfinalized_utxo: use_unfinalized_utxo
     )
   end
-  let(:signer_wallet) { Glueby::Internal::Wallet.create }
+  let(:sender_wallet) { Glueby::Internal::Wallet.create }
   let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
   let(:use_auto_fee) { false }
   let(:use_auto_fulfill_inputs) { false }
@@ -162,7 +162,7 @@ RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
 
     shared_examples_for 'correct behavior' do
       it 'broadcast for a tx that has an output to the UTXO and the UTXO is add to the utxos' do
-        expect(signer_wallet).to receive(:broadcast) do |tx|
+        expect(sender_wallet).to receive(:broadcast) do |tx|
           expect(tx.outputs.first.value).to eq(amount)
           expect(tx.outputs.first.script_pubkey).to eq(Tapyrus::Script.parse_from_addr(address))
           tx
@@ -175,7 +175,7 @@ RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
     end
 
     before do
-      fund_to_wallet(signer_wallet)
+      fund_to_wallet(sender_wallet)
       fund_to_wallet(Glueby::UtxoProvider.instance.wallet)
       fund_to_wallet(Glueby::FeeProvider.new.wallet)
     end
@@ -276,13 +276,13 @@ RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
 
     shared_examples_for 'correct behavior' do
       before do
-        allow(signer_wallet).to receive(:create_pay_to_contract_address)
+        allow(sender_wallet).to receive(:create_pay_to_contract_address)
                                   .with(metadata)
                                   .and_return([p2c_address, payment_base])
       end
 
       it 'broadcast for a tx that has an output to the p2c address and the UTXO is add to the @p2c_utxos' do
-        expect(signer_wallet).to receive(:broadcast) do |tx|
+        expect(sender_wallet).to receive(:broadcast) do |tx|
           expect(tx.outputs.first.value).to eq(amount)
           expect(tx.outputs.first.script_pubkey).to eq(Tapyrus::Script.parse_from_addr(p2c_address))
           tx
@@ -300,7 +300,7 @@ RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
     end
 
     before do
-      fund_to_wallet(signer_wallet)
+      fund_to_wallet(sender_wallet)
     end
 
     context 'it doesn\'t pass the p2c_address and paymetn_base' do

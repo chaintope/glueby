@@ -9,7 +9,7 @@ module Glueby
             @fee_estimator = fee_estimator
 
             @txb = Internal::TxBuilder.new(
-              signer_wallet: @wallet.internal_wallet,
+              sender_wallet: @wallet.internal_wallet,
               fee_estimator: @fee_estimator
             )
           end

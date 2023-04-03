@@ -1,32 +1,33 @@
 module Glueby
   module Internal
     class TxBuilder < Tapyrus::TxBuilder
-      attr_reader :fee_estimator, :signer_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fee,
+      attr_reader :fee_estimator, :sender_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fee,
                   :use_auto_fulfill_inputs
 
-      # @param [Glueby::Internal::Wallet] signer_wallet The wallet that is used to sign the transaction.
+      # @param [Glueby::Internal::Wallet] sender_wallet The wallet that is an user's wallet who send the transaction
+      #                                                 to a blockchain.
       # @param [Symbol|Glueby::Contract::FeeEstimator] fee_estimator :auto or :fixed
       # @param [Boolean] use_auto_fee If it's true, inputs are automatically added to fulfill the fee.
-      #                               The TPC for the fee is supply from the signer_wallet or UtxoProvider
+      #                               The TPC for the fee is supply from the sender_wallet or UtxoProvider
       #                               and it is selected automatically from configuration. If using the UTXO
       #                               Provider is enabled, it uses UTXO Provider. If it's false, an user of
       #                               TxBuilder need to add UTXOs to pay the fee manually. This behavior
       #                               works independently of the FeeProvider.
       # @param [Boolean] use_auto_fulfill_inputs If it's true, inputs for payments are automatically added to fulfill
-      #                                          from the signer_wallet. If you create an colored coin issue
+      #                                          from the sender_wallet. If you create an colored coin issue
       #                                          transaction, you must set this to false or it try to add inputs up
       #                                          to the issue amount. The default value is false.
       # @param [Boolean] use_unfinalized_utxo If it's true, The TxBuilder use unfinalized UTXO that is not
       #                                       included in the block in its inputs.
       # @raise [Glueby::ArgumentError] If the fee_estimator is not :auto or :fixed
       def initialize(
-        signer_wallet:,
+        sender_wallet:,
         fee_estimator: :auto,
         use_auto_fee: false,
         use_auto_fulfill_inputs: false,
         use_unfinalized_utxo: false
       )
-        @signer_wallet = signer_wallet
+        @sender_wallet = sender_wallet
         set_fee_estimator(fee_estimator)
         @use_auto_fee = use_auto_fee
         @use_auto_fulfill_inputs = use_auto_fulfill_inputs
@@ -110,21 +111,21 @@ module Glueby
           fee_estimator ||= @fee_estimator
           txb = Tapyrus::TxBuilder.new
           fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(txb.build))
-          _sum, utxos = signer_wallet
+          _sum, utxos = sender_wallet
                          .collect_uncolored_outputs(fee + amount, nil, only_finalized)
           utxos.each { |utxo| txb.add_utxo(to_tapyrusrb_utxo_hash(utxo)) }
           tx = txb.pay(address, amount)
-                  .change_address(signer_wallet.change_address)
+                  .change_address(sender_wallet.change_address)
                   .fee(fee)
                   .build
-          signer_wallet.sign_tx(tx)
+          sender_wallet.sign_tx(tx)
           index = 0
         end
 
         ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
           # Here needs to use the return tx from Internal::Wallet#broadcast because the txid
           # is changed if you enable FeeProvider.
-          tx = signer_wallet.broadcast(tx)
+          tx = sender_wallet.broadcast(tx)
         end
 
         @prev_txs << tx
@@ -156,7 +157,7 @@ module Glueby
         fee_estimator: nil
       )
         if p2c_address.nil? || payment_base.nil?
-          p2c_address, payment_base = signer_wallet
+          p2c_address, payment_base = sender_wallet
                                         .create_pay_to_contract_address(metadata)
         end
 
@@ -177,14 +178,14 @@ module Glueby
 
       alias_method :original_build, :build
       def build
-        auto_fulfill_inputs_from_signer_wallet if use_auto_fulfill_inputs
+        auto_fulfill_inputs_from_sender_wallet if use_auto_fulfill_inputs
 
         tx = if @use_auto_fee && Glueby.configuration.use_utxo_provider?
                tx = add_change_for_colored_coin(super)
                auto_fee_with_utxo_provider(tx)
              elsif @use_auto_fee
                fee(dummy_fee)
-               auto_fee_with_signer_wallet
+               auto_fee_with_sender_wallet
                set_tpc_change_address
                super
              else
@@ -215,10 +216,10 @@ module Glueby
 
       def sign(tx)
         utxos = @utxos.map { |u| to_sign_tx_utxo_hash(u) }
-        tx = signer_wallet.sign_tx(tx, utxos)
+        tx = sender_wallet.sign_tx(tx, utxos)
 
         @p2c_utxos.each do |utxo|
-          tx = signer_wallet
+          tx = sender_wallet
                  .sign_to_pay_to_contract_address(tx, utxo, utxo[:payment_base], utxo[:metadata])
         end
         tx
@@ -228,7 +229,7 @@ module Glueby
         if Glueby.configuration.use_utxo_provider?
           change_address(UtxoProvider.instance.wallet.change_address)
         else
-          change_address(@signer_wallet.change_address)
+          change_address(@sender_wallet.change_address)
         end
       end
 
@@ -248,13 +249,13 @@ module Glueby
         tx
       end
 
-      # Automatically add UTXO to fulfill the amount of inputs from the signer_wallet.
-      def auto_fulfill_inputs_from_signer_wallet
+      # Automatically add UTXO to fulfill the amount of inputs from the sender_wallet.
+      def auto_fulfill_inputs_from_sender_wallet
         @outgoings.each do |color_id, outgoing_amount|
           target_amount = outgoing_amount - (@incomings[color_id] || 0)
           next if target_amount <= 0
 
-          @signer_wallet
+          @sender_wallet
             .collect_colored_outputs(color_id, target_amount, nil, use_only_finalized_utxo, true)[1]
             .each { |utxo| add_utxo(utxo) }
         end
@@ -288,12 +289,12 @@ module Glueby
         utxo_provider.wallet.sign_tx(tx, provided_utxos)
       end
 
-      def auto_fee_with_signer_wallet
+      def auto_fee_with_sender_wallet
         # FIXME: If fee is 0, here add all TPC UTXOs in the issuer wallet. If the estimated_fee is zero, here should do nothing.
         amount = estimated_fee == 0 ? nil : estimated_fee
 
         # TODO: Support the case of increasing fee by adding multiple inputs
-        _, outputs = signer_wallet
+        _, outputs = sender_wallet
                        .collect_uncolored_outputs(amount, nil, use_only_finalized_utxo)
         outputs.each { |o| add_utxo(o) }
       end

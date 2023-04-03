@@ -34,7 +34,7 @@ module Glueby
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
           txb = Internal::TxBuilder.new(
-            signer_wallet: sender.internal_wallet,
+            sender_wallet: sender.internal_wallet,
             fee_estimator: fee_estimator
           )
 

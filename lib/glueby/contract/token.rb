@@ -110,7 +110,7 @@ module Glueby
 
         def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
           txb = Internal::TxBuilder.new(
-            signer_wallet: issuer.internal_wallet,
+            sender_wallet: issuer.internal_wallet,
             fee_estimator: fee_estimator,
             use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
           )
@@ -183,7 +183,7 @@ module Glueby
 
         def issue_token_from_out_point(token_type, issuer:, amount:, split: 1, fee_estimator: , metadata: nil)
           txb = Internal::TxBuilder.new(
-            signer_wallet: issuer.internal_wallet,
+            sender_wallet: issuer.internal_wallet,
             fee_estimator: fee_estimator,
             use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
           )
@@ -279,7 +279,7 @@ module Glueby
         raise Glueby::Contract::Errors::UnknownScriptPubkey unless valid_reissuer?(wallet: issuer, token_metadata: token_metadata)
 
         txb = Internal::TxBuilder.new(
-          signer_wallet: issuer.internal_wallet,
+          sender_wallet: issuer.internal_wallet,
           fee_estimator: fee_estimator,
           use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
         )
@@ -346,7 +346,7 @@ module Glueby
 
         txb = Internal::TxBuilder
                 .new(
-                  signer_wallet: sender.internal_wallet,
+                  sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,
                   use_unfinalized_utxo: !only_finalized?,
                   use_auto_fee: true,
@@ -379,7 +379,7 @@ module Glueby
 
         tx = Internal::TxBuilder
                 .new(
-                  signer_wallet: sender.internal_wallet,
+                  sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,
                   use_unfinalized_utxo: !only_finalized?,
                   use_auto_fee: true,
