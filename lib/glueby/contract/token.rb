@@ -109,21 +109,21 @@ module Glueby
         end
 
         def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
-          txb = Internal::TxBuilder.new(
+          txb = Internal::ContractBuilder.new(
             sender_wallet: issuer.internal_wallet,
             fee_estimator: fee_estimator,
             use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
           )
 
           if metadata
-            txb.add_p2c_utxo_to(
+            txb.add_p2c_utxo_to!(
               metadata: metadata,
               amount: FeeEstimator::Fixed.new.fixed_fee,
               only_finalized: only_finalized?,
               fee_estimator: Contract::FeeEstimator::Fixed.new
             )
           else
-            txb.add_utxo_to(
+            txb.add_utxo_to!(
               address: issuer.internal_wallet.receive_address,
               amount: FeeEstimator::Fixed.new.fixed_fee,
               only_finalized: only_finalized?,
@@ -182,7 +182,7 @@ module Glueby
         end
 
         def issue_token_from_out_point(token_type, issuer:, amount:, split: 1, fee_estimator: , metadata: nil)
-          txb = Internal::TxBuilder.new(
+          txb = Internal::ContractBuilder.new(
             sender_wallet: issuer.internal_wallet,
             fee_estimator: fee_estimator,
             use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
@@ -191,7 +191,7 @@ module Glueby
           funding_tx = nil
 
           if metadata
-            txb.add_p2c_utxo_to(
+            txb.add_p2c_utxo_to!(
               metadata: metadata,
               amount: FeeEstimator::Fixed.new.fixed_fee,
               only_finalized: only_finalized?,
@@ -199,7 +199,7 @@ module Glueby
             )
             funding_tx = txb.prev_txs.first
           elsif Glueby.configuration.use_utxo_provider?
-            txb.add_utxo_to(
+            txb.add_utxo_to!(
               address: issuer.internal_wallet.receive_address,
               amount: FeeEstimator::Fixed.new.fixed_fee,
               only_finalized: only_finalized?,
@@ -278,14 +278,14 @@ module Glueby
         token_metadata = Glueby::Contract::AR::TokenMetadata.find_by(color_id: color_id.to_hex)
         raise Glueby::Contract::Errors::UnknownScriptPubkey unless valid_reissuer?(wallet: issuer, token_metadata: token_metadata)
 
-        txb = Internal::TxBuilder.new(
+        txb = Internal::ContractBuilder.new(
           sender_wallet: issuer.internal_wallet,
           fee_estimator: fee_estimator,
           use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
         )
 
         if token_metadata
-          txb.add_p2c_utxo_to(
+          txb.add_p2c_utxo_to!(
             metadata: metadata,
             amount: FeeEstimator::Fixed.new.fixed_fee,
             p2c_address: token_metadata.p2c_address,
@@ -294,7 +294,7 @@ module Glueby
             fee_estimator: Contract::FeeEstimator::Fixed.new
           )
         else
-          txb.add_utxo_to(
+          txb.add_utxo_to!(
             address: @script_pubkey.to_addr,
             amount: FeeEstimator::Fixed.new.fixed_fee,
             only_finalized: only_finalized?,
@@ -344,7 +344,7 @@ module Glueby
           raise Glueby::Contract::Errors::InvalidAmount unless r[:amount].positive?
         end
 
-        txb = Internal::TxBuilder
+        txb = Internal::ContractBuilder
                 .new(
                   sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,
@@ -377,7 +377,7 @@ module Glueby
         raise Glueby::Contract::Errors::InsufficientTokens unless balance
         raise Glueby::Contract::Errors::InsufficientTokens if balance < amount
 
-        tx = Internal::TxBuilder
+        tx = Internal::ContractBuilder
                 .new(
                   sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,

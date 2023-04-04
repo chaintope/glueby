@@ -18,7 +18,7 @@ RSpec.describe 'Glueby::Contract::TimestampTxBuilder::Simple', active_record: tr
 
       context 'when utxo_provider is not nil' do
         it 'adds utxo to builder' do
-          expect(builder.instance_variable_get('@txb')).to receive(:add_utxo_to)
+          expect(builder.instance_variable_get('@txb')).to receive(:add_utxo_to!)
           subject
         end
       end
@@ -37,7 +37,7 @@ RSpec.describe 'Glueby::Contract::TimestampTxBuilder::Simple', active_record: tr
 
         context 'fee provider is disabled' do
           it 'adds utxo to builder' do
-            expect(builder.instance_variable_get('@txb')).not_to receive(:add_utxo_to)
+            expect(builder.instance_variable_get('@txb')).not_to receive(:add_utxo_to!)
             expect(builder.instance_variable_get('@wallet'))
               .to receive_message_chain(:internal_wallet, :collect_uncolored_outputs)
                     .and_return([100, [valid_utxo]])
@@ -55,7 +55,7 @@ RSpec.describe 'Glueby::Contract::TimestampTxBuilder::Simple', active_record: tr
           end
 
           it 'adds utxo to builder' do
-            expect(builder.instance_variable_get('@txb')).not_to receive(:add_utxo_to)
+            expect(builder.instance_variable_get('@txb')).not_to receive(:add_utxo_to!)
             expect(builder.instance_variable_get('@wallet')).not_to receive(:internal_wallet)
             subject
           end

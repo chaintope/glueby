@@ -8,7 +8,7 @@ module Glueby
             @wallet = wallet
             @fee_estimator = fee_estimator
 
-            @txb = Internal::TxBuilder.new(
+            @txb = Internal::ContractBuilder.new(
               sender_wallet: @wallet.internal_wallet,
               fee_estimator: @fee_estimator
             )
@@ -32,7 +32,7 @@ module Glueby
 
           def set_inputs(utxo_provider)
             if utxo_provider
-              @txb.add_utxo_to(
+              @txb.add_utxo_to!(
                 address: @wallet.internal_wallet.receive_address,
                 amount: @txb.dummy_fee,
                 utxo_provider: utxo_provider

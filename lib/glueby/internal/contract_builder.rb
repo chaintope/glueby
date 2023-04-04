@@ -1,6 +1,6 @@
 module Glueby
   module Internal
-    class TxBuilder < Tapyrus::TxBuilder
+    class ContractBuilder < Tapyrus::TxBuilder
       attr_reader :fee_estimator, :sender_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fee,
                   :use_auto_fulfill_inputs
 
@@ -11,13 +11,13 @@ module Glueby
       #                               The TPC for the fee is supply from the sender_wallet or UtxoProvider
       #                               and it is selected automatically from configuration. If using the UTXO
       #                               Provider is enabled, it uses UTXO Provider. If it's false, an user of
-      #                               TxBuilder need to add UTXOs to pay the fee manually. This behavior
+      #                               ContractBuilder need to add UTXOs to pay the fee manually. This behavior
       #                               works independently of the FeeProvider.
       # @param [Boolean] use_auto_fulfill_inputs If it's true, inputs for payments are automatically added to fulfill
       #                                          from the sender_wallet. If you create an colored coin issue
       #                                          transaction, you must set this to false or it try to add inputs up
       #                                          to the issue amount. The default value is false.
-      # @param [Boolean] use_unfinalized_utxo If it's true, The TxBuilder use unfinalized UTXO that is not
+      # @param [Boolean] use_unfinalized_utxo If it's true, The ContractBuilder use unfinalized UTXO that is not
       #                                       included in the block in its inputs.
       # @raise [Glueby::ArgumentError] If the fee_estimator is not :auto or :fixed
       def initialize(
@@ -94,7 +94,7 @@ module Glueby
       # @param [Glueby::Internal::UtxoProvider] utxo_provider The UTXO provider
       # @param [Boolean] only_finalized If true, the UTXO is provided from the finalized UTXO set. It is ignored if the configuration is set to use UTXO provider.
       # @param [Glueby::Contract::FeeEstimator] fee_estimator It estimate fee for prev tx. It is ignored if the configuration is set to use UTXO provider.
-      def add_utxo_to(
+      def add_utxo_to!(
         address:,
         amount:,
         utxo_provider: nil,
@@ -148,7 +148,7 @@ module Glueby
       #                              key format. It must be use with p2c_address parameter.
       # @param [Boolean] only_finalized If true, the UTXO is provided from the finalized UTXO set. It is ignored if the configuration is set to use UTXO provider.
       # @param [Glueby::Contract::FeeEstimator] fee_estimator It estimate fee for prev tx. It is ignored if the configuration is set to use UTXO provider.
-      def add_p2c_utxo_to(
+      def add_p2c_utxo_to!(
         metadata:,
         amount:,
         p2c_address: nil,
@@ -161,7 +161,7 @@ module Glueby
                                         .create_pay_to_contract_address(metadata)
         end
 
-        add_utxo_to(
+        add_utxo_to!(
           address: p2c_address,
           amount: amount,
           only_finalized: only_finalized,

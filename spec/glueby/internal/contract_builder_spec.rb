@@ -1,4 +1,4 @@
-RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
+RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
   let(:instance) do
     described_class.new(
       sender_wallet: sender_wallet,
@@ -157,7 +157,7 @@ RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
 
   describe '#add_utxo_to' do
     subject do
-      instance.add_utxo_to(
+      instance.add_utxo_to!(
         address: address,
         amount: amount,
         utxo_provider: utxo_provider,
@@ -271,7 +271,7 @@ RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
 
   describe '#add_p2c_utxo_to' do
     subject do
-      instance.add_p2c_utxo_to(
+      instance.add_p2c_utxo_to!(
         metadata: metadata,
         amount: amount,
         only_finalized: only_finalized,
@@ -321,7 +321,7 @@ RSpec.describe Glueby::Internal::TxBuilder, active_record: true do
 
     context 'it pass the p2c_address and paymetn_base' do
       subject do
-        instance.add_p2c_utxo_to(
+        instance.add_p2c_utxo_to!(
           metadata: metadata,
           amount: amount,
           only_finalized: only_finalized,
