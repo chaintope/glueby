@@ -73,6 +73,7 @@ end
 require_relative 'support/mysql'
 require_relative 'support/setup_fee_provider'
 require_relative 'support/setup_utxo_provider'
+require_relative 'support/negated_matchers'
 
 def sqlite3_config
   { adapter: 'sqlite3', database: File.join(Dir.tmpdir, 'glueby-test-db') }

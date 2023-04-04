@@ -1,8 +1,6 @@
 module Glueby
   class UtxoProvider
     class Tasks
-      include Glueby::Contract::TxBuilder
-
       attr_reader :utxo_provider
 
       STATUS = {

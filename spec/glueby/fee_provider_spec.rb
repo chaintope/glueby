@@ -77,6 +77,8 @@ RSpec.describe 'Glueby::FeeProvider' do
   describe "#validate_config!" do
     subject { Glueby::FeeProvider.new.send(:validate_config!) }
 
+    after { Glueby::FeeProvider.configure(utxo_pool_size: Glueby::FeeProvider::DEFAULT_UTXO_POOL_SIZE) }
+
     context 'has no configuration' do
       it { expect { subject }.not_to raise_error }
     end

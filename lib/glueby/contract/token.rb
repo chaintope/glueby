@@ -48,9 +48,6 @@ module Glueby
     # token.metadata
     # => "metadata"
     class Token
-      include Glueby::Contract::TxBuilder
-      extend Glueby::Contract::TxBuilder
-
       class << self
         # Issue new token with specified amount and token type.
         # REISSUABLE token can be reissued with #reissue! method, and
@@ -112,60 +109,135 @@ module Glueby
         end
 
         def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
-          script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
+          txb = Internal::ContractBuilder.new(
+            sender_wallet: issuer.internal_wallet,
+            fee_estimator: fee_estimator,
+            use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+          )
 
-          # For reissuable token, we need funding transaction for every issuance.
-          # To make it easier for API users to understand whether a transaction is a new issue or a reissue, 
-          # when Token.issue! is executed, a new address is created and tpc is sent to it to ensure that it is a new issue, 
-          # and a transaction is created using that UTXO as input to create a new color_id. 
-          funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?)
+          if metadata
+            txb.add_p2c_utxo_to!(
+              metadata: metadata,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+          else
+            txb.add_utxo_to!(
+              address: issuer.internal_wallet.receive_address,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+          end
+
+          funding_tx = txb.prev_txs.first
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-            funding_tx = issuer.internal_wallet.broadcast(funding_tx)
-          end
-
-          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
             # Store the script_pubkey for reissue the token.
-            Glueby::Contract::AR::ReissuableToken.create!(color_id: color_id.to_hex, script_pubkey: script_pubkey.to_hex)
+            Glueby::Contract::AR::ReissuableToken.create!(
+              color_id: color_id.to_hex,
+              script_pubkey: script_pubkey.to_hex
+            )
 
-            tx = create_issue_tx_for_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
             if metadata
+              p2c_utxo = txb.p2c_utxos.first
               Glueby::Contract::AR::TokenMetadata.create!(
                 color_id: color_id.to_hex,
                 metadata: metadata,
-                p2c_address: p2c_address,
-                payment_base: payment_base
+                p2c_address: p2c_utxo[:p2c_address],
+                payment_base: p2c_utxo[:payment_base]
               )
-              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
             end
+
+            tx = txb.reissuable_split(script_pubkey, issuer.internal_wallet.receive_address, amount, split)
+                    .build
             tx = issuer.internal_wallet.broadcast(tx)
             [[funding_tx, tx], color_id]
           end
         end
 
         def issue_non_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
-          script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
-          funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider? || script
-          if funding_tx
-            ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-              funding_tx = issuer.internal_wallet.broadcast(funding_tx)
-            end
+          issue_token_from_out_point(
+            Tapyrus::Color::TokenTypes::NON_REISSUABLE,
+            issuer: issuer,
+            amount: amount,
+            split: split,
+            fee_estimator: fee_estimator,
+            metadata: metadata
+          )
+        end
+
+        def issue_nft_token(issuer:, metadata: nil)
+          issue_token_from_out_point(
+            Tapyrus::Color::TokenTypes::NFT,
+            issuer: issuer,
+            amount: 1,
+            split: 1,
+            fee_estimator: Contract::FeeEstimator::Fixed.new,
+            metadata: metadata
+          )
+        end
+
+        def issue_token_from_out_point(token_type, issuer:, amount:, split: 1, fee_estimator: , metadata: nil)
+          txb = Internal::ContractBuilder.new(
+            sender_wallet: issuer.internal_wallet,
+            fee_estimator: fee_estimator,
+            use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+          )
+
+          funding_tx = nil
+
+          if metadata
+            txb.add_p2c_utxo_to!(
+              metadata: metadata,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+            funding_tx = txb.prev_txs.first
+          elsif Glueby.configuration.use_utxo_provider?
+            txb.add_utxo_to!(
+              address: issuer.internal_wallet.receive_address,
+              amount: FeeEstimator::Fixed.new.fixed_fee,
+              only_finalized: only_finalized?,
+              fee_estimator: Contract::FeeEstimator::Fixed.new
+            )
+            funding_tx = txb.prev_txs.first
+          else
+            # It does not create funding tx if metadata is not given and utxo provider is not used.
+            fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
+
+            # FIXME: It is enough to add just one UTXO here. Funding for fee should care by use_auto_fee feature. But, here add all UTXOs in issuer's wallet, if fee provider is enabled.
+            _, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee == 0 ? nil : fee, nil, true)
+            outputs.each { |utxo| txb.add_utxo(utxo) }
+          end
+
+          utxo = txb.utxos.first
+          out_point = Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:index])
+
+          case token_type
+          when Tapyrus::Color::TokenTypes::NON_REISSUABLE
+            color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
+            tx = txb.non_reissuable_split(out_point, issuer.internal_wallet.receive_address, amount, split)
+                    .build
+          when Tapyrus::Color::TokenTypes::NFT
+            color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
+            tx = txb.nft(out_point, issuer.internal_wallet.receive_address)
+                    .build
           end
 
           ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-            tx = create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split, fee_estimator: fee_estimator)
-            out_point = tx.inputs.first.out_point
-            color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
             if metadata
+              p2c_utxo = txb.p2c_utxos.first
               Glueby::Contract::AR::TokenMetadata.create!(
                 color_id: color_id.to_hex,
                 metadata: metadata,
-                p2c_address: p2c_address,
-                payment_base: payment_base
+                p2c_address: p2c_utxo[:p2c_address],
+                payment_base: p2c_utxo[:payment_base]
               )
-              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
             end
             tx = issuer.internal_wallet.broadcast(tx)
 
@@ -177,36 +249,12 @@ module Glueby
           end
         end
 
-        def issue_nft_token(issuer:, metadata: nil)
-          script, p2c_address, payment_base = create_p2c_address(issuer, metadata) if metadata
-          funding_tx = create_funding_tx(wallet: issuer, script: script, only_finalized: only_finalized?) if Glueby.configuration.use_utxo_provider? || script
-          if funding_tx
-            ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-              funding_tx = issuer.internal_wallet.broadcast(funding_tx)
-            end
-          end
-
-          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
-            tx = create_issue_tx_for_nft_token(funding_tx: funding_tx, issuer: issuer)
-            out_point = tx.inputs.first.out_point
-            color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
-            if metadata
-              Glueby::Contract::AR::TokenMetadata.create!(
-                color_id: color_id.to_hex,
-                metadata: metadata,
-                p2c_address: p2c_address,
-                payment_base: payment_base
-              )
-              tx = sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
-            end
-            tx = issuer.internal_wallet.broadcast(tx)
-
-            if funding_tx
-              [[funding_tx, tx], color_id]
-            else
-              [[tx], color_id]
-            end
-          end
+        # Add dummy inputs and outputs to tx for issue non-reissuable transaction and nft transaction
+        def dummy_issue_tx_from_out_point
+          tx = Tapyrus::Tx.new
+          receiver_colored_script = Tapyrus::Script.parse_from_payload('21c20000000000000000000000000000000000000000000000000000000000000000bc76a914000000000000000000000000000000000000000088ac'.htb)
+          tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: receiver_colored_script)
+          FeeEstimator.dummy_tx(tx)
         end
       end
 
@@ -230,12 +278,33 @@ module Glueby
         token_metadata = Glueby::Contract::AR::TokenMetadata.find_by(color_id: color_id.to_hex)
         raise Glueby::Contract::Errors::UnknownScriptPubkey unless valid_reissuer?(wallet: issuer, token_metadata: token_metadata)
 
-        funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey, only_finalized: only_finalized?)
-        funding_tx = issuer.internal_wallet.broadcast(funding_tx)
-        tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id, split: split, fee_estimator: fee_estimator)
+        txb = Internal::ContractBuilder.new(
+          sender_wallet: issuer.internal_wallet,
+          fee_estimator: fee_estimator,
+          use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+        )
+
         if token_metadata
-          tx = Token.sign_to_p2c_output(issuer, tx, funding_tx, token_metadata.payment_base, token_metadata.metadata)
+          txb.add_p2c_utxo_to!(
+            metadata: metadata,
+            amount: FeeEstimator::Fixed.new.fixed_fee,
+            p2c_address: token_metadata.p2c_address,
+            payment_base: token_metadata.payment_base,
+            only_finalized: only_finalized?,
+            fee_estimator: Contract::FeeEstimator::Fixed.new
+          )
+        else
+          txb.add_utxo_to!(
+            address: @script_pubkey.to_addr,
+            amount: FeeEstimator::Fixed.new.fixed_fee,
+            only_finalized: only_finalized?,
+            fee_estimator: Contract::FeeEstimator::Fixed.new
+          )
         end
+
+        tx = txb.reissuable_split(@script_pubkey, issuer.internal_wallet.receive_address, amount, split)
+                .build
+
         tx = issuer.internal_wallet.broadcast(tx)
 
         [color_id, tx]
@@ -252,18 +321,13 @@ module Glueby
       # @raise [InsufficientTokens] if wallet does not have enough token to send.
       # @raise [InvalidAmount] if amount is not positive integer.
       def transfer!(sender:, receiver_address:, amount: 1, fee_estimator: FeeEstimator::Fixed.new)
-        raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
-
-        tx = create_transfer_tx(
-          color_id: color_id,
+        multi_transfer!(
           sender: sender,
-          receiver_address: receiver_address,
-          amount: amount,
-          only_finalized: only_finalized?,
-          fee_estimator: fee_estimator
-        )
-        sender.internal_wallet.broadcast(tx)
-        [color_id, tx]
+          receivers: [{
+            address: receiver_address,
+            amount: amount
+          }],
+          fee_estimator: fee_estimator)
       end
 
       # Send the tokens to multiple wallets
@@ -280,14 +344,21 @@ module Glueby
           raise Glueby::Contract::Errors::InvalidAmount unless r[:amount].positive?
         end
 
-        tx = create_multi_transfer_tx(
-          color_id: color_id,
-          sender: sender,
-          receivers: receivers,
-          only_finalized: only_finalized?,
-          fee_estimator: fee_estimator
-        )
-        sender.internal_wallet.broadcast(tx)
+        txb = Internal::ContractBuilder
+                .new(
+                  sender_wallet: sender.internal_wallet,
+                  fee_estimator: fee_estimator,
+                  use_unfinalized_utxo: !only_finalized?,
+                  use_auto_fee: true,
+                  use_auto_fulfill_inputs: true
+                )
+                .change_address(sender.internal_wallet.receive_address, color_id)
+
+        receivers.each do |r|
+          txb.pay(r[:address], r[:amount].to_i, color_id)
+        end
+
+        tx = sender.internal_wallet.broadcast(txb.build)
         [color_id, tx]
       end
 
@@ -306,7 +377,18 @@ module Glueby
         raise Glueby::Contract::Errors::InsufficientTokens unless balance
         raise Glueby::Contract::Errors::InsufficientTokens if balance < amount
 
-        tx = create_burn_tx(color_id: color_id, sender: sender, amount: amount, only_finalized: only_finalized?, fee_estimator: fee_estimator)
+        tx = Internal::ContractBuilder
+                .new(
+                  sender_wallet: sender.internal_wallet,
+                  fee_estimator: fee_estimator,
+                  use_unfinalized_utxo: !only_finalized?,
+                  use_auto_fee: true,
+                  use_auto_fulfill_inputs: true
+                )
+                .burn(amount, color_id)
+                .change_address(sender.internal_wallet.receive_address, color_id)
+                .build
+
         sender.internal_wallet.broadcast(tx)
       end
 
@@ -314,10 +396,10 @@ module Glueby
       # @param wallet [Glueby::Wallet]
       # @return [Integer] amount of utxo value associated with this token.
       def amount(wallet:)
-        # collect utxo associated with this address
-        utxos = wallet.internal_wallet.list_unspent(only_finalized?)
-        _, results = collect_colored_outputs(utxos, color_id)
-        results.sum { |result| result[:amount] }
+        amount, _utxos = wallet
+                           .internal_wallet
+                           .collect_colored_outputs(color_id, nil, nil, only_finalized?)
+        amount
       end
 
       # Return metadata for this token

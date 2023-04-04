@@ -29,28 +29,23 @@ module Glueby
     # => 10_000
     #
     class Payment
-      extend Glueby::Contract::TxBuilder
-
       class << self
         def transfer(sender:, receiver_address:, amount:, fee_estimator: FeeEstimator::Fixed.new)
           raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
 
-          tx = Tapyrus::Tx.new
-          dummy_fee = fee_estimator.fee(FeeEstimator.dummy_tx(tx))
+          txb = Internal::ContractBuilder.new(
+            sender_wallet: sender.internal_wallet,
+            fee_estimator: fee_estimator
+          )
 
-          sum, outputs = sender.internal_wallet.collect_uncolored_outputs(dummy_fee + amount)
-          fill_input(tx, outputs)
+          _sum, outputs = sender.internal_wallet.collect_uncolored_outputs(txb.dummy_fee + amount)
+          outputs.each do |utxo|
+            txb.add_utxo(utxo)
+          end
 
-          receiver_script = Tapyrus::Script.parse_from_addr(receiver_address)
-          tx.outputs << Tapyrus::TxOut.new(value: amount, script_pubkey: receiver_script)
+          txb.pay(receiver_address, amount)
 
-          fee = fee_estimator.fee(tx)
-
-          fill_change_tpc(tx, sender, sum - fee - amount)
-
-          tx = sender.internal_wallet.sign_tx(tx)
-
-          sender.internal_wallet.broadcast(tx)
+          sender.internal_wallet.broadcast(txb.build)
         end
       end
     end
