@@ -209,7 +209,11 @@ module Glueby
 
           key = Tapyrus::Key.new(pubkey: payment_base, key_type: Tapyrus::Key::TYPES[:compressed])
           commitment = create_pay_to_contract_commitment(key, contents)
-          Tapyrus::Key.new(priv_key: ((ar_key.private_key.to_i(16) + commitment) % group.order).to_even_length_hex, key_type: Tapyrus::Key::TYPES[:compressed]) # K + commitment
+          p2c_private_key = (ar_key.private_key.to_i(16) + commitment) % group.order # K + commitment
+          Tapyrus::Key.new(
+            priv_key: ECDSA::Format::IntegerOctetString.encode(p2c_private_key, 32).bth,
+            key_type: Tapyrus::Key::TYPES[:compressed]
+          )
         end
       end
     end
