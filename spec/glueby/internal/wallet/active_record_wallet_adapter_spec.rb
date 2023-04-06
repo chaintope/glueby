@@ -498,4 +498,47 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       expect(adapter.has_address?(wallet.wallet_id, '1LUMPgobnSdbaA4iaikHKjCDLHveWYUSt5')).to be_falsy
     end
   end
+
+  describe '#create_pay_to_contract_private_key' do
+    subject { adapter.send(:create_pay_to_contract_private_key, wallet_id, payment_base, contents) }
+
+    let(:wallet_id) { wallet.wallet_id }
+    let(:payment_base) { '02046e89be90d26872e1318feb7d5ca7a6f588118e76f4906cf5b8ef262b63ab49' }
+    let(:contents) { 'metadata' }
+
+    before do
+      Glueby::Internal::Wallet::AR::Key.create!(
+        private_key: 'c5580f6c26f83fb513dd5e0d1b03c36be26fcefa139b1720a7ca7c0dedd439c2',
+        public_key: '02046e89be90d26872e1318feb7d5ca7a6f588118e76f4906cf5b8ef262b63ab49',
+        script_pubkey: '76a9141747ad39deefc57d933d0d625f7f71ca6fcc688d88ac',
+        label: nil,
+        purpose: 'receive',
+        wallet_id: wallet.id
+      )
+    end
+
+    it 'creates correct private key' do
+      expect(subject.priv_key).to eq('78612a8498322787104379330ec41f749fd2ada016e0c0a6c2b233ed13fc8978')
+    end
+
+    context 'p2c private key is missing one digit in hex' do
+      let(:payment_base) { '02cb23227e4650356be1b16eedba4e4b011cc06831077fdf9bd20ab002712955f9' }
+      let(:contents) { 'metadata' }
+
+      before do
+        Glueby::Internal::Wallet::AR::Key.create!(
+          private_key: '3257a1cb9ad35b3139e75eefcc0e3c97cca7220b29e3dbbd9fdf3895eb9e0e6d',
+          public_key: '02cb23227e4650356be1b16eedba4e4b011cc06831077fdf9bd20ab002712955f9',
+          script_pubkey: '76a91432e0f7928e594c178159f395d20e3953e02ddff388ac',
+          label: nil,
+          purpose: 'receive',
+          wallet_id: wallet.id
+        )
+      end
+
+      it 'creates correct private key' do
+        expect(subject.priv_key).to eq('008c27fdcb3cca8b7b7a196ea5491d9fec579456d6ba09c9f5cec97890de9f78')
+      end
+    end
+  end
 end
