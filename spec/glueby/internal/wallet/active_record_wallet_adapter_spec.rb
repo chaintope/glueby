@@ -322,6 +322,93 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     end
   end
 
+  describe '#get_addresses_info' do
+    subject { adapter.get_addresses_info(addresses) }
+
+    before do
+      # Skip callbacks
+      allow(Glueby::Internal::Wallet::AR::Key).to receive(:generate_key)
+      allow(Glueby::Internal::Wallet::AR::Key).to receive(:set_script_pubkey)
+    end
+
+    let!(:keys) do
+      [
+        Glueby::Internal::Wallet::AR::Key.create!({
+          private_key: 'b850e10e8265973f5cd65b385beb1452132dbe10b7eb2a0107c5a04cb2010896',
+          public_key: '0221cc1113cb761d650b27e0e8d4a36802427a53bdd3ed631bd6ffc2fd6b5927b3',
+          script_pubkey: '76a9142f2776cc7fa11adc44a5568604f95283e964a43988ac',
+          label: label,
+          purpose: purpose,
+          wallet_id: wallet.id
+        }),
+        Glueby::Internal::Wallet::AR::Key.create!({
+          private_key: '34d477342334e70ea4259a944e14a3fdd8ce2657c874bcc3a5b94c1a3f754747',
+          public_key: '023b5c432e5d3174900b8c845e8311c1d7fffdd482a60b8c966b13497694bbdb2e',
+          script_pubkey: '76a914a23178289ed6e2a15bd760e7406f85b32d79c17888ac',
+          label: label,
+          purpose: purpose,
+          wallet_id: wallet.id
+        })
+      ]
+    end
+    let(:addresses) { ['15JL32ZJTEeNUT7Fs348errZ8xmavXXhLp', '1FnbjGaaHaitz9FwTpDq4Ss8AkeKpLB5YY'] }
+    let(:purpose) { 'receive' }
+    let(:label) { nil }
+    let(:valid_result) do
+      [
+        {
+          address: '15JL32ZJTEeNUT7Fs348errZ8xmavXXhLp',
+          public_key: '0221cc1113cb761d650b27e0e8d4a36802427a53bdd3ed631bd6ffc2fd6b5927b3',
+          wallet_id: wallet.wallet_id,
+          label: label,
+          script_pubkey: '76a9142f2776cc7fa11adc44a5568604f95283e964a43988ac',
+          purpose: purpose
+        },
+        {
+          address: '1FnbjGaaHaitz9FwTpDq4Ss8AkeKpLB5YY',
+          public_key: '023b5c432e5d3174900b8c845e8311c1d7fffdd482a60b8c966b13497694bbdb2e',
+          wallet_id: wallet.wallet_id,
+          label: label,
+          script_pubkey: '76a914a23178289ed6e2a15bd760e7406f85b32d79c17888ac',
+          purpose: purpose
+        }
+      ]
+    end
+
+    context 'valid address' do
+      context 'receive_address' do
+        it { expect(subject).to eq(valid_result) }
+      end
+
+      context 'change_address' do
+        let(:purpose) { 'change' }
+
+        it { expect(subject).to eq(valid_result) }
+      end
+
+      context 'labeld address' do
+        let(:label) { 'Glueby-Contract-Tracking' }
+
+        it { expect(subject).to eq(valid_result) }
+      end
+    end
+
+    context 'invalid address' do
+      let(:addresses) { ['15JL32ZJTEeNUT7Fs348errZ8xmavXXhLp', '1FnbjGaaHaitz9FwTpDq4Ss8AkeKpLB5YY', 'invalidaddress1FnbjGaaHaitz9FwTpDq4Ss8AkeKpLB5YY'] }
+      it { expect { subject }.to raise_error(Glueby::ArgumentError, '"invalidaddress1FnbjGaaHaitz9FwTpDq4Ss8AkeKpLB5YY" is invalid address. Value passed not a valid Base58 String.') }
+    end
+
+    context 'invalid version byte address' do
+      let(:addresses) { ['mp4Gq7bucHRNkD52L8wa2Q57MiEZSGsw2a'] }
+      it { expect { subject }.to raise_error(Glueby::ArgumentError, '"mp4Gq7bucHRNkD52L8wa2Q57MiEZSGsw2a" is invalid address. Invalid version bytes.') }
+    end
+
+    context 'the addresses are not managed in the wallet' do
+      let(:addresses) { ["1Dc9f6MvAKB4L3xhzD61YMgd12JdsGUg6N", "17i5rxVcXsujjFZnEv6JkDK88Y8VsSXZ12"] }
+      it { expect(subject).to eq([]) }
+    end
+  end
+
   describe '#broadcast' do
     subject { adapter.broadcast(wallet.wallet_id, tx) }
     let(:tx) { Tapyrus::Tx.new }
