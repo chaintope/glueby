@@ -1,4 +1,4 @@
-require_relative '../../support/tx_builder_test_support'
+require_relative '../../support/contract_builder_test_support'
 
 RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
   let(:instance) do
