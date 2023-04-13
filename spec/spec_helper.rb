@@ -6,7 +6,7 @@ require 'docker'
 require 'active_record'
 
 TAPYRUSD_CONTAINER_NAME = 'glueby-tapyrusd'
-TAPYRUSD_VERSION = 'v0.5.1'
+TAPYRUSD_VERSION = 'v0.5.2'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
