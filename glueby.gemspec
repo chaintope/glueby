@@ -27,8 +27,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_runtime_dependency 'tapyrus', '>= 0.3.1'
-  spec.add_runtime_dependency 'activerecord', '~> 6.1.3'
+  spec.add_runtime_dependency 'activerecord', '~> 7.0.0'
   spec.add_development_dependency 'sqlite3'
   spec.add_development_dependency 'mysql2'
-  spec.add_development_dependency 'rails', '~> 6.1.3'
+  spec.add_development_dependency 'rails', '~> 7.0.0'
 end
