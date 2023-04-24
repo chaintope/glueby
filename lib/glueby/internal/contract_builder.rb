@@ -35,6 +35,7 @@ module Glueby
         @p2c_utxos = []
         @prev_txs = []
         @change_script_pubkeys = {}
+        @burn_contract = false
         super()
       end
 
@@ -67,6 +68,7 @@ module Glueby
       def burn(value, color_id)
         raise Glueby::ArgumentError, 'Burn TPC is not supported.' if color_id.default?
 
+        @burn_contract = true
         @outgoings[color_id] ||= 0
         @outgoings[color_id] += value
         self
@@ -176,23 +178,27 @@ module Glueby
         self
       end
 
-      alias_method :original_build, :build
+      alias :original_build :build
       def build
         auto_fulfill_inputs if use_auto_fulfill_inputs
 
-        tx = if @use_auto_fee && Glueby.configuration.use_utxo_provider?
-               tx = add_change_for_colored_coin(super)
-               auto_fee_with_utxo_provider(tx)
-             elsif @use_auto_fee
-               fee(dummy_fee)
-               auto_fee_with_sender_wallet
-               set_tpc_change_address
-               super
-             else
-               fee(dummy_fee)
-               set_tpc_change_address
-               super
-             end
+        tx = Tapyrus::Tx.new
+
+        set_tpc_change_address
+        auto_fee_with_sender_wallet if @use_auto_fee && !Glueby.configuration.use_utxo_provider?
+
+        expand_input(tx)
+        @outputs.each { |output| tx.outputs << output }
+
+        add_change_for_colored_coin(tx)
+
+        if @use_auto_fee && Glueby.configuration.use_utxo_provider?
+          auto_fee_with_utxo_provider(tx)
+        else
+          add_change_for_tpc(tx)
+        end
+
+        add_dummy_output(tx)
 
         sign(tx)
       end
@@ -208,11 +214,25 @@ module Glueby
         self
       end
 
+      private :fee
+
       def dummy_fee
         fee_estimator.fee(Contract::FeeEstimator.dummy_tx(original_build))
       end
 
       private
+
+      def estimated_fee
+        @fee ||= estimate_fee
+      end
+
+      def estimate_fee
+        tx = Tapyrus::Tx.new
+        expand_input(tx)
+        @outputs.each { |output| tx.outputs << output }
+        add_change_for_colored_coin(tx)
+        fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
+      end
 
       def sign(tx)
         utxos = @utxos.map { |u| to_sign_tx_utxo_hash(u) }
@@ -249,18 +269,46 @@ module Glueby
         tx
       end
 
+      def add_change_for_tpc(tx)
+        raise Glueby::ArgumentError, "The change address for TPC must be set." unless @change_script_pubkey
+        in_amount = @incomings[Tapyrus::Color::ColorIdentifier.default] || 0
+        out_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
+
+        change = in_amount - out_amount - estimated_fee
+
+        raise Contract::Errors::InsufficientFunds if change < 0
+
+        change_output = Tapyrus::TxOut.new(script_pubkey: @change_script_pubkey, value: change)
+        return tx if change_output.dust?
+
+        tx.outputs << change_output
+
+        tx
+      end
+
       def auto_fulfill_inputs
+        # fulfill TPC inputs
+        in_amount = @incomings[Tapyrus::Color::ColorIdentifier.default] || 0
+        out_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
+        target_amount = if @use_auto_fee
+                          (out_amount + estimate_fee) - in_amount
+                        else
+                          out_amount - in_amount
+                        end
+        if target_amount > 0
+          auto_fulfill_inputs_utxos_for_tpc(target_amount)
+            .each { |utxo| add_utxo(utxo) }
+        end
+
+        # fulfill colored inputs
         @outgoings.each do |color_id, outgoing_amount|
+          next if color_id.default?
+
           target_amount = outgoing_amount - (@incomings[color_id] || 0)
           next if target_amount <= 0
 
-          utxos = if color_id.default?
-                    auto_fulfill_inputs_utxos_for_tpc(target_amount)
-                  else
-                    auto_fulfill_inputs_utxos_for_color(color_id, target_amount)
-                  end
-
-          utxos.each { |utxo| add_utxo(utxo) }
+          auto_fulfill_inputs_utxos_for_color(color_id, target_amount)
+            .each { |utxo| add_utxo(utxo) }
         end
       end
 
@@ -320,6 +368,9 @@ module Glueby
       end
 
       def auto_fee_with_sender_wallet
+        # If it uses auto fulfill inputs feature, #auto_fulfill_inputs method adds TPC UTXOs includes fee.
+        return if @use_auto_fulfill_inputs
+
         # FIXME: If fee is 0, here add all TPC UTXOs in the issuer wallet. If the estimated_fee is zero, here should do nothing.
         amount = estimated_fee == 0 ? nil : estimated_fee
 
@@ -357,6 +408,18 @@ module Glueby
         (split - 1).times { yield(split_value) }
         yield(value - split_value * (split - 1))
         self
+      end
+
+      # If the tx has no output due to the contract creating a burn token, a dummy output should be added to make
+      # the transaction valid.
+      def add_dummy_output(tx)
+        if @burn_contract && tx.outputs.size == 0
+
+          tx.outputs << Tapyrus::TxOut.new(
+            value: 0,
+            script_pubkey: Tapyrus::Script.new << Tapyrus::Script::OP_RETURN
+          )
+        end
       end
 
       # The UTXO format that is used in Tapyrus::TxBuilder
