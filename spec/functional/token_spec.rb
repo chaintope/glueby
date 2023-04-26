@@ -463,26 +463,18 @@ RSpec.describe 'Token Contract', functional: true do
         expect(receiver.internal_wallet.list_unspent(false).select {|i| i[:color_id] == token.color_id.to_hex}.size).to eq(100)
       end
 
-      it 'raise insufficient error in to much split number' do
+      it 'doesn\'t raise insufficient error in too much split number' do
         expect do
           Glueby::Contract::Token.issue!(
             issuer: sender, token_type: Tapyrus::Color::TokenTypes::REISSUABLE, amount: 10_000, split: 25)
-        end.to raise_error(
-          Tapyrus::RPC::Error,
-          '{"response_code":"500","response_msg":"Internal Server Error","rpc_error":{"code":-26,"message":"min relay fee not met, 2000 \u003c 2051 (code 66)"}}'
-        )
-        # It remains the amount of funding tx to sender's wallet
-        expect(sender.balances(false)['']).to eq(2000)
+        end.not_to raise_error
+        expect(sender.balances(false)['']).to be_nil
 
         expect do
           Glueby::Contract::Token.issue!(
             issuer: sender, token_type: Tapyrus::Color::TokenTypes::NON_REISSUABLE, amount: 10_000, split: 25)
-        end.to raise_error(
-          Tapyrus::RPC::Error,
-          '{"response_code":"500","response_msg":"Internal Server Error","rpc_error":{"code":-26,"message":"min relay fee not met, 2000 \u003c 2051 (code 66)"}}'
-        )
-        # It remains the amount of funding tx to sender's wallet
-        expect(sender.balances(false)['']).to eq(4000)
+        end.not_to raise_error
+        expect(sender.balances(false)['']).to be_nil
       end
     end
   end

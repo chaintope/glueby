@@ -291,7 +291,11 @@ module Glueby
         # fulfill TPC inputs
         in_amount = @incomings[Tapyrus::Color::ColorIdentifier.default] || 0
         out_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
-        target_amount = (out_amount + estimate_fee) - in_amount
+        target_amount = if Glueby.configuration.use_utxo_provider?
+                          out_amount - in_amount
+                        else
+                          (out_amount + estimate_fee) - in_amount
+                        end
 
         if target_amount > 0
           auto_fulfill_inputs_utxos_for_tpc(target_amount)

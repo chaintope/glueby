@@ -79,9 +79,6 @@ module Glueby
       fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx, dummy_input_count: 0))
       provided_utxos = []
 
-      # If the change output value is less than DUST_LIMIT, tapyrus core returns "dust" error while broadcasting.
-      target_amount += DUST_LIMIT if target_amount < DUST_LIMIT
-
       while current_amount - fee < target_amount
         sum, utxos = collect_uncolored_outputs(wallet, fee + target_amount - current_amount, provided_utxos)
 
