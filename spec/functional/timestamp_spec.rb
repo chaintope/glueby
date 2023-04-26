@@ -71,7 +71,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
           # and it should consume one UTXO in UtxoProvider
           expect do
             Rake.application['glueby:contract:timestamp:create'].execute
-          end.to change { Glueby::UtxoProvider.instance.wallet.list_unspent.count }.by(-1)
+          end.to change { Glueby::UtxoProvider.instance.wallet.list_unspent.count }.by(-2)
 
           ar.reload
           expect(sender.balances(false)['']).to be_nil
@@ -102,7 +102,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
           )
           expect do
             Rake.application['glueby:contract:timestamp:create'].execute
-          end.to change { Glueby::UtxoProvider.instance.wallet.list_unspent.count }.by(-1)
+          end.to change { Glueby::UtxoProvider.instance.wallet.list_unspent.count }.by(-2)
 
           update_ar.reload
           # expect(sender.balances(false)['']).to be_nil

@@ -16,6 +16,12 @@ module Glueby
             @txb.pay(p2c_address, P2C_DEFAULT_VALUE)
             self
           end
+
+          private
+
+          def input_amount
+            super + P2C_DEFAULT_VALUE
+          end
         end
       end
     end

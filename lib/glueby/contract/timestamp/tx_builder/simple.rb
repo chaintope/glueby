@@ -34,11 +34,11 @@ module Glueby
             if utxo_provider
               @txb.add_utxo_to!(
                 address: @wallet.internal_wallet.receive_address,
-                amount: @txb.dummy_fee,
+                amount: input_amount,
                 utxo_provider: utxo_provider
               )
             else
-              fee = @txb.dummy_fee
+              fee = input_amount
               return self if fee == 0
 
               _, outputs = @wallet.internal_wallet.collect_uncolored_outputs(fee)
@@ -49,6 +49,10 @@ module Glueby
 
           def funding_tx
             @txb.prev_txs.first
+          end
+
+          def input_amount
+            @txb.dummy_fee
           end
         end
       end
