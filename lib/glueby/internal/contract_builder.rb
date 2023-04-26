@@ -12,7 +12,8 @@ module Glueby
       #                               and it is selected automatically from configuration. If using the UTXO
       #                               Provider is enabled, it uses UTXO Provider. If it's false, an user of
       #                               ContractBuilder need to add UTXOs to pay the fee manually. This behavior
-      #                               works independently of the FeeProvider.
+      #                               works independently of the FeeProvider. If you set use_auto_fulfill_inputs,
+      #                               use_auto_fee option is also enabled automatically.
       # @param [Boolean] use_auto_fulfill_inputs If it's true, inputs for payments are automatically added to fulfill
       #                                          from the sender_wallet. If you create an colored coin issue
       #                                          transaction, you must set this to false or it try to add inputs up
@@ -29,7 +30,7 @@ module Glueby
       )
         @sender_wallet = sender_wallet
         set_fee_estimator(fee_estimator)
-        @use_auto_fee = use_auto_fee
+        @use_auto_fee = use_auto_fulfill_inputs || use_auto_fee
         @use_auto_fulfill_inputs = use_auto_fulfill_inputs
         @use_unfinalized_utxo = use_unfinalized_utxo
         @p2c_utxos = []
@@ -290,11 +291,8 @@ module Glueby
         # fulfill TPC inputs
         in_amount = @incomings[Tapyrus::Color::ColorIdentifier.default] || 0
         out_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
-        target_amount = if @use_auto_fee
-                          (out_amount + estimate_fee) - in_amount
-                        else
-                          out_amount - in_amount
-                        end
+        target_amount = (out_amount + estimate_fee) - in_amount
+
         if target_amount > 0
           auto_fulfill_inputs_utxos_for_tpc(target_amount)
             .each { |utxo| add_utxo(utxo) }
