@@ -68,7 +68,12 @@ RSpec.describe 'Timestamp Contract', functional: true do
           expect(ar.payment_base).to be_nil
 
           # Broadcast tx for the timestamp job
-          # and it should consume one UTXO in UtxoProvider
+          # and it should consume two UTXOs in UtxoProvider
+          # It creates two TXs, the one is funding tx that is created by UTXO Provider to provide a tapyrus input
+          # to the timestamp tx. The funding tx has two inputs from UTXO pool and the input amount is 8000 tapyrus.
+          # The timestamp TX requires 3000 tapyrus, so the funding tx has 4000 tapyrus output to the timestamp tx.
+          # The fee of the funding tx is 2000 tapyrus, this is fixed by FixedFeeEstimator. And the change is 3000
+          # tapyrus to the UTXO Provider's wallet. So, it should consume two UTXOs from UTXO Provider.
           expect do
             Rake.application['glueby:contract:timestamp:create'].execute
           end.to change { Glueby::UtxoProvider.instance.wallet.list_unspent.count }.by(-2)

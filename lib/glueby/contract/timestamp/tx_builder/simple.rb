@@ -51,6 +51,8 @@ module Glueby
             @txb.prev_txs.first
           end
 
+          private
+
           def input_amount
             @txb.dummy_fee
           end

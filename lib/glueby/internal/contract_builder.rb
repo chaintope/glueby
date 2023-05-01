@@ -419,7 +419,7 @@ module Glueby
 
           tx.outputs << Tapyrus::TxOut.new(
             value: 0,
-            script_pubkey: Tapyrus::Script.new << Tapyrus::Script::OP_RETURN
+            script_pubkey: Tapyrus::Script.new << Tapyrus::Opcodes::OP_RETURN
           )
         end
       end

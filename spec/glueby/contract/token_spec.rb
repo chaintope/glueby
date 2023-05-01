@@ -558,6 +558,9 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
         it 'has one output for to be a standard tx' do
           expect(internal_wallet).to receive(:broadcast).once do |tx|
+            # Inputs: 2 colored input(200_000 token), 1 uncolored inputs(1_000 tapyrus)
+            # Outputs: 1 OP_RETURN output.
+            # It never create TPC change output because of the change(that is 550) is less than DUST_LIMIT 600.
             expect(tx.inputs.count).to eq(3)
             expect(tx.outputs.count).to eq(1)
             expect(tx.outputs[0].value).to eq(0)
