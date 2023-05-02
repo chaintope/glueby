@@ -528,7 +528,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
     let(:token) { Glueby::Contract::Token.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb376a914234113b860822e68f9715d1957af28b8f5117ee288ac'.htb) }
     let(:sender) { wallet }
     let(:amount) { 200_000 }
-    let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 450) }
+    let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 455) }
 
     before do
       allow(sender).to receive(:balances).and_return({ 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' => 200_000 })
@@ -544,7 +544,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
       it do
         expect(internal_wallet).to receive(:broadcast).once do |tx|
           # 1 colored input(100_000 token), 1 uncolored inputs(1_000 tapyrus)
-          # Fee is 450 tapyrus, so 550 tapyrus is change. But the change amount is less than DUST_LIMIT, so the change
+          # Fee is 450 tapyrus, so 550 tapyrus is change. But the change amount is less than 546, so the change
           # output is not created. 550 tapyrus is also pay as fee.
           expect(tx.inputs.count).to eq(2)
           expect(tx.outputs.count).to eq(1)
@@ -560,7 +560,8 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
           expect(internal_wallet).to receive(:broadcast).once do |tx|
             # Inputs: 2 colored input(200_000 token), 1 uncolored inputs(1_000 tapyrus)
             # Outputs: 1 OP_RETURN output.
-            # It never create TPC change output because of the change(that is 550) is less than DUST_LIMIT 600.
+            # It never create TPC change output because of the change(that is 545) is less than dust threshold(546
+            # tapyrus for the output).
             expect(tx.inputs.count).to eq(3)
             expect(tx.outputs.count).to eq(1)
             expect(tx.outputs[0].value).to eq(0)
@@ -572,13 +573,13 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
       context 'If the token amount and fee is equal to value in utxos' do
         let(:amount) { 100_000 }
-        let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 401) }
+        let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 455) }
 
         it 'has one output for to be a standard tx' do
           expect(internal_wallet).to receive(:broadcast).once do |tx|
-            # It funds 1_000 tapyrus to the TX and fee is 401 tapyrus. So the rest 599 tapyrus is change amount.
-            # But less than DUST_LIMIT(600 tapyrus) can not be output value because of Tapyrus Core's dust output
-            # policy. So, here will not create change output. All the remain TPC will be payed as fee.
+            # It funds 1_000 tapyrus to the TX and fee is 455 tapyrus. So the rest 545 tapyrus is change amount.
+            # But less than dust threshold(546 tapyrus for the output) can not be output value because of Tapyrus
+            # Core's dust output policy. So, here will not create change output. All the remain TPC will be payed as fee.
             # And the TX has dummy output that has 0 value and OP_RETURN script.
             expect(tx.inputs.count).to eq(2)
             expect(tx.outputs.count).to eq(1)

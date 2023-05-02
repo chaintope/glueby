@@ -52,13 +52,13 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
             # FIXME: But, the input by #auto_fee_with_sender_wallet is unnecessary because the input by #add_utxo is enough to pay fee.
             expect(subject.inputs.size).to eq(2)
             expect(subject.outputs.size).to eq(2)
-            expect(fee_estimator.fee(subject)).to eq(360)
-            # input amount is 3600, outgoing value is 600, fee is 360, so change is 2640
-            expect(subject.outputs[1].value).to eq(2_640)
+            expect(fee_estimator.fee(subject)).to eq(219)
+            # input amount is 2600, outgoing value is 600, fee is 219, so change is 1781
+            expect(subject.outputs[1].value).to eq(1781)
           end
         end
 
-        context 'change amount is less than DUST_LIMIT' do
+        context 'change amount is less than dust threshold to the change output' do
           before do
             instance.pay(valid_address, 600)
                     .add_utxo({
@@ -69,16 +69,14 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
                     })
           end
 
-          it 'add change output' do
+          it 'doesn\'t add a change output' do
+            # input amount is 1000, outgoing value is 600, fee is 185, change will be 215, but the change amount is
+            # less than dust threshold 546.
             expect { subject }.not_to raise_error
-            # It have 2 inputs, 1 by #add_utxo and 1 by #auto_fee_with_sender_wallet
-            # FIXME: But, the input by #auto_fee_with_sender_wallet is unnecessary because the input by #add_utxo is enough to pay fee.
-            expect(subject.inputs.size).to eq(2)
-            expect(subject.outputs.size).to eq(2)
+            expect(subject.inputs.size).to eq(1)
+            expect(subject.outputs.size).to eq(1)
             expect(subject.outputs[0].value).to eq(600)
-            expect(fee_estimator.fee(subject)).to eq(360)
-            # input amount is 2000, outgoing value is 600, fee is 360, so change is 1040
-            expect(subject.outputs[1].value).to eq(1040)
+            expect(fee_estimator.fee(subject)).to eq(185)
           end
         end
 
@@ -120,16 +118,14 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
 
           it 'just add a input for fee and a change output' do
             expect { subject }.not_to raise_error
-            # It have 2 inputs, 1 by #add_utxo and 1 by #auto_fee_with_sender_wallet
-            # FIXME: But, the input by #auto_fee_with_sender_wallet is unnecessary because the input by #add_utxo is enough to pay fee.
-            expect(subject.inputs.size).to eq(2)
+            expect(subject.inputs.size).to eq(1)
             expect(subject.outputs.size).to eq(2)
-            # input amount is 3600, outgoing value is 600, fee is 1000, so change is 2000
-            expect(subject.outputs[1].value).to eq(2_000)
+            # input amount is 2600, outgoing value is 600, fee is 1000, so change is 1000
+            expect(subject.outputs[1].value).to eq(1_000)
           end
         end
 
-        context 'change amount is less than DUST_LIMIT' do
+        context 'change amount is less than dust threshold to the change output' do
           before do
             instance.pay(valid_address, 600)
                     .add_utxo({
@@ -140,15 +136,13 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
                     })
           end
 
-          it 'add change output' do
+          it 'doesn\'t add a change output' do
+            # input amount is 2000, outgoing value is 600, fee is 1000, so change is 400.
+            # But the change value is less than dust threshold 546. So the change output won't add.
             expect { subject }.not_to raise_error
-            # It have 2 inputs, 1 by #add_utxo and 1 by #auto_fee_with_sender_wallet
-            # FIXME: But, the input by #auto_fee_with_sender_wallet is unnecessary because the input by #add_utxo is enough to pay fee.
-            expect(subject.inputs.size).to eq(2)
-            expect(subject.outputs.size).to eq(2)
+            expect(subject.inputs.size).to eq(1)
+            expect(subject.outputs.size).to eq(1)
             expect(subject.outputs[0].value).to eq(600)
-            # input amount is 3000, outgoing value is 600, fee is 1000, so change is 1400
-            expect(subject.outputs[1].value).to eq(1400)
           end
         end
 
@@ -208,7 +202,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           end
         end
 
-        context 'change amount is less than DUST_LIMIT' do
+        context 'change amount is less than dust threshold' do
           before do
             instance.pay(valid_address, 600)
                     .add_utxo({
@@ -223,7 +217,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(1)
             # input amount is 1000, outgoing value is 600, fee is 185, so change is 215.
-            # but the change amount is less than DUST_LIMIT 600, so it doesn't add change output.
+            # but the change amount is less than dust threshold 546, so it doesn't add change output.
             expect(subject.outputs.size).to eq(1)
             expect(fee_estimator.fee(subject)).to eq(185)
             expect(subject.outputs[0].value).to eq(600)
@@ -276,7 +270,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           end
         end
 
-        context 'change amount is less than DUST_LIMIT' do
+        context 'change amount is less than dust threshold' do
           before do
             instance.pay(valid_address, 600)
                     .add_utxo({
@@ -291,7 +285,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(1)
             # input amount is 2000, outgoing value is 600, fee is 1000, so change is 400.
-            # but the change amount is less than DUST_LIMIT 600, so it doesn't add change output.
+            # but the change amount is less than dust threshold 546, so it doesn't add change output.
             expect(subject.outputs.size).to eq(1)
             expect(subject.outputs[0].value).to eq(600)
           end
