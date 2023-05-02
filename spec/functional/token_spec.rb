@@ -148,8 +148,14 @@ RSpec.describe 'Token Contract', functional: true do
           expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
           expect(receiver.balances(false)[token.color_id.to_hex]).to eq 1
 
+          receiver_before_balance = receiver.balances(false)['']
+
           token.burn!(sender: receiver, amount: 1, fee_estimator: fee_estimator)
           process_block
+
+          if fee_estimator.is_a?(Glueby::Contract::FeeEstimator::Fixed)
+            expect(receiver.balances(false)['']).to eq(receiver_before_balance - fee)
+          end
 
           expect(receiver.balances(false)[token.color_id.to_hex]).to be_nil
         end
