@@ -71,6 +71,37 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
     end
   end
 
+  shared_examples_for 'issue' do
+    it 'increase @issues value' do
+      expect { subject }
+        .to change { instance.instance_variable_get('@issues')[color_id] }.from(0).to(value)
+        .and change { instance.outputs.size }.from(0).to(1)
+    end
+
+    context 'use_auto_fullfill_inputs is true' do
+      let(:use_auto_fulfill_inputs) { true }
+
+      before do
+        fund_to_wallet(sender_wallet)
+      end
+
+      it 'doesn\'t raise Glueby::Contract::Errors::InsufficientTokens error' do
+        expect { subject.build }.not_to raise_error
+      end
+    end
+  end
+
+  describe '#reissuable' do
+    subject { instance.reissuable(script_pubkey, address, value) }
+
+    let(:value) { 1000 }
+    let(:script_pubkey) { valid_script_pubkey }
+    let(:address) { valid_address }
+    let(:color_id) { valid_reissuable_color_id }
+
+    it_behaves_like 'issue'
+  end
+
   describe '#reissuable_split' do
     subject { instance.reissuable_split(script_pubkey, address, value, split) }
 
@@ -83,6 +114,17 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
     it_behaves_like 'splitable'
   end
 
+  describe '#non_reissuable' do
+    subject { instance.non_reissuable(out_point, address, value) }
+
+    let(:out_point) { Tapyrus::OutPoint.new('0000000000000000000000000000000000000000000000000000000000000000', 0) }
+    let(:address) { valid_address }
+    let(:color_id) { Tapyrus::Color::ColorIdentifier.non_reissuable(out_point) }
+    let(:value) { 1000 }
+
+    it_behaves_like 'issue'
+  end
+
   describe '#non_reissuable_split' do
     subject { instance.non_reissuable_split(out_point, address, value, split) }
 
@@ -93,6 +135,17 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
     let(:split) { 1 }
 
     it_behaves_like 'splitable'
+  end
+
+  describe '#nft' do
+    subject { instance.nft(out_point, address) }
+
+    let(:out_point) { Tapyrus::OutPoint.new('0000000000000000000000000000000000000000000000000000000000000000', 0) }
+    let(:address) { valid_address }
+    let(:color_id) { Tapyrus::Color::ColorIdentifier.nft(out_point) }
+    let(:value) { 1 }
+
+    it_behaves_like 'issue'
   end
 
   describe '#burn' do
