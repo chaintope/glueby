@@ -12,7 +12,6 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
       )
     end
     let(:sender_wallet) { Glueby::Internal::Wallet.create }
-    let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
     let(:use_auto_fee) { false }
     let(:use_unfinalized_utxo) { false }
 
@@ -28,47 +27,101 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
     subject { instance.build }
 
     shared_examples 'it has enough inputs' do
-      context 'it needs 3000 tapyrus' do
-        before do
-          instance.pay(valid_address, 3000)
+      context 'fee is 0' do
+        let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 0) }
+
+        context 'it needs 3000 tapyrus' do
+          before do
+            instance.pay(valid_address, 3000)
+          end
+
+          it 'fulfill inputs from sender\'s wallet' do
+            expect { subject }.not_to raise_error
+            expect(subject.inputs.size).to eq(3)
+          end
         end
 
-        it 'fulfill inputs from sender\'s wallet' do
-          expect { subject }.not_to raise_error
-          expect(subject.inputs.size).to eq(3)
+        context 'it needs 1100 tapyrus' do
+          before do
+            instance.pay(valid_address, 1100)
+          end
+
+          it 'fulfill inputs from sender\'s wallet' do
+            expect { subject }.not_to raise_error
+            expect(subject.inputs.size).to eq(2)
+          end
+        end
+
+        context 'it needs 1100 colored coins' do
+          before do
+            instance.pay(valid_address, 1100, valid_reissuable_color_id)
+                    .change_address(valid_address, valid_reissuable_color_id)
+          end
+
+          it 'fulfill inputs from sender\'s wallet' do
+            expect { subject }.not_to raise_error
+            expect(subject.inputs.size).to eq(2)
+          end
+        end
+
+        context 'it needs 3000 colored coins' do
+          before do
+            instance.pay(valid_address, 3000, valid_reissuable_color_id)
+          end
+
+          it 'fulfill inputs from sender\'s wallet' do
+            expect { subject }.not_to raise_error
+            expect(subject.inputs.size).to eq(3)
+          end
         end
       end
 
-      context 'it needs 1100 tapyrus' do
-        before do
-          instance.pay(valid_address, 1100)
+      context 'fee is 1000' do
+        let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 1000) }
+
+        context 'it needs 4000 tapyrus' do
+          before do
+            instance.pay(valid_address, 3000)
+          end
+
+          it 'fulfill inputs from sender\'s wallet' do
+            expect { subject }.not_to raise_error
+            expect(subject.inputs.size).to eq(4)
+          end
         end
 
-        it 'fulfill inputs from sender\'s wallet' do
-          expect { subject }.not_to raise_error
-          expect(subject.inputs.size).to eq(2)
-        end
-      end
+        context 'it needs 2100 tapyrus' do
+          before do
+            instance.pay(valid_address, 1100)
+          end
 
-      context 'it needs 1100 colored coins' do
-        before do
-          instance.pay(valid_address, 1100, valid_reissuable_color_id)
-        end
-
-        it 'fulfill inputs from sender\'s wallet' do
-          expect { subject }.not_to raise_error
-          expect(subject.inputs.size).to eq(2)
-        end
-      end
-
-      context 'it needs 3000 colored coins' do
-        before do
-          instance.pay(valid_address, 3000, valid_reissuable_color_id)
+          it 'fulfill inputs from sender\'s wallet' do
+            expect { subject }.not_to raise_error
+            expect(subject.inputs.size).to eq(3)
+          end
         end
 
-        it 'fulfill inputs from sender\'s wallet' do
-          expect { subject }.not_to raise_error
-          expect(subject.inputs.size).to eq(3)
+        context 'it needs 1100 colored coins' do
+          before do
+            instance.pay(valid_address, 1100, valid_reissuable_color_id)
+                    .change_address(valid_address, valid_reissuable_color_id)
+          end
+
+          it 'fulfill inputs from sender\'s wallet' do
+            expect { subject }.not_to raise_error
+            expect(subject.inputs.size).to eq(3)
+          end
+        end
+
+        context 'it needs 3000 colored coins' do
+          before do
+            instance.pay(valid_address, 3000, valid_reissuable_color_id)
+          end
+
+          it 'fulfill inputs from sender\'s wallet' do
+            expect { subject }.not_to raise_error
+            expect(subject.inputs.size).to eq(4)
+          end
         end
       end
     end

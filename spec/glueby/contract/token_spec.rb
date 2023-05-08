@@ -543,11 +543,12 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
       it do
         expect(internal_wallet).to receive(:broadcast).once do |tx|
-          # 1 colored input(100_000 token), 2 uncolored inputs(2_000 tapyrus)
-          expect(tx.inputs.count).to eq 3
-          expect(tx.outputs.count).to eq(2)
+          # 1 colored input(100_000 token), 1 uncolored inputs(1_000 tapyrus)
+          # Fee is 450 tapyrus, so 550 tapyrus is change. But the change amount is less than DUST_LIMIT, so the change
+          # output is not created. 550 tapyrus is also pay as fee.
+          expect(tx.inputs.count).to eq(2)
+          expect(tx.outputs.count).to eq(1)
           expect(tx.outputs[0].value).to eq(50_000)
-          expect(tx.outputs[1].value).to eq(1550)
         end
         subject
       end
@@ -557,10 +558,13 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
         it 'has one output for to be a standard tx' do
           expect(internal_wallet).to receive(:broadcast).once do |tx|
-            # 2 colored input(200_000 token), 2 uncolored inputs(2_000 tapyrus)
-            expect(tx.inputs.count).to eq 4
+            # Inputs: 2 colored input(200_000 token), 1 uncolored inputs(1_000 tapyrus)
+            # Outputs: 1 OP_RETURN output.
+            # It never create TPC change output because of the change(that is 550) is less than DUST_LIMIT 600.
+            expect(tx.inputs.count).to eq(3)
             expect(tx.outputs.count).to eq(1)
-            expect(tx.outputs[0].value).to eq(1550)
+            expect(tx.outputs[0].value).to eq(0)
+            expect(tx.outputs[0].script_pubkey.op_return?).to be_truthy
           end
           subject
         end
@@ -572,11 +576,14 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
         it 'has one output for to be a standard tx' do
           expect(internal_wallet).to receive(:broadcast).once do |tx|
-            # Need 1_001 tapyrus at least, that means 401 tapyrus for tx fee, and 600 tapyrus to avoiding "dust limit error"
-            # 1 colored input(100_000 token), 2 uncolored inputs(1_000 * 2 tapyrus)
-            expect(tx.inputs.count).to eq 3
+            # It funds 1_000 tapyrus to the TX and fee is 401 tapyrus. So the rest 599 tapyrus is change amount.
+            # But less than DUST_LIMIT(600 tapyrus) can not be output value because of Tapyrus Core's dust output
+            # policy. So, here will not create change output. All the remain TPC will be payed as fee.
+            # And the TX has dummy output that has 0 value and OP_RETURN script.
+            expect(tx.inputs.count).to eq(2)
             expect(tx.outputs.count).to eq(1)
-            expect(tx.outputs[0].value).to eq(1_599)
+            expect(tx.outputs[0].value).to eq(0)
+            expect(tx.outputs[0].script_pubkey.op_return?).to be_truthy
           end
           subject
         end
