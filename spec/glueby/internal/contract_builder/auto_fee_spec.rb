@@ -1,19 +1,17 @@
 require_relative '../../../support/contract_builder_test_support'
 
 RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
-  describe 'auto fee feature' do
+  describe 'auto fulfill inputs for fee' do
     let(:instance) do
       described_class.new(
         sender_wallet: sender_wallet,
         fee_estimator: fee_estimator,
-        use_auto_fee: true,
-        use_auto_fulfill_inputs: use_auto_fulfill_inputs,
+        use_auto_fulfill_inputs: true,
         use_unfinalized_utxo: use_unfinalized_utxo
       )
     end
     let(:sender_wallet) { Glueby::Internal::Wallet.create }
     let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
-    let(:use_auto_fulfill_inputs) { false }
     let(:use_unfinalized_utxo) { false }
 
     let(:valid_script_pubkey_hex) { valid_script_pubkey.to_hex }
@@ -48,9 +46,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
 
           it 'just add a input for fee and a change output' do
             expect { subject }.not_to raise_error
-            # It have 2 inputs, 1 by #add_utxo and 1 by #auto_fee_with_sender_wallet
-            # FIXME: But, the input by #auto_fee_with_sender_wallet is unnecessary because the input by #add_utxo is enough to pay fee.
-            expect(subject.inputs.size).to eq(2)
+            expect(subject.inputs.size).to eq(1)
             expect(subject.outputs.size).to eq(2)
             expect(fee_estimator.fee(subject)).to eq(219)
             # input amount is 2600, outgoing value is 600, fee is 219, so change is 1781
@@ -194,6 +190,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
 
           it 'just add a change output' do
             expect { subject }.not_to raise_error
+            p subject.to_hex
             expect(subject.inputs.size).to eq(1)
             expect(subject.outputs.size).to eq(2)
             expect(fee_estimator.fee(subject)).to eq(219)

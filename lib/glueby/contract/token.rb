@@ -210,7 +210,7 @@ module Glueby
             # It does not create funding tx if metadata is not given and utxo provider is not used.
             fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
 
-            # FIXME: It is enough to add just one UTXO here. Funding for fee should care by use_auto_fee feature. But, here add all UTXOs in issuer's wallet, if fee provider is enabled.
+            # FIXME: It is enough to add just one UTXO here. But, here add all UTXOs in issuer's wallet, if fee provider is enabled.
             _, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee == 0 ? nil : fee, nil, true)
             outputs.each { |utxo| txb.add_utxo(utxo) }
           end
