@@ -1,8 +1,7 @@
 module Glueby
   module Internal
     class ContractBuilder < Tapyrus::TxBuilder
-      attr_reader :fee_estimator, :sender_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fee,
-                  :use_auto_fulfill_inputs
+      attr_reader :fee_estimator, :sender_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fulfill_inputs
 
       # @param [Glueby::Internal::Wallet] sender_wallet The wallet that is an user's wallet who send the transaction
       #                                                 to a blockchain.
@@ -19,7 +18,6 @@ module Glueby
       def initialize(
         sender_wallet:,
         fee_estimator: :auto,
-        use_auto_fee: false,
         use_auto_fulfill_inputs: false,
         use_unfinalized_utxo: false
       )

@@ -349,7 +349,6 @@ module Glueby
                   sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,
                   use_unfinalized_utxo: !only_finalized?,
-                  use_auto_fee: true,
                   use_auto_fulfill_inputs: true
                 )
                 .change_address(sender.internal_wallet.receive_address, color_id)
@@ -382,7 +381,6 @@ module Glueby
                   sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,
                   use_unfinalized_utxo: !only_finalized?,
-                  use_auto_fee: true,
                   use_auto_fulfill_inputs: true
                 )
                 .burn(amount, color_id)

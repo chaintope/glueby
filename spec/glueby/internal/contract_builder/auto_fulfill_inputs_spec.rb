@@ -6,13 +6,11 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
       described_class.new(
         sender_wallet: sender_wallet,
         fee_estimator: fee_estimator,
-        use_auto_fee: use_auto_fee,
         use_auto_fulfill_inputs: true,
         use_unfinalized_utxo: use_unfinalized_utxo
       )
     end
     let(:sender_wallet) { Glueby::Internal::Wallet.create }
-    let(:use_auto_fee) { false }
     let(:use_unfinalized_utxo) { false }
 
     let(:valid_script_pubkey_hex) { '76a914ec88ce760de37265b11f48ee341248aab42615fb88ac' }

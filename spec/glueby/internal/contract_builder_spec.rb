@@ -5,14 +5,12 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
     described_class.new(
       sender_wallet: sender_wallet,
       fee_estimator: fee_estimator,
-      use_auto_fee: use_auto_fee,
       use_auto_fulfill_inputs: use_auto_fulfill_inputs,
       use_unfinalized_utxo: use_unfinalized_utxo
     )
   end
   let(:sender_wallet) { Glueby::Internal::Wallet.create }
   let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
-  let(:use_auto_fee) { false }
   let(:use_auto_fulfill_inputs) { false }
   let(:use_unfinalized_utxo) { false }
 
