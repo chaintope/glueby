@@ -76,23 +76,20 @@ module Glueby
     # @return [Integer] current_amount The final amount of the tx inputs
     # @return [Array<Hash>] provided_utxos The utxos that are added to the tx inputs
     def fill_inputs(tx, target_amount: , current_amount: 0, fee_estimator: Contract::FeeEstimator::Fixed.new)
-      fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx, dummy_input_count: 0))
-      provided_utxos = []
-
-      while current_amount - fee < target_amount
-        sum, utxos = collect_uncolored_outputs(wallet, fee + target_amount - current_amount, provided_utxos)
-
-        utxos.each do |utxo|
-          tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:vout]))
-          provided_utxos << utxo
-        end
-        current_amount += sum
-
-        new_fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx, dummy_input_count: 0))
-        fee = new_fee
+      wallet.fill_uncolored_inputs(
+        tx,
+        target_amount: target_amount,
+        current_amount: current_amount,
+        fee_estimator: fee_estimator
+      ) do |utxo|
+        # It must use only UTXOs that has defalut_value amount.
+        utxo[:amount] == default_value
       end
+    end
+    alias fill_uncolored_inputs fill_inputs
 
-      [tx, fee, current_amount, provided_utxos]
+    def change_address
+      wallet.change_address
     end
 
     def default_value
@@ -149,22 +146,10 @@ module Glueby
     # @return [Integer] sum The sum amount of the funds
     # @return [Array<Hash>] outputs The UTXO set of the funds
     def collect_uncolored_outputs(wallet, amount, excludes = [])
-      utxos = wallet.list_unspent.select do |o|
-        !o[:color_id] &&
-          o[:amount] == default_value &&
-          !excludes.find { |i| i[:txid] == o[:txid] && i[:vout] == o[:vout] }
+      wallet.collect_uncolored_outputs(amount, nil, true, true, true) do |utxo|
+        utxo[:amount] == default_value &&
+          !excludes.find { |i| i[:txid] == utxo[:txid] && i[:vout] == utxo[:vout] }
       end
-      utxos.shuffle!
-      
-      utxos.inject([0, []]) do |(sum, outputs), output|
-        if wallet.lock_unspent(output)
-          sum += output[:amount]
-          outputs << output
-          return [sum, outputs] if sum >= amount
-        end
-        [sum, outputs]
-      end
-      raise Glueby::Contract::Errors::InsufficientFunds
     end
 
     def validate_config!
