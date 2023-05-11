@@ -112,7 +112,7 @@ module Glueby
           txb = Internal::ContractBuilder.new(
             sender_wallet: issuer.internal_wallet,
             fee_estimator: fee_estimator,
-            use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+            use_auto_fulfill_inputs: true
           )
 
           if metadata
@@ -185,7 +185,7 @@ module Glueby
           txb = Internal::ContractBuilder.new(
             sender_wallet: issuer.internal_wallet,
             fee_estimator: fee_estimator,
-            use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+            use_auto_fulfill_inputs: true
           )
 
           funding_tx = nil
@@ -281,7 +281,7 @@ module Glueby
         txb = Internal::ContractBuilder.new(
           sender_wallet: issuer.internal_wallet,
           fee_estimator: fee_estimator,
-          use_auto_fee: Glueby.configuration.use_utxo_provider? # FIXME: Use the auto fee feature even if it does not use the utxo provider.
+          use_auto_fulfill_inputs: true
         )
 
         if token_metadata

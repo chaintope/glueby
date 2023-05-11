@@ -37,7 +37,18 @@ module Glueby
         @prev_txs = []
         @change_script_pubkeys = {}
         @burn_contract = false
+        @issues = Hash.new(0)
         super()
+      end
+
+      # Issue reissuable token
+      # @param script_pubkey [Tapyrus::Script] the script pubkey in the issue input.
+      # @param address [String] p2pkh or p2sh address.
+      # @param value [Integer] issued amount.
+      def reissuable(script_pubkey, address, value)
+        color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
+        @issues[color_id] += value
+        super
       end
 
       # Issue reissuable token to the split outputs
@@ -51,6 +62,16 @@ module Glueby
         end
       end
 
+      # Issue non reissuable token
+      # @param out_point [Tapyrus::OutPoint] the out point at issue input.
+      # @param address [String] p2pkh or p2sh address.
+      # @param value [Integer] issued amount.
+      def non_reissuable(out_point, address, value)
+        color_id = Tapyrus::Color::ColorIdentifier.non_reissuable(out_point)
+        @issues[color_id] += value
+        super
+      end
+
       # Issue non-reissuable token to the split outputs
       # @param [Tapyrus::OutPoint] out_point The outpoint of the reissuable token
       # @param [String] address The address that is the token is sent to
@@ -60,6 +81,17 @@ module Glueby
         split_value(value, split) do |value|
           non_reissuable(out_point, address, value)
         end
+      end
+
+      # Issue NFT
+      # @param out_point [Tapyrus::OutPoint] the out point at issue input.
+      # @param address [String] p2pkh or p2sh address.
+      # @raise [Glueby::ArgumentError] If the NFT is already issued in this contract builder.
+      def nft(out_point, address)
+        color_id = Tapyrus::Color::ColorIdentifier.nft(out_point)
+        raise Glueby::ArgumentError, 'NFT is already issued.' if @issues[color_id] == 1
+        @issues[color_id] = 1
+        super
       end
 
       # Burn token
@@ -306,7 +338,7 @@ module Glueby
         @outgoings.each do |color_id, outgoing_amount|
           next if color_id.default?
 
-          target_amount = outgoing_amount - (@incomings[color_id] || 0)
+          target_amount = outgoing_amount - (@incomings[color_id] || 0) - @issues[color_id]
           next if target_amount <= 0
 
           auto_fulfill_inputs_utxos_for_color(color_id, target_amount)
