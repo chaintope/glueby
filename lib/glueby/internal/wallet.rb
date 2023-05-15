@@ -151,7 +151,10 @@ module Glueby
       # @param [String] label The label of UTXO to collect
       # @param [Boolean] only_finalized The flag to collect only finalized UTXO
       # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
-      # @return [Array<Hash>] The array of UTXO
+      # @param [Boolean] lock_utxos The flag to lock returning UTXOs to prevent to be used from other threads or processes
+      # @param [Array<Hash] excludes The UTXO list to exclude the method result. Each hash must hub keys that are :txid and :vout
+      # @return [Integer] The sum of return UTOXs
+      # @return [Array<Hash>] An array of UTXO hash
       #
       # ## The UTXO structure
       #
@@ -182,7 +185,10 @@ module Glueby
       # @param [String] label The label of UTXO to collect
       # @param [Boolean] only_finalized The flag to collect only finalized UTXO
       # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
-      # @return [Array<Hash>] The array of UTXO
+      # @param [Boolean] lock_utxos The flag to lock returning UTXOs to prevent to be used from other threads or processes
+      # @param [Array<Hash] excludes The UTXO list to exclude the method result. Each hash must hub keys that are :txid and :vout
+      # @return [Integer] The sum of return UTOXs
+      # @return [Array<Hash>] An array of UTXO hash
       #
       # ## The UTXO structure
       #
@@ -197,10 +203,10 @@ module Glueby
         label = nil,
         only_finalized = true,
         shuffle = false,
-        lock_utoxs = false,
+        lock_utxos = false,
         excludes = []
       )
-        collect_utxos(amount, label, only_finalized, shuffle, lock_utoxs, excludes) do |output|
+        collect_utxos(amount, label, only_finalized, shuffle, lock_utxos, excludes) do |output|
           next false unless output[:color_id] == color_id.to_hex
           next yield(output) if block_given?
 
@@ -285,7 +291,7 @@ module Glueby
         only_finalized,
         shuffle = true,
         lock_utxos = false,
-        excludes = nil
+        excludes = []
       )
         collect_all = amount.nil?
 
@@ -294,7 +300,9 @@ module Glueby
         utxos = utxos.shuffle if shuffle
 
         r = utxos.inject([0, []]) do |(sum, outputs), output|
-          if excludes.is_a?(Array) && excludes.find { |i| i[:txid] == output[:txid] && i[:vout] == output[:vout] }
+          if excludes.is_a?(Array) &&
+            !excludes.empty? &&
+            excludes.find { |i| i[:txid] == output[:txid] && i[:vout] == output[:vout] }
             next [sum, outputs]
           end
 
