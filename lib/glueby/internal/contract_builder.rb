@@ -213,14 +213,12 @@ module Glueby
         @outputs.each { |output| tx.outputs << output }
         add_change_for_colored_coin(tx)
 
-        if use_auto_fulfill_inputs
-          auto_fulfill_inputs_utxos_for_tpc(tx)
-        else
-          add_change_for_tpc(tx)
-        end
+
+        change, provided_utxos = auto_fulfill_inputs_utxos_for_tpc(tx) if use_auto_fulfill_inputs
+        add_change_for_tpc(tx, change)
 
         add_dummy_output(tx)
-        sign(tx)
+        sign(tx, provided_utxos)
       end
 
       def change_address(address, color_id = Tapyrus::Color::ColorIdentifier.default)
@@ -254,14 +252,21 @@ module Glueby
         fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
       end
 
-      def sign(tx)
-        utxos = @utxos.map { |u| to_sign_tx_utxo_hash(u) }
+      def sign(tx, extra_utxos)
+        utxos = @utxos.map { |u| to_sign_tx_utxo_hash(u) } + (extra_utxos || [])
+
+        # Sign inputs from sender_wallet
         tx = sender_wallet.sign_tx(tx, utxos)
 
+        # Sign inputs which is pay to contract output
         @p2c_utxos.each do |utxo|
           tx = sender_wallet
                  .sign_to_pay_to_contract_address(tx, utxo, utxo[:payment_base], utxo[:metadata])
         end
+
+        # Sign inputs from UtxoProvider
+        Glueby::UtxoProvider.instance.wallet.sign_tx(tx, utxos) if Glueby.configuration.use_utxo_provider?
+
         tx
       end
 
@@ -289,12 +294,14 @@ module Glueby
         tx
       end
 
-      def add_change_for_tpc(tx)
+      def add_change_for_tpc(tx, change = nil)
         raise Glueby::ArgumentError, "The change address for TPC must be set." unless @change_script_pubkey
-        in_amount = @incomings[Tapyrus::Color::ColorIdentifier.default] || 0
-        out_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
+        change ||= begin
+                     in_amount = @incomings[Tapyrus::Color::ColorIdentifier.default] || 0
+                     out_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
 
-        change = in_amount - out_amount - estimated_fee
+                     in_amount - out_amount - estimated_fee
+                   end
 
         raise Contract::Errors::InsufficientFunds if change < 0
 
@@ -306,6 +313,8 @@ module Glueby
         tx
       end
 
+      # @return [Integer] The TPC change amount
+      # @return [Array<Hash>] The provided UTXOs
       def auto_fulfill_inputs_utxos_for_tpc(tx)
         target_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
 
@@ -315,7 +324,7 @@ module Glueby
                      sender_wallet
                    end
 
-        tx, fee, tpc_amount, provided_utxos = provider.fill_uncolored_inputs(
+        _tx, fee, tpc_amount, provided_utxos = provider.fill_uncolored_inputs(
           tx,
           target_amount: target_amount,
           current_amount: @incomings[Tapyrus::Color::ColorIdentifier.default] || 0,
@@ -323,14 +332,7 @@ module Glueby
         )
 
         change = tpc_amount - target_amount - fee
-
-        change_script = Tapyrus::Script.parse_from_addr(provider.change_address)
-        output = Tapyrus::TxOut.new(value: change, script_pubkey: change_script)
-        unless output.dust?
-          tx.outputs << Tapyrus::TxOut.new(value: change, script_pubkey: change_script)
-        end
-
-        provider.wallet.sign_tx(tx, provided_utxos) if Glueby.configuration.use_utxo_provider?
+        [change, provided_utxos]
       end
 
       def auto_fulfill_inputs_utxos_for_color
