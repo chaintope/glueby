@@ -80,16 +80,20 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
         )
       end
 
-      context 'output value is DUST_LIMIT' do
-        let(:value) { 600 }
+      context 'output value is dust threshold(546)' do
+        let(:value) { 546 }
 
         it { is_expected.to be_valid }
       end
 
-      context 'output is less than the DUST_LIMIT' do
-        let(:value) { 599 }
+      context 'output is less than dust threshold(546)' do
+        let(:value) { 545 }
 
         it { is_expected.to be_invalid }
+        it do
+          subject
+          expect(utxo.errors.full_messages).to eq ["Value is less than dust limit(546)"]
+        end
       end
     end
   end
