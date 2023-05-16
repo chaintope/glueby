@@ -153,7 +153,7 @@ module Glueby
       # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
       # @param [Boolean] lock_utxos The flag to lock returning UTXOs to prevent to be used from other threads or processes
       # @param [Array<Hash] excludes The UTXO list to exclude the method result. Each hash must hub keys that are :txid and :vout
-      # @return [Integer] The sum of return UTOXs
+      # @return [Integer] The sum of return UTXOs
       # @return [Array<Hash>] An array of UTXO hash
       #
       # ## The UTXO structure
@@ -187,7 +187,7 @@ module Glueby
       # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
       # @param [Boolean] lock_utxos The flag to lock returning UTXOs to prevent to be used from other threads or processes
       # @param [Array<Hash] excludes The UTXO list to exclude the method result. Each hash must hub keys that are :txid and :vout
-      # @return [Integer] The sum of return UTOXs
+      # @return [Integer] The sum of return UTXOs
       # @return [Array<Hash>] An array of UTXO hash
       #
       # ## The UTXO structure
