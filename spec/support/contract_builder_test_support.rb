@@ -1,6 +1,6 @@
 # Create fund to the wallet
 # @param [Glueby::Internal::Wallet] wallet
-def fund_to_wallet(wallet, color_id: Tapyrus::Color::ColorIdentifier.default)
+def fund_to_wallet(wallet, color_id: Tapyrus::Color::ColorIdentifier.default, count: 20)
   ar_wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: wallet.id)
   ar_key = ar_wallet.keys.create!(purpose: :receive)
   txid = Tapyrus::sha256(wallet.id + color_id.to_hex).bth # dummy txid
@@ -11,7 +11,7 @@ def fund_to_wallet(wallet, color_id: Tapyrus::Color::ColorIdentifier.default)
                     valid_script_pubkey.add_color(color_id)
                   end
 
-  20.times do |i|
+  count.times do |i|
     Glueby::Internal::Wallet::AR::Utxo.create!(
       txid: txid,
       index: i,

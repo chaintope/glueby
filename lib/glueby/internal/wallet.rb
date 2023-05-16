@@ -151,7 +151,10 @@ module Glueby
       # @param [String] label The label of UTXO to collect
       # @param [Boolean] only_finalized The flag to collect only finalized UTXO
       # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
-      # @return [Array<Hash>] The array of UTXO
+      # @param [Boolean] lock_utxos The flag to lock returning UTXOs to prevent to be used from other threads or processes
+      # @param [Array<Hash] excludes The UTXO list to exclude the method result. Each hash must hub keys that are :txid and :vout
+      # @return [Integer] The sum of return UTXOs
+      # @return [Array<Hash>] An array of UTXO hash
       #
       # ## The UTXO structure
       #
@@ -160,9 +163,19 @@ module Glueby
       # - amount: [Integer] Amount of the UTXO as tapyrus unit
       # - finalized: [Boolean] Whether the UTXO is finalized
       # - script_pubkey: [String] ScriptPubkey of the UTXO
-      def collect_uncolored_outputs(amount = nil, label = nil, only_finalized = true, shuffle = false)
-        collect_utxos(amount, label, only_finalized, shuffle) do |output|
-          output[:color_id].nil?
+      def collect_uncolored_outputs(
+        amount = nil,
+        label = nil,
+        only_finalized = true,
+        shuffle = false,
+        lock_utxos = false,
+        excludes = []
+      )
+        collect_utxos(amount, label, only_finalized, shuffle, lock_utxos, excludes) do |output|
+          next false unless output[:color_id].nil?
+          next yield(output) if block_given?
+
+          true
         end
       end
 
@@ -172,7 +185,10 @@ module Glueby
       # @param [String] label The label of UTXO to collect
       # @param [Boolean] only_finalized The flag to collect only finalized UTXO
       # @param [Boolean] shuffle The flag to shuffle UTXO before collecting
-      # @return [Array<Hash>] The array of UTXO
+      # @param [Boolean] lock_utxos The flag to lock returning UTXOs to prevent to be used from other threads or processes
+      # @param [Array<Hash] excludes The UTXO list to exclude the method result. Each hash must hub keys that are :txid and :vout
+      # @return [Integer] The sum of return UTXOs
+      # @return [Array<Hash>] An array of UTXO hash
       #
       # ## The UTXO structure
       #
@@ -181,9 +197,20 @@ module Glueby
       # - amount: [Integer] Amount of the UTXO as tapyrus unit
       # - finalized: [Boolean] Whether the UTXO is finalized
       # - script_pubkey: [String] ScriptPubkey of the UTXO
-      def collect_colored_outputs(color_id, amount = nil, label = nil, only_finalized = true, shuffle = false)
-        collect_utxos(amount, label, only_finalized, shuffle) do |output|
-          output[:color_id] == color_id.to_hex
+      def collect_colored_outputs(
+        color_id,
+        amount = nil,
+        label = nil,
+        only_finalized = true,
+        shuffle = false,
+        lock_utxos = false,
+        excludes = []
+      )
+        collect_utxos(amount, label, only_finalized, shuffle, lock_utxos, excludes) do |output|
+          next false unless output[:color_id] == color_id.to_hex
+          next yield(output) if block_given?
+
+          true
         end
       rescue Glueby::Contract::Errors::InsufficientFunds
         raise Glueby::Contract::Errors::InsufficientTokens
@@ -209,27 +236,89 @@ module Glueby
         wallet_adapter.has_address?(id, address)
       end
 
+      # Fill inputs in the tx up to target_amount of TPC from UTXOs in the wallet.
+      # This method should be called before adding change output and script_sig in outputs.
+      # FeeEstimator.dummy_tx returns fee amount to the TX that will be added one TPC input, a change TPC output and
+      # script sigs in outputs.
+      # @param [Tapyrus::Tx] tx The tx that will be filled the inputs
+      # @param [Integer] target_amount The tapyrus amount the tx is expected to be added in this method
+      # @param [Integer] current_amount The tapyrus amount the tx already has in its inputs
+      # @param [Glueby::Contract::FeeEstimator] fee_estimator
+      # @return [Tapyrus::Tx] tx The tx that is added inputs
+      # @return [Integer] fee The final fee after the inputs are filled
+      # @return [Integer] current_amount The final amount of the tx inputs
+      # @return [Array<Hash>] provided_utxos The utxos that are added to the tx inputs
+      def fill_uncolored_inputs(
+        tx,
+        target_amount: ,
+        current_amount: 0,
+        fee_estimator: Contract::FeeEstimator::Fixed.new,
+        &block
+      )
+        fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx, dummy_input_count: 0))
+        provided_utxos = []
+
+        while current_amount - fee < target_amount
+          sum, utxos = collect_uncolored_outputs(
+            fee + target_amount - current_amount,
+            nil, nil, true, true,
+            provided_utxos,
+            &block
+          )
+
+          utxos.each do |utxo|
+            tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.from_txid(utxo[:txid], utxo[:vout]))
+            provided_utxos << utxo
+          end
+          current_amount += sum
+
+          new_fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx, dummy_input_count: 0))
+          fee = new_fee
+        end
+
+        [tx, fee, current_amount, provided_utxos]
+      end
+
       private
 
       def wallet_adapter
         self.class.wallet_adapter
       end
 
-      def collect_utxos(amount, label, only_finalized, shuffle)
+      def collect_utxos(
+        amount,
+        label,
+        only_finalized,
+        shuffle = true,
+        lock_utxos = false,
+        excludes = []
+      )
         collect_all = amount.nil?
 
         raise Glueby::ArgumentError, 'amount must be positive' unless collect_all || amount.positive?
         utxos = list_unspent(only_finalized, label)
-        utxos.shuffle! if shuffle
+        utxos = utxos.shuffle if shuffle
 
-        r = utxos.inject([0, []]) do |sum, output|
-          next sum unless yield(output)
+        r = utxos.inject([0, []]) do |(sum, outputs), output|
+          if excludes.is_a?(Array) &&
+            !excludes.empty? &&
+            excludes.find { |i| i[:txid] == output[:txid] && i[:vout] == output[:vout] }
+            next [sum, outputs]
+          end
 
-          new_sum = sum[0] + output[:amount]
-          new_outputs = sum[1] << output
-          return [new_sum, new_outputs] unless collect_all || new_sum < amount
+          if block_given?
+            next [sum, outputs] unless yield(output)
+          end
 
-          [new_sum, new_outputs]
+          if lock_utxos
+            next [sum, outputs] unless lock_unspent(output)
+          end
+
+          sum += output[:amount]
+          outputs << output
+          return [sum, outputs] unless collect_all || sum < amount
+
+          [sum, outputs]
         end
         raise Glueby::Contract::Errors::InsufficientFunds unless collect_all
 

@@ -207,12 +207,9 @@ module Glueby
             )
             funding_tx = txb.prev_txs.first
           else
-            # It does not create funding tx if metadata is not given and utxo provider is not used.
-            fee = fee_estimator.fee(dummy_issue_tx_from_out_point)
-
-            # FIXME: It is enough to add just one UTXO here. Funding for fee should care by use_auto_fee feature. But, here add all UTXOs in issuer's wallet, if fee provider is enabled.
-            _, outputs = issuer.internal_wallet.collect_uncolored_outputs(fee == 0 ? nil : fee, nil, true)
-            outputs.each { |utxo| txb.add_utxo(utxo) }
+            # Here need to add just one UTXO to derive color_id from the UTXO out-point.
+            _, outputs = issuer.internal_wallet.collect_uncolored_outputs(1, nil, true)
+            txb.add_utxo(outputs.first)
           end
 
           utxo = txb.utxos.first
@@ -349,7 +346,6 @@ module Glueby
                   sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,
                   use_unfinalized_utxo: !only_finalized?,
-                  use_auto_fee: true,
                   use_auto_fulfill_inputs: true
                 )
                 .change_address(sender.internal_wallet.receive_address, color_id)
@@ -382,7 +378,6 @@ module Glueby
                   sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,
                   use_unfinalized_utxo: !only_finalized?,
-                  use_auto_fee: true,
                   use_auto_fulfill_inputs: true
                 )
                 .burn(amount, color_id)

@@ -6,13 +6,11 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
       described_class.new(
         sender_wallet: sender_wallet,
         fee_estimator: fee_estimator,
-        use_auto_fee: use_auto_fee,
         use_auto_fulfill_inputs: true,
         use_unfinalized_utxo: use_unfinalized_utxo
       )
     end
     let(:sender_wallet) { Glueby::Internal::Wallet.create }
-    let(:use_auto_fee) { false }
     let(:use_unfinalized_utxo) { false }
 
     let(:valid_script_pubkey_hex) { '76a914ec88ce760de37265b11f48ee341248aab42615fb88ac' }
@@ -26,6 +24,22 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
 
     subject { instance.build }
 
+    RSpec::Matchers.define :has_unique_inputs do
+      match do |tx|
+        tx.inputs.map { |i| i.out_point.txid + i.out_point.index.to_s }.uniq.size == tx.inputs.size
+      end
+
+      failure_message do |actual|
+        'expected that the tx has unique inputs but it has duplicated ' \
+        "inputs: #{actual.inputs.map { |i| i.out_point.to_payload.bth }}"
+      end
+
+      failure_message_when_negated do |actual|
+        'expected that the tx has duplicate inputs but it has unique ' \
+        "inputs: #{actual.inputs.map { |i| i.out_point.to_payload.bth }}"
+      end
+    end
+
     shared_examples 'it has enough inputs' do
       context 'fee is 0' do
         let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new(fixed_fee: 0) }
@@ -38,6 +52,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           it 'fulfill inputs from sender\'s wallet' do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(3)
+            expect(subject).to has_unique_inputs
           end
         end
 
@@ -49,6 +64,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           it 'fulfill inputs from sender\'s wallet' do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(2)
+            expect(subject).to has_unique_inputs
           end
         end
 
@@ -61,6 +77,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           it 'fulfill inputs from sender\'s wallet' do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(2)
+            expect(subject).to has_unique_inputs
           end
         end
 
@@ -72,6 +89,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           it 'fulfill inputs from sender\'s wallet' do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(3)
+            expect(subject).to has_unique_inputs
           end
         end
       end
@@ -87,6 +105,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           it 'fulfill inputs from sender\'s wallet' do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(4)
+            expect(subject).to has_unique_inputs
           end
         end
 
@@ -98,6 +117,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           it 'fulfill inputs from sender\'s wallet' do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(3)
+            expect(subject).to has_unique_inputs
           end
         end
 
@@ -110,6 +130,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           it 'fulfill inputs from sender\'s wallet' do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(3)
+            expect(subject).to has_unique_inputs
           end
         end
 
@@ -121,6 +142,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
           it 'fulfill inputs from sender\'s wallet' do
             expect { subject }.not_to raise_error
             expect(subject.inputs.size).to eq(4)
+            expect(subject).to has_unique_inputs
           end
         end
       end
@@ -129,8 +151,8 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
     context 'UtxoProvider is disabled' do
       before do
         # Here should funds UTXOs from sender's wallet
-        fund_to_wallet(sender_wallet)
-        fund_to_wallet(sender_wallet, color_id: valid_reissuable_color_id)
+        fund_to_wallet(sender_wallet, count: 4)
+        fund_to_wallet(sender_wallet, color_id: valid_reissuable_color_id, count: 4)
       end
       it_behaves_like 'it has enough inputs'
     end
@@ -140,8 +162,8 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
         Glueby.configuration.enable_utxo_provider!
 
         # Here should funds tapyrus UTXOs from UtxoProvider and colored coins UTXOs from sender's wallet
-        fund_to_wallet(Glueby::UtxoProvider.instance.wallet)
-        fund_to_wallet(sender_wallet, color_id: valid_reissuable_color_id)
+        fund_to_wallet(Glueby::UtxoProvider.instance.wallet, count: 4)
+        fund_to_wallet(sender_wallet, color_id: valid_reissuable_color_id, count: 4)
       end
 
       after do

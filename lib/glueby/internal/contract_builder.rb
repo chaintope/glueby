@@ -1,36 +1,28 @@
 module Glueby
   module Internal
     class ContractBuilder < Tapyrus::TxBuilder
-      attr_reader :fee_estimator, :sender_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fee,
-                  :use_auto_fulfill_inputs
+      attr_reader :fee_estimator, :sender_wallet, :prev_txs, :p2c_utxos, :use_unfinalized_utxo, :use_auto_fulfill_inputs
 
       # @param [Glueby::Internal::Wallet] sender_wallet The wallet that is an user's wallet who send the transaction
       #                                                 to a blockchain.
       # @param [Symbol|Glueby::Contract::FeeEstimator] fee_estimator :auto or :fixed
-      # @param [Boolean] use_auto_fee If it's true, inputs are automatically added to fulfill the fee.
-      #                               The TPC for the fee is supply from the sender_wallet or UtxoProvider
-      #                               and it is selected automatically from configuration. If using the UTXO
-      #                               Provider is enabled, it uses UTXO Provider. If it's false, an user of
-      #                               ContractBuilder need to add UTXOs to pay the fee manually. This behavior
-      #                               works independently of the FeeProvider. If you set use_auto_fulfill_inputs,
-      #                               use_auto_fee option is also enabled automatically.
-      # @param [Boolean] use_auto_fulfill_inputs If it's true, inputs for payments are automatically added to fulfill
-      #                                          from the sender_wallet. If you create an colored coin issue
-      #                                          transaction, you must set this to false or it try to add inputs up
-      #                                          to the issue amount. The default value is false.
+      # @param [Boolean] use_auto_fulfill_inputs
+      #   If it's true, inputs are automatically added up to fulfill the TPC and tokens requirement that is added by
+      #   #pay and #burn. The option also support to fill adding TPC inputs for paying fee.
+      #   If Glueby.configuration.use_utxo_provider? is true, All the TPC inputs are added from the UtxoProvider's
+      #   wallet. It it's false, all the TPC inputs are from sender_wallet.
+      #   If Glueby.configuration.fee_provider_bears? is true, it won't add TPC amount for fee.
       # @param [Boolean] use_unfinalized_utxo If it's true, The ContractBuilder use unfinalized UTXO that is not
       #                                       included in the block in its inputs.
       # @raise [Glueby::ArgumentError] If the fee_estimator is not :auto or :fixed
       def initialize(
         sender_wallet:,
         fee_estimator: :auto,
-        use_auto_fee: false,
         use_auto_fulfill_inputs: false,
         use_unfinalized_utxo: false
       )
         @sender_wallet = sender_wallet
         set_fee_estimator(fee_estimator)
-        @use_auto_fee = use_auto_fulfill_inputs || use_auto_fee
         @use_auto_fulfill_inputs = use_auto_fulfill_inputs
         @use_unfinalized_utxo = use_unfinalized_utxo
         @p2c_utxos = []
@@ -213,27 +205,20 @@ module Glueby
 
       alias :original_build :build
       def build
-        auto_fulfill_inputs if use_auto_fulfill_inputs
+        auto_fulfill_inputs_utxos_for_color if use_auto_fulfill_inputs
 
         tx = Tapyrus::Tx.new
-
         set_tpc_change_address
-        auto_fee_with_sender_wallet if @use_auto_fee && !Glueby.configuration.use_utxo_provider?
-
         expand_input(tx)
         @outputs.each { |output| tx.outputs << output }
-
         add_change_for_colored_coin(tx)
 
-        if @use_auto_fee && Glueby.configuration.use_utxo_provider?
-          auto_fee_with_utxo_provider(tx)
-        else
-          add_change_for_tpc(tx)
-        end
+
+        change, provided_utxos = auto_fulfill_inputs_utxos_for_tpc(tx) if use_auto_fulfill_inputs
+        add_change_for_tpc(tx, change)
 
         add_dummy_output(tx)
-
-        sign(tx)
+        sign(tx, provided_utxos)
       end
 
       def change_address(address, color_id = Tapyrus::Color::ColorIdentifier.default)
@@ -267,14 +252,21 @@ module Glueby
         fee_estimator.fee(Contract::FeeEstimator.dummy_tx(tx))
       end
 
-      def sign(tx)
-        utxos = @utxos.map { |u| to_sign_tx_utxo_hash(u) }
+      def sign(tx, extra_utxos)
+        utxos = @utxos.map { |u| to_sign_tx_utxo_hash(u) } + (extra_utxos || [])
+
+        # Sign inputs from sender_wallet
         tx = sender_wallet.sign_tx(tx, utxos)
 
+        # Sign inputs which is pay to contract output
         @p2c_utxos.each do |utxo|
           tx = sender_wallet
                  .sign_to_pay_to_contract_address(tx, utxo, utxo[:payment_base], utxo[:metadata])
         end
+
+        # Sign inputs from UtxoProvider
+        Glueby::UtxoProvider.instance.wallet.sign_tx(tx, utxos) if Glueby.configuration.use_utxo_provider?
+
         tx
       end
 
@@ -302,12 +294,14 @@ module Glueby
         tx
       end
 
-      def add_change_for_tpc(tx)
+      def add_change_for_tpc(tx, change = nil)
         raise Glueby::ArgumentError, "The change address for TPC must be set." unless @change_script_pubkey
-        in_amount = @incomings[Tapyrus::Color::ColorIdentifier.default] || 0
-        out_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
+        change ||= begin
+                     in_amount = @incomings[Tapyrus::Color::ColorIdentifier.default] || 0
+                     out_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
 
-        change = in_amount - out_amount - estimated_fee
+                     in_amount - out_amount - estimated_fee
+                   end
 
         raise Contract::Errors::InsufficientFunds if change < 0
 
@@ -319,21 +313,29 @@ module Glueby
         tx
       end
 
-      def auto_fulfill_inputs
-        # fulfill TPC inputs
-        in_amount = @incomings[Tapyrus::Color::ColorIdentifier.default] || 0
-        out_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
-        target_amount = if Glueby.configuration.use_utxo_provider?
-                          out_amount - in_amount
-                        else
-                          (out_amount + estimate_fee) - in_amount
-                        end
+      # @return [Integer] The TPC change amount
+      # @return [Array<Hash>] The provided UTXOs
+      def auto_fulfill_inputs_utxos_for_tpc(tx)
+        target_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
 
-        if target_amount > 0
-          auto_fulfill_inputs_utxos_for_tpc(target_amount)
-            .each { |utxo| add_utxo(utxo) }
-        end
+        provider = if Glueby.configuration.use_utxo_provider?
+                     UtxoProvider.instance
+                   else
+                     sender_wallet
+                   end
 
+        _tx, fee, tpc_amount, provided_utxos = provider.fill_uncolored_inputs(
+          tx,
+          target_amount: target_amount,
+          current_amount: @incomings[Tapyrus::Color::ColorIdentifier.default] || 0,
+          fee_estimator: fee_estimator
+        )
+
+        change = tpc_amount - target_amount - fee
+        [change, provided_utxos]
+      end
+
+      def auto_fulfill_inputs_utxos_for_color
         # fulfill colored inputs
         @outgoings.each do |color_id, outgoing_amount|
           next if color_id.default?
@@ -341,33 +343,16 @@ module Glueby
           target_amount = outgoing_amount - (@incomings[color_id] || 0) - @issues[color_id]
           next if target_amount <= 0
 
-          auto_fulfill_inputs_utxos_for_color(color_id, target_amount)
+          @sender_wallet.collect_colored_outputs(
+            color_id,
+            target_amount,
+            nil,
+            use_only_finalized_utxo,
+            true
+          )[1]
             .each { |utxo| add_utxo(utxo) }
         end
-      end
 
-      def auto_fulfill_inputs_utxos_for_tpc(target_amount)
-        wallet = if Glueby.configuration.use_utxo_provider?
-                   Glueby::UtxoProvider.instance.wallet
-                 else
-                   @sender_wallet
-                 end
-        wallet.collect_uncolored_outputs(
-          target_amount,
-          nil,
-          use_only_finalized_utxo,
-          true
-        )[1]
-      end
-
-      def auto_fulfill_inputs_utxos_for_color(color_id, target_amount)
-        @sender_wallet.collect_colored_outputs(
-          color_id,
-          target_amount,
-          nil,
-          use_only_finalized_utxo,
-          true
-        )[1]
       end
 
       def get_fee_estimator(fee_estimator_name)
@@ -376,42 +361,6 @@ module Glueby
 
       def valid_fee_estimator?(fee_estimator)
         [:fixed, :auto].include?(fee_estimator)
-      end
-
-      def auto_fee_with_utxo_provider(tx)
-        # If fee_provider_bears is true, estimated_fee is 0.
-        return if estimated_fee == 0
-
-        utxo_provider = UtxoProvider.instance
-        target_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
-        tx, fee, tpc_amount, provided_utxos = utxo_provider.fill_inputs(
-          tx,
-          target_amount: target_amount,
-          current_amount: @incomings[Tapyrus::Color::ColorIdentifier.default] || 0,
-          fee_estimator: fee_estimator
-        )
-
-        change = tpc_amount - target_amount - fee
-
-        if change >= DUST_LIMIT
-          change_script = Tapyrus::Script.parse_from_addr(utxo_provider.wallet.change_address)
-          tx.outputs << Tapyrus::TxOut.new(value: change, script_pubkey: change_script)
-        end
-
-        utxo_provider.wallet.sign_tx(tx, provided_utxos)
-      end
-
-      def auto_fee_with_sender_wallet
-        # If it uses auto fulfill inputs feature, #auto_fulfill_inputs method adds TPC UTXOs includes fee.
-        return if @use_auto_fulfill_inputs
-
-        # FIXME: If fee is 0, here add all TPC UTXOs in the issuer wallet. If the estimated_fee is zero, here should do nothing.
-        amount = estimated_fee == 0 ? nil : estimated_fee
-
-        # TODO: Support the case of increasing fee by adding multiple inputs
-        _, outputs = sender_wallet
-                       .collect_uncolored_outputs(amount, nil, use_only_finalized_utxo)
-        outputs.each { |o| add_utxo(o) }
       end
 
       def use_only_finalized_utxo
