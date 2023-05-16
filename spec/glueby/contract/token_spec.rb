@@ -545,7 +545,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
         expect(internal_wallet).to receive(:broadcast).once do |tx|
           # 1 colored input(100_000 token), 1 uncolored inputs(1_000 tapyrus)
           # Fee is 455 tapyrus, so 545 tapyrus is change. But the change amount is less than 546, so the change
-          # output is not created. 550 tapyrus is also pay as fee.
+          # output is not created. 545 tapyrus is also pay as fee.
           expect(tx.inputs.count).to eq(2)
           expect(tx.outputs.count).to eq(1)
           expect(tx.outputs[0].value).to eq(50_000)

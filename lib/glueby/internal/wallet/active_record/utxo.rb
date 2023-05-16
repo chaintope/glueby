@@ -49,8 +49,9 @@ module Glueby
         private
 
           def check_dust_output
-            if !color_id && value < DUST_LIMIT
-              errors.add(:value, "is less than dust limit(#{DUST_LIMIT})")
+            output = Tapyrus::TxOut.new(value: value, script_pubkey: Tapyrus::Script.parse_from_payload(script_pubkey.htb))
+            if !color_id && output.dust?
+              errors.add(:value, "is less than dust limit(#{output.send(:dust_threshold)})")
             end
           end
         end
