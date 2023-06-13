@@ -1,3 +1,3 @@
 module Glueby
-  VERSION = "1.1.2"
+  VERSION = "1.2.0-alpha.1"
 end
