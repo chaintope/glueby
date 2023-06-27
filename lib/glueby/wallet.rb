@@ -22,6 +22,9 @@ module Glueby
         when 'activerecord'
           Glueby::Internal::RPC.configure(config)
           Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
+        when 'mysql'
+          Glueby::Internal::RPC.configure(config)
+          Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::MySQLWalletAdapter.new
         else
           raise 'Not implemented'
         end
