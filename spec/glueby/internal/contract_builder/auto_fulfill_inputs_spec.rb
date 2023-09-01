@@ -162,7 +162,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
         Glueby.configuration.enable_utxo_provider!
 
         # Here should funds tapyrus UTXOs from UtxoProvider and colored coins UTXOs from sender's wallet
-        fund_to_wallet(Glueby::UtxoProvider.instance.wallet, count: 4)
+        fund_to_wallet(Glueby::UtxoProvider.new.wallet, count: 4)
         fund_to_wallet(sender_wallet, color_id: valid_reissuable_color_id, count: 4)
       end
 

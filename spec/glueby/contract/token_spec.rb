@@ -67,7 +67,7 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
     before do
       Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new
       Glueby.configuration.enable_utxo_provider!
-      privider = Glueby::UtxoProvider.instance
+      Glueby::UtxoProvider.new
 
       # 20 Utxos are pooled.
       (0...utxos).each do |i|

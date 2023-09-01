@@ -378,11 +378,10 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: Glueby::UtxoProvider::WALLET_ID)
       end
       let(:key) { provider_wallet.keys.create(purpose: :receive) }
-      let(:utxo_provider) { Glueby::UtxoProvider.instance }
 
       before do
         Glueby.configuration.enable_utxo_provider!
-        Glueby::UtxoProvider.instance
+        Glueby::UtxoProvider.new
 
         # 20 Utxos are pooled.
         (0...21).each do |i|

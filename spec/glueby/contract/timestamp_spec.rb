@@ -297,7 +297,7 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           end
         end
 
-        let(:utxo_provider) { Glueby::UtxoProvider.instance }
+        let(:utxo_provider) { Glueby::UtxoProvider.new }
         let(:wallet_adapter) { double(:wallet_adapter) }
 
         before do
