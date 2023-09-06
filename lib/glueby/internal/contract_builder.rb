@@ -131,7 +131,7 @@ module Glueby
         tx, index = nil
 
         if Glueby.configuration.use_utxo_provider? || utxo_provider
-          utxo_provider ||= UtxoProvider.instance
+          utxo_provider ||= UtxoProvider.new
           script_pubkey = Tapyrus::Script.parse_from_addr(address)
           tx, index = utxo_provider.get_utxo(script_pubkey, amount)
         else
@@ -265,14 +265,14 @@ module Glueby
         end
 
         # Sign inputs from UtxoProvider
-        Glueby::UtxoProvider.instance.wallet.sign_tx(tx, utxos) if Glueby.configuration.use_utxo_provider?
+        Glueby::UtxoProvider.new.wallet.sign_tx(tx, utxos) if Glueby.configuration.use_utxo_provider?
 
         tx
       end
 
       def set_tpc_change_address
         if Glueby.configuration.use_utxo_provider?
-          change_address(UtxoProvider.instance.wallet.change_address)
+          change_address(UtxoProvider.new.wallet.change_address)
         else
           change_address(@sender_wallet.change_address)
         end
@@ -319,7 +319,7 @@ module Glueby
         target_amount = @outgoings[Tapyrus::Color::ColorIdentifier.default] || 0
 
         provider = if Glueby.configuration.use_utxo_provider?
-                     UtxoProvider.instance
+                     UtxoProvider.new
                    else
                      sender_wallet
                    end

@@ -58,6 +58,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
         include_context 'setup utxo provider'
 
         let(:sender) { Glueby::Wallet.create }
+        let(:utxo_provider) { Glueby::UtxoProvider.new }
 
         it do
           # Add timestamp job to timestamps table
@@ -76,7 +77,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
           # tapyrus to the UTXO Provider's wallet. So, it should consume two UTXOs from UTXO Provider.
           expect do
             Rake.application['glueby:contract:timestamp:create'].execute
-          end.to change { Glueby::UtxoProvider.instance.wallet.list_unspent.count }.by(-2)
+          end.to change { utxo_provider.wallet.list_unspent.count }.by(-2)
 
           ar.reload
           expect(sender.balances(false)['']).to be_nil
@@ -107,7 +108,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
           )
           expect do
             Rake.application['glueby:contract:timestamp:create'].execute
-          end.to change { Glueby::UtxoProvider.instance.wallet.list_unspent.count }.by(-2)
+          end.to change { utxo_provider.wallet.list_unspent.count }.by(-2)
 
           update_ar.reload
           # expect(sender.balances(false)['']).to be_nil
@@ -136,7 +137,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
               Glueby::Contract::Errors::PrevTimestampAlreadyUpdated,
               /The previous timestamp\(id: [0-9]+\) was already updated/
             )
-            .and change { Glueby::UtxoProvider.instance.wallet.list_unspent.count }.by(0) # never consume UTXO pool and never broadcast any tx.
+            .and change { utxo_provider.wallet.list_unspent.count }.by(0) # never consume UTXO pool and never broadcast any tx.
         end
       end
     end
@@ -248,13 +249,14 @@ RSpec.describe 'Timestamp Contract', functional: true do
         include_context 'setup utxo provider'
 
         let(:sender) { Glueby::Wallet.create }
+        let(:utxo_provider) { Glueby::UtxoProvider.new }
 
         it 'use Glueby::Contract::Timestamp directly' do
           timestamp = Glueby::Contract::Timestamp.new(
             wallet: sender,
             content: "\xFF\xFF\xFF",
             prefix: 'app',
-            utxo_provider: Glueby::UtxoProvider.instance
+            utxo_provider: utxo_provider
           )
           timestamp.save!
 
@@ -271,7 +273,7 @@ RSpec.describe 'Timestamp Contract', functional: true do
           # and it should consume one UTXO in UtxoProvider
           expect do
             Rake.application['glueby:contract:timestamp:create'].execute
-          end.to change { Glueby::UtxoProvider.instance.wallet.list_unspent.count }.by(-1)
+          end.to change { utxo_provider.wallet.list_unspent.count }.by(-1)
           ar.reload
           expect(sender.balances(false)['']).to be_nil
           expect(ar.status).to eq('unconfirmed')

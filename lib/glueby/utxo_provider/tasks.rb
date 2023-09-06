@@ -13,7 +13,7 @@ module Glueby
       }
 
       def initialize
-        @utxo_provider = Glueby::UtxoProvider.instance
+        @utxo_provider = Glueby::UtxoProvider.new
       end
 
       # Create UTXOs for paying tpc
