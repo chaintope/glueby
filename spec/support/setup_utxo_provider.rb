@@ -15,7 +15,7 @@ RSpec.shared_context 'setup utxo provider' do
       }
     end
     # create UTXOs in the UTXO pool
-    utxo_provider = Glueby::UtxoProvider.instance
+    utxo_provider = Glueby::UtxoProvider.new
     wallet = utxo_provider.wallet
     process_block(to_address: wallet.receive_address)
     Rake.application['glueby:utxo_provider:manage_utxo_pool'].execute

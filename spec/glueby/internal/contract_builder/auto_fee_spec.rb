@@ -167,7 +167,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
     context 'UtxoProvider is enabled' do
       before do
         Glueby.configuration.enable_utxo_provider!
-        fund_to_wallet(Glueby::UtxoProvider.instance.wallet)
+        fund_to_wallet(Glueby::UtxoProvider.new.wallet)
       end
 
       after do

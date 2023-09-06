@@ -488,6 +488,7 @@ RSpec.describe 'Token Contract', functional: true do
   context 'use mysql', mysql: true do
     include_context 'setup utxo provider'
     let(:utxo_pool_size) { 40 }
+    let(:utxo_provider) { Glueby::UtxoProvider.new }
 
     let(:sender) { Glueby::Wallet.create }
     let(:receiver) { Glueby::Wallet.create }
@@ -510,7 +511,7 @@ RSpec.describe 'Token Contract', functional: true do
     end
 
     it 'broadast transactions with no error on multi thread' do
-      expect(Glueby::UtxoProvider.instance.current_utxo_pool_size).to eq utxo_pool_size
+      expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size
       tokens = issue_on_multi_thread(count)
       process_block
 
@@ -519,7 +520,7 @@ RSpec.describe 'Token Contract', functional: true do
         expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
       end
 
-      expect(Glueby::UtxoProvider.instance.current_utxo_pool_size).to eq utxo_pool_size - count
+      expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size - count
     end
   end
 end

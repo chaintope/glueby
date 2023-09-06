@@ -6,7 +6,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   end
 
   shared_context 'Use UtxoProvider' do
-    let(:utxo_provider) { Glueby::UtxoProvider.instance }
+    let(:utxo_provider) { Glueby::UtxoProvider.new }
     let(:wallet_adapter) { double(:wallet_adapter) }
     let(:utxo_provider_wallet) { TestInternalWallet.new }
     let(:pool_outputs) do

@@ -1,7 +1,5 @@
 module Glueby
   class UtxoProvider
-    include Singleton
-
     autoload :Tasks, 'glueby/utxo_provider/tasks'
 
     WALLET_ID = 'UTXO_PROVIDER_WALLET'

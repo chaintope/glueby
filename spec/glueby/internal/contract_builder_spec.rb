@@ -223,7 +223,7 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
 
     before do
       fund_to_wallet(sender_wallet)
-      fund_to_wallet(Glueby::UtxoProvider.instance.wallet)
+      fund_to_wallet(Glueby::UtxoProvider.new.wallet)
       fund_to_wallet(Glueby::FeeProvider.new.wallet)
     end
 
