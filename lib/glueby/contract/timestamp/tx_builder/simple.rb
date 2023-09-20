@@ -23,7 +23,7 @@ module Glueby
             @data = data
 
             contents = [prefix, data].map do |content|
-              content.bytes.map { |i| i.to_s(16) }.join
+              content.unpack1('H*')
             end
 
             @txb.data(*contents)
