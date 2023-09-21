@@ -510,7 +510,7 @@ RSpec.describe 'Token Contract', functional: true do
       threads.map { |t| t.value }
     end
 
-    it 'broadast transactions with no error on multi thread' do
+    it 'broadcast transactions with no error on multi thread' do
       expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size
       tokens = issue_on_multi_thread(count)
       process_block
@@ -521,6 +521,44 @@ RSpec.describe 'Token Contract', functional: true do
       end
 
       expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size - count
+    end
+
+    context 'transferring token' do
+      let(:issue_amount) { 100_000 }
+      let(:token) do
+        token, _tx = Glueby::Contract::Token.issue!(
+          issuer: sender,
+          token_type: Tapyrus::Color::TokenTypes::REISSUABLE,
+          split: count,
+          amount: issue_amount
+        )
+        process_block
+        token
+      end
+      def transfer_on_multi_thread(count)
+        threads = count.times.map do
+          Thread.new do
+            result = token.transfer!(
+              sender: sender,
+              receiver_address: receiver.internal_wallet.receive_address,
+              amount: issue_amount / count,
+              fee_estimator: Glueby::Contract::FeeEstimator::Auto.new
+            )
+            result
+          end
+        end
+        threads.map { |t| t.value }
+      end
+
+      it 'broadast transactions with no error on multi thread' do
+        expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size
+        transfer_on_multi_thread(count)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(receiver.balances(false)[token.color_id.to_hex]).to eq(issue_amount)
+        expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size - (count + 1)
+      end
     end
   end
 end
