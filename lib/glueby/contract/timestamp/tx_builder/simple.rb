@@ -22,10 +22,7 @@ module Glueby
             @prefix = prefix
             @data = data
 
-            contents = [prefix, data].map do |content|
-              content.unpack1('H*')
-            end
-
+            contents = [prefix, data].map(&:bth)
             @txb.data(*contents)
             self
           end

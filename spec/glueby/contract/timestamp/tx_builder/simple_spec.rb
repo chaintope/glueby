@@ -94,7 +94,7 @@ RSpec.describe 'Glueby::Contract::TimestampTxBuilder::Simple', active_record: tr
     end
 
     context 'it gets a prefix that has a single hexadecimal digit' do
-      let(:prefix) { 'prefix' }
+      let(:prefix) { "prefix\x01" }
 
       it 'set correct OP_RETURN data' do
         tx = builder.build
@@ -103,7 +103,7 @@ RSpec.describe 'Glueby::Contract::TimestampTxBuilder::Simple', active_record: tr
     end
 
     context 'it gets a content that has a single hexadecimal digit' do
-      let(:content) { 'content' }
+      let(:content) { "content\x01" }
 
       it 'set correct OP_RETURN data' do
         tx = builder.build
