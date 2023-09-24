@@ -14,11 +14,13 @@ module Glueby
         validate :validate_prev
 
         class << self
-          def digest_content(content, digest)
+          def digest_content(content, digest, hex = false)
             case digest&.downcase
             when :sha256
+              content = hex ? content.htb : content
               Tapyrus.sha256(content).bth
             when :double_sha256
+              content = hex ? content.htb : content
               Tapyrus.double_sha256(content).bth
             when :none
               content
@@ -33,17 +35,20 @@ module Glueby
         # - content
         # - prefix(optional)
         # - timestamp_type(optional)
+        # - hex(optional) [Boolean] 
         # @raise [Glueby::ArgumentError] If the timestamp_type is not in :simple or :trackable
         def initialize(attributes = nil)
           # Set content_hash from :content attribute
-          content_hash = Timestamp.digest_content(attributes[:content], attributes[:digest] || :sha256)
+          hex = attributes[:hex] || false
+          content_hash = Timestamp.digest_content(attributes[:content], attributes[:digest] || :sha256, hex)
           super(
             wallet_id: attributes[:wallet_id],
             content_hash: content_hash,
-            prefix: attributes[:prefix] ? attributes[:prefix] : '',
+            prefix: attributes[:prefix] || '',
             status: :init,
             timestamp_type: attributes[:timestamp_type] || :simple,
-            prev_id: attributes[:prev_id]
+            prev_id: attributes[:prev_id],
+            hex: hex
           )
         rescue ::ArgumentError => e
           raise Glueby::ArgumentError, e.message
@@ -142,6 +147,8 @@ module Glueby
             )
           end
 
+          prefix = hex ? self.prefix&.htb : self.prefix
+          content_hash = hex ? self.content_hash&.htb : self.content_hash
           tx = builder.set_data(prefix, content_hash)
                       .set_inputs(utxo_provider)
                       .build

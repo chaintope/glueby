@@ -29,6 +29,7 @@ module Glueby
       # - :simple
       # - :trackable
       # @param [Integer] prev_timestamp_id The id column of glueby_timestamps that will be updated by the timestamp that will be created
+      # @param [Boolean] if true, prefix and content are treated as hex strings
       # @raise [Glueby::Contract::Errors::UnsupportedDigestType] if digest is unsupported
       # @raise [Glueby::Contract::Errors::InvalidTimestampType] if timestamp_type is unsupported
       def initialize(
@@ -39,7 +40,8 @@ module Glueby
         digest: :sha256,
         utxo_provider: nil,
         timestamp_type: :simple,
-        prev_timestamp_id: nil
+        prev_timestamp_id: nil,
+        hex: false
       )
         @wallet = wallet
         @content = content
@@ -51,6 +53,7 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidTimestampType, "#{timestamp_type} is invalid type, supported types are :simple, and :trackable." unless [:simple, :trackable].include?(timestamp_type)
         @timestamp_type = timestamp_type
         @prev_timestamp_id = prev_timestamp_id
+        @hex = hex
       end
 
       # broadcast to Tapyrus Core
@@ -66,7 +69,8 @@ module Glueby
           content: @content,
           timestamp_type: @timestamp_type,
           digest: @digest,
-          prev_id: @prev_timestamp_id
+          prev_id: @prev_timestamp_id,
+          hex: @hex
         )
         @ar.save_with_broadcast!(fee_estimator: @fee_estimator, utxo_provider: @utxo_provider)
         @ar.txid
