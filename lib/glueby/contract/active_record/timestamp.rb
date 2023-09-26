@@ -35,7 +35,7 @@ module Glueby
         # - content
         # - prefix(optional)
         # - timestamp_type(optional)
-        # - hex(optional) [Boolean] 
+        # - hex(optional) [Boolean] If true, the strings set in prefix and content are treated as hex strings.
         # @raise [Glueby::ArgumentError] If the timestamp_type is not in :simple or :trackable
         def initialize(attributes = nil)
           # Set content_hash from :content attribute

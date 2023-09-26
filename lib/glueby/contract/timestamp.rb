@@ -29,7 +29,7 @@ module Glueby
       # - :simple
       # - :trackable
       # @param [Integer] prev_timestamp_id The id column of glueby_timestamps that will be updated by the timestamp that will be created
-      # @param [Boolean] if true, prefix and content are treated as hex strings
+      # @param [Boolean] hex If true, prefix and content are treated as hex strings
       # @raise [Glueby::Contract::Errors::UnsupportedDigestType] if digest is unsupported
       # @raise [Glueby::Contract::Errors::InvalidTimestampType] if timestamp_type is unsupported
       def initialize(

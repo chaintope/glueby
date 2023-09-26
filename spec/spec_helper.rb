@@ -124,7 +124,7 @@ def setup_database(config: sqlite3_config)
     t.string   :payment_base
     t.bigint   :prev_id
     t.boolean  :latest, null: false, default: true
-    t.boolean  :hex, default: false
+    t.boolean  :hex, null: false, default: false
   end
   connection.add_index :glueby_timestamps, [:prev_id], unique: true
 
