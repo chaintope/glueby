@@ -348,6 +348,7 @@ module Glueby
             target_amount,
             nil,
             use_only_finalized_utxo,
+            true,
             true
           )[1]
             .each { |utxo| add_utxo(utxo) }
