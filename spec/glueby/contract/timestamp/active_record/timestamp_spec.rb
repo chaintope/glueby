@@ -232,6 +232,190 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
     it_behaves_like 'returns false if it raises an error' do
       let(:error_class) { Glueby::Contract::Errors::PrevTimestampAlreadyUpdated }
     end
+
+    shared_examples 'broadcast correct tx with op_return' do
+      let(:timestamp) do
+        Glueby::Contract::AR::Timestamp.new(
+          wallet_id: '00000000000000000000000000000000',
+          content: content,
+          prefix: prefix,
+          timestamp_type: :simple,
+          digest: digest,
+          prev_id: nil,
+          hex: hex
+        )
+      end
+      let(:rpc) { double('mock') }
+      let(:wallet) { Glueby::Wallet.create }
+      let(:address) { wallet.internal_wallet.receive_address }
+      let(:key) do
+        Glueby::Internal::Wallet::AR::Key.find_by(script_pubkey: Tapyrus::Script.parse_from_addr(address).to_hex)
+      end
+
+      before do
+        Glueby.configuration.wallet_adapter = :activerecord
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'aa' * 32,
+          index: 1,
+          value: 20_000,
+          script_pubkey: '76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
+          status: :finalized,
+          key: key
+        )
+      end
+
+      it 'broadcast correct tx' do
+        allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
+        allow(rpc).to receive(:sendrawtransaction)
+        allow(Glueby::Wallet).to receive(:load).with("00000000000000000000000000000000").and_return(wallet)
+
+        subject
+
+        expect(rpc).to have_received(:sendrawtransaction) do |hex|
+          tx = Tapyrus::Tx.parse_from_payload(hex.htb)
+          expect(tx.outputs.first.script_pubkey.op_return_data).to eq op_return
+        end
+      end
+    end
+
+    shared_examples 'broadcast correct trackable tx' do
+      let(:timestamp) do
+        Glueby::Contract::AR::Timestamp.new(
+          wallet_id: '00000000000000000000000000000000',
+          content: content,
+          prefix: prefix,
+          timestamp_type: :trackable,
+          digest: digest,
+          prev_id: nil,
+          hex: hex
+        )
+      end
+      let(:rpc) { double('mock') }
+      let(:wallet) { Glueby::Wallet.create }
+      let(:address) { wallet.internal_wallet.receive_address }
+      let(:key) do
+        Glueby::Internal::Wallet::AR::Key.find_by(script_pubkey: Tapyrus::Script.parse_from_addr(address).to_hex)
+      end
+
+      before do
+        Glueby.configuration.wallet_adapter = :activerecord
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'aa' * 32,
+          index: 1,
+          value: 20_000,
+          script_pubkey: '76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
+          status: :finalized,
+          key: key
+        )
+      end
+
+      it 'broadcast correct tx' do
+        allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
+        allow(rpc).to receive(:sendrawtransaction)
+        allow(Glueby::Wallet).to receive(:load).with("00000000000000000000000000000000").and_return(wallet)
+
+        allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:create_pubkey).and_return(
+          Tapyrus::Key.new(priv_key: "c5580f6c26f83fb513dd5e0d1b03c36be26fcefa139b1720a7ca7c0dedd439c2")
+        )
+
+        subject
+
+        expect(rpc).to have_received(:sendrawtransaction) do |hex|
+          tx = Tapyrus::Tx.parse_from_payload(hex.htb)
+          expect(tx.outputs.first.script_pubkey.op_return?).to be_falsy
+          expect(tx.outputs.first.script_pubkey.to_hex).to eq script_pubkey
+        end
+      end
+    end
+
+    context 'build transaction', active_record: true do
+      let(:prefix) { "070122" }
+      let(:content) { "00010203040506070809" }
+
+      context 'simple type' do
+        let(:timestamp_type) { :simple }
+
+        context 'hex format' do
+          let(:hex) { true }
+
+          it_behaves_like 'broadcast correct tx with op_return' do
+            let(:digest) { :none }
+            let(:op_return) { "07012200010203040506070809".htb }
+          end
+
+          it_behaves_like 'broadcast correct tx with op_return' do
+            let(:digest) { :sha256 }
+            let(:op_return) { "0701221f825aa2f0020ef7cf91dfa30da4668d791c5d4824fc8e41354b89ec05795ab3".htb }
+          end
+
+          it_behaves_like 'broadcast correct tx with op_return' do
+            let(:digest) { :double_sha256 }
+            let(:op_return) { "07012231db1cf62c6a2f0791fa3b4f7e3134f63d22e80836a8e18d0358670b5b9ed487".htb }
+          end
+        end
+
+        context 'old format' do
+          let(:hex) { false }
+
+          it_behaves_like 'broadcast correct tx with op_return' do
+            let(:digest) { :none }
+            let(:op_return) { "07012200010203040506070809" }
+          end
+
+          it_behaves_like 'broadcast correct tx with op_return' do
+            let(:digest) { :sha256 }
+            let(:op_return) { "070122713bf898faa2588baac01468cca272ffacad71645e30ef6da3da2424c7cb26d9" }
+          end
+
+          it_behaves_like 'broadcast correct tx with op_return' do
+            let(:digest) { :double_sha256 }
+            let(:op_return) { "07012296091e2d474970e6e4c27831a4db039fe7b5ba83192521c409aae7c4226998fe" }
+          end
+        end
+      end
+
+      context 'trackable type' do
+        let(:timestamp_type) { :trackable }
+
+        context 'hex format' do
+          let(:hex) { true }
+
+          it_behaves_like 'broadcast correct trackable tx' do
+            let(:digest) { :none }
+            let(:script_pubkey) { "76a9145c9bfe38e6096cb3ba7f1d70ffa43091ad9850cb88ac" }
+          end
+
+          it_behaves_like 'broadcast correct trackable tx' do
+            let(:digest) { :sha256 }
+            let(:script_pubkey) { "76a91433da2f27131a56a2ec37429a63dd0b88f5a6800988ac" }
+          end
+
+          it_behaves_like 'broadcast correct trackable tx' do
+            let(:digest) { :double_sha256 }
+            let(:script_pubkey) { "76a914046e598dba82ef6684d1cef9f13e6b094f88ced988ac" }
+          end
+        end
+
+        context 'old format' do
+          let(:hex) { false }
+
+          it_behaves_like 'broadcast correct trackable tx' do
+            let(:digest) { :none }
+            let(:script_pubkey) { "76a91447bbdadaa6abe3d853f6ed2dbb08dc60fcfc759d88ac" }
+          end
+
+          it_behaves_like 'broadcast correct trackable tx' do
+            let(:digest) { :sha256 }
+            let(:script_pubkey) { "76a9146eb7cba3bf5fdf656b456f678651226cfb5147e188ac" }
+          end
+
+          it_behaves_like 'broadcast correct trackable tx' do
+            let(:digest) { :double_sha256 }
+            let(:script_pubkey) { "76a914349b8706473e55911ac9c24c90fb40d83572697a88ac" }
+          end
+        end
+      end
+    end
   end
 
   describe '#save_with_broadcast!' do
