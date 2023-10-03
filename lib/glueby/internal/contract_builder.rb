@@ -130,26 +130,26 @@ module Glueby
       )
         tx, index = nil
 
-        if Glueby.configuration.use_utxo_provider? || utxo_provider
-          utxo_provider ||= UtxoProvider.new
-          script_pubkey = Tapyrus::Script.parse_from_addr(address)
-          tx, index = utxo_provider.get_utxo(script_pubkey, amount)
-        else
-          fee_estimator ||= @fee_estimator
-          txb = Tapyrus::TxBuilder.new
-          fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(txb.build))
-          _sum, utxos = sender_wallet
-                         .collect_uncolored_outputs(fee + amount, nil, only_finalized)
-          utxos.each { |utxo| txb.add_utxo(to_tapyrusrb_utxo_hash(utxo)) }
-          tx = txb.pay(address, amount)
-                  .change_address(sender_wallet.change_address)
-                  .fee(fee)
-                  .build
-          sender_wallet.sign_tx(tx)
-          index = 0
-        end
-
         ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+          if Glueby.configuration.use_utxo_provider? || utxo_provider
+            utxo_provider ||= UtxoProvider.new
+            script_pubkey = Tapyrus::Script.parse_from_addr(address)
+            tx, index = utxo_provider.get_utxo(script_pubkey, amount)
+          else
+            fee_estimator ||= @fee_estimator
+            txb = Tapyrus::TxBuilder.new
+            fee = fee_estimator.fee(Contract::FeeEstimator.dummy_tx(txb.build))
+            _sum, utxos = sender_wallet
+                           .collect_uncolored_outputs(fee + amount, nil, only_finalized)
+            utxos.each { |utxo| txb.add_utxo(to_tapyrusrb_utxo_hash(utxo)) }
+            tx = txb.pay(address, amount)
+                    .change_address(sender_wallet.change_address)
+                    .fee(fee)
+                    .build
+            sender_wallet.sign_tx(tx)
+            index = 0
+          end
+
           # Here needs to use the return tx from Internal::Wallet#broadcast because the txid
           # is changed if you enable FeeProvider.
           tx = sender_wallet.broadcast(tx)

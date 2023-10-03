@@ -79,7 +79,6 @@ module Glueby
                          else
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
-
           [new(color_id: color_id), txs]
         end
 
@@ -354,7 +353,10 @@ module Glueby
           txb.pay(r[:address], r[:amount].to_i, color_id)
         end
 
-        tx = sender.internal_wallet.broadcast(txb.build)
+        tx = nil
+        ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+          tx = sender.internal_wallet.broadcast(txb.build)
+        end
         [color_id, tx]
       end
 
