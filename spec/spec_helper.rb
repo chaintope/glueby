@@ -22,6 +22,8 @@ RSpec.configure do |config|
   config.before(:each) do |example|
     if example.metadata[:active_record]
       setup_database
+
+      ActiveRecord::Base.logger = Logger.new(STDOUT) if ENV['DEBUG']
     end
 
     if example.metadata[:functional]
@@ -35,6 +37,8 @@ RSpec.configure do |config|
         MySQLContainer.setup
         MySQLContainer.start
         setup_database(config: MySQLContainer.config)
+
+        ActiveRecord::Base.logger = Logger.new(STDOUT) if ENV['DEBUG']
       end
     end
   end
