@@ -495,58 +495,61 @@ RSpec.describe 'Token Contract', functional: true do
     let(:before_balance) { sender.balances(false)[''] }
     let(:count) { 20 }
 
-    def issue_on_multi_thread(count)
-      threads = count.times.map do |i|
-        Thread.new do
-          issue
+    let(:issue_amount) { 100_000 }
+
+    shared_examples 'issuing token works correctly' do
+      def issue_on_multi_thread(count)
+        threads = count.times.map do |i|
+          Thread.new do
+            issue
+          end
+        end
+        # Each value is Token object
+        threads.map { |t| t.value }
+      end
+
+      def issue
+        token, _txs = Glueby::Contract::Token.issue!(
+          issuer: sender,
+          token_type: token_type,
+          amount: issue_amount
+        )
+        token
+      end
+
+      it 'broadcast transactions with no error on multi thread' do
+        expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size
+        tokens = issue_on_multi_thread(count)
+        process_block
+
+        expect(sender.balances(false)['']).to eq(before_balance)
+        tokens.each do |token|
+          expect(sender.balances(false)[token.color_id.to_hex]).to eq(issue_amount)
+        end
+
+        expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size - count
+      end
+
+      context 'broadcasting funding tx is failure' do
+        let(:count) { 1 }
+        let(:rpc) { double('mock') }
+
+        before do
+          allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
+          allow(rpc).to receive(:sendrawtransaction).and_raise(Tapyrus::RPC::Error.new(
+            '500',
+            'Internal Server Error',
+            { 'code' => -25, 'message' => 'Missing inputs'}))
+        end
+
+        it 'unlock UTXOs that are used as inputs' do
+          expect { issue }.to raise_error(Tapyrus::RPC::Error)
+          expect(Glueby::Internal::Wallet::AR::Utxo.where('locked_at is not null').count).to eq 0
         end
       end
-      # Each value is Token object
-      threads.map { |t| t.value }
     end
 
-    def issue
-      token, _txs = Glueby::Contract::Token.issue!(
-        issuer: sender,
-        token_type: Tapyrus::Color::TokenTypes::REISSUABLE,
-        amount: 10_000
-      )
-      token
-    end
-
-    it 'broadcast transactions with no error on multi thread' do
-      expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size
-      tokens = issue_on_multi_thread(count)
-      process_block
-
-      expect(sender.balances(false)['']).to eq(before_balance)
-      tokens.each do |token|
-        expect(sender.balances(false)[token.color_id.to_hex]).to eq(10_000)
-      end
-
-      expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size - count
-    end
-
-    context 'broadcasting funding tx is failure' do
-      let(:count) { 1 }
-      let(:rpc) { double('mock') }
-
-      before do
-        allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
-        allow(rpc).to receive(:sendrawtransaction).and_raise(Tapyrus::RPC::Error.new(
-          '500',
-          'Internal Server Error',
-          { 'code' => -25, 'message' => 'Missing inputs'}))
-      end
-
-      it 'unlock UTXOs that are used as inputs' do
-        expect { issue }.to raise_error(Tapyrus::RPC::Error)
-        expect(Glueby::Internal::Wallet::AR::Utxo.where('locked_at is not null').count).to eq 0
-      end
-    end
-
-    context 'transferring token' do
-      let(:issue_amount) { 100_000 }
+    shared_examples 'transferring token works correctly' do
       let!(:token) do
         token, _tx = Glueby::Contract::Token.issue!(
           issuer: sender,
@@ -559,6 +562,7 @@ RSpec.describe 'Token Contract', functional: true do
         process_block
         token
       end
+
       def transfer_on_multi_thread(count)
         threads = count.times.map do
           Thread.new { transfer(issue_amount / count) }
@@ -575,7 +579,9 @@ RSpec.describe 'Token Contract', functional: true do
         )
       end
 
-      it 'broadast transactions with no error on multi thread' do
+      it 'broadcast transactions with no error on multi thread' do
+        skip 'NFT cannot split to multiple UTXOs to transfer on multi thread.' if token_type == Tapyrus::Color::TokenTypes::NFT
+
         expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size
         transfer_on_multi_thread(count)
         process_block
@@ -602,6 +608,28 @@ RSpec.describe 'Token Contract', functional: true do
           expect(Glueby::Internal::Wallet::AR::Utxo.where('locked_at is not null').count).to eq 0
         end
       end
+    end
+
+    context 'REISSUABLE token' do
+      let(:token_type) { Tapyrus::Color::TokenTypes::REISSUABLE }
+
+      it_behaves_like 'issuing token works correctly'
+      it_behaves_like 'transferring token works correctly'
+    end
+
+    context 'NON_REISSUABLE token' do
+      let(:token_type) { Tapyrus::Color::TokenTypes::NON_REISSUABLE }
+
+      it_behaves_like 'issuing token works correctly'
+      it_behaves_like 'transferring token works correctly'
+    end
+
+    context 'NFT token' do
+      let(:token_type) { Tapyrus::Color::TokenTypes::NFT }
+      let(:issue_amount) { 1 }
+
+      it_behaves_like 'issuing token works correctly'
+      it_behaves_like 'transferring token works correctly'
     end
   end
 end
