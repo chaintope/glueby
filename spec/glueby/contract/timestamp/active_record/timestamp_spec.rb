@@ -443,7 +443,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       end
 
       it do
-        expect { subject }.to raise_error(Glueby::Contract::Errors::FailedToBroadcast, 'failed to broadcast (id=, reason=error message)')
+        expect { subject }.to raise_error(Glueby::Contract::Errors::FailedToBroadcast, 'failed to broadcast (id=1, reason=error message)')
       end
     end
 
