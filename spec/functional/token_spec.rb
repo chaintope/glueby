@@ -499,13 +499,9 @@ RSpec.describe 'Token Contract', functional: true do
 
     shared_examples 'issuing token works correctly' do
       def issue_on_multi_thread(count)
-        threads = count.times.map do |i|
-          Thread.new do
-            issue
-          end
+        on_multi_thread(count) do
+          issue
         end
-        # Each value is Token object
-        threads.map { |t| t.value }
       end
 
       def issue
@@ -564,10 +560,9 @@ RSpec.describe 'Token Contract', functional: true do
       end
 
       def transfer_on_multi_thread(count)
-        threads = count.times.map do
-          Thread.new { transfer(issue_amount / count) }
+        on_multi_thread(count) do
+          transfer(issue_amount / count)
         end
-        threads.map { |t| t.value }
       end
 
       def transfer(amount)
