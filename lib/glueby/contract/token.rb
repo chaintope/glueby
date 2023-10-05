@@ -375,7 +375,7 @@ module Glueby
         raise Glueby::Contract::Errors::InsufficientTokens unless balance
         raise Glueby::Contract::Errors::InsufficientTokens if balance < amount
 
-        tx = Internal::ContractBuilder
+        builder = Internal::ContractBuilder
                 .new(
                   sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,
@@ -384,9 +384,11 @@ module Glueby
                 )
                 .burn(amount, color_id)
                 .change_address(sender.internal_wallet.receive_address, color_id)
-                .build
 
-        sender.internal_wallet.broadcast(tx)
+        ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+          tx = builder.build
+          sender.internal_wallet.broadcast(tx)
+        end
       end
 
       # Return balance of token in the specified wallet.

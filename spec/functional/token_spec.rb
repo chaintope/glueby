@@ -605,11 +605,71 @@ RSpec.describe 'Token Contract', functional: true do
       end
     end
 
+    shared_examples 'burning token works correctly' do
+      let!(:token) do
+        token, _tx = Glueby::Contract::Token.issue!(
+          issuer: sender,
+          token_type: Tapyrus::Color::TokenTypes::REISSUABLE,
+          split: count,
+          amount: issue_amount
+        )
+
+        Rake.application['glueby:utxo_provider:manage_utxo_pool'].execute
+        process_block
+        token
+      end
+
+      def burn_on_multi_thread(count)
+        on_multi_thread(count) do
+          burn(issue_amount / count)
+        end
+      end
+
+      def burn(amount)
+        token.burn!(
+          sender: sender,
+          amount: amount,
+          fee_estimator: Glueby::Contract::FeeEstimator::Auto.new
+        )
+      end
+
+      it 'broadcast transactions with no error on multi thread' do
+        skip 'NFT cannot split to multiple UTXOs to burn on multi thread.' if token_type == Tapyrus::Color::TokenTypes::NFT
+
+        expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size
+        burn_on_multi_thread(count)
+        process_block
+
+        expect(sender.balances(false)['']).to be_nil
+        expect(sender.balances(false)[token.color_id.to_hex]).to be_nil
+        expect(utxo_provider.current_utxo_pool_size).to eq utxo_pool_size - count
+      end
+
+      context 'broadcasting is failure' do
+        let(:count) { 1 }
+        let(:rpc) { double('mock') }
+
+        before do
+          allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
+          allow(rpc).to receive(:sendrawtransaction).and_raise(Tapyrus::RPC::Error.new(
+            '500',
+            'Internal Server Error',
+            { 'code' => -25, 'message' => 'Missing inputs'}))
+        end
+
+        it 'unlock UTXOs that are used as inputs' do
+          expect { burn(issue_amount) }.to raise_error(Tapyrus::RPC::Error)
+          expect(Glueby::Internal::Wallet::AR::Utxo.where('locked_at is not null').count).to eq 0
+        end
+      end
+    end
+
     context 'REISSUABLE token' do
       let(:token_type) { Tapyrus::Color::TokenTypes::REISSUABLE }
 
       it_behaves_like 'issuing token works correctly'
       it_behaves_like 'transferring token works correctly'
+      it_behaves_like 'burning token works correctly'
     end
 
     context 'NON_REISSUABLE token' do
@@ -617,6 +677,7 @@ RSpec.describe 'Token Contract', functional: true do
 
       it_behaves_like 'issuing token works correctly'
       it_behaves_like 'transferring token works correctly'
+      it_behaves_like 'burning token works correctly'
     end
 
     context 'NFT token' do
@@ -625,6 +686,7 @@ RSpec.describe 'Token Contract', functional: true do
 
       it_behaves_like 'issuing token works correctly'
       it_behaves_like 'transferring token works correctly'
+      it_behaves_like 'burning token works correctly'
     end
   end
 end
