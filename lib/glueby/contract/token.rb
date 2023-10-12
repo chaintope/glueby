@@ -79,7 +79,6 @@ module Glueby
                          else
                            raise Glueby::Contract::Errors::UnsupportedTokenType
                          end
-
           [new(color_id: color_id), txs]
         end
 
@@ -135,7 +134,7 @@ module Glueby
           script_pubkey = funding_tx.outputs.first.script_pubkey
           color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
 
-          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+          Glueby::AR.transaction(isolation: :read_committed) do
             # Store the script_pubkey for reissue the token.
             Glueby::Contract::AR::ReissuableToken.create!(
               color_id: color_id.to_hex,
@@ -226,7 +225,7 @@ module Glueby
                     .build
           end
 
-          ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+          Glueby::AR.transaction(isolation: :read_committed) do
             if metadata
               p2c_utxo = txb.p2c_utxos.first
               Glueby::Contract::AR::TokenMetadata.create!(
@@ -354,7 +353,10 @@ module Glueby
           txb.pay(r[:address], r[:amount].to_i, color_id)
         end
 
-        tx = sender.internal_wallet.broadcast(txb.build)
+        tx = nil
+        Glueby::AR.transaction(isolation: :read_committed) do
+          tx = sender.internal_wallet.broadcast(txb.build)
+        end
         [color_id, tx]
       end
 
@@ -373,7 +375,7 @@ module Glueby
         raise Glueby::Contract::Errors::InsufficientTokens unless balance
         raise Glueby::Contract::Errors::InsufficientTokens if balance < amount
 
-        tx = Internal::ContractBuilder
+        builder = Internal::ContractBuilder
                 .new(
                   sender_wallet: sender.internal_wallet,
                   fee_estimator: fee_estimator,
@@ -382,9 +384,11 @@ module Glueby
                 )
                 .burn(amount, color_id)
                 .change_address(sender.internal_wallet.receive_address, color_id)
-                .build
 
-        sender.internal_wallet.broadcast(tx)
+        Glueby::AR.transaction(isolation: :read_committed) do
+          tx = builder.build
+          sender.internal_wallet.broadcast(tx)
+        end
       end
 
       # Return balance of token in the specified wallet.

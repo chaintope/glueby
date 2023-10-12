@@ -120,7 +120,7 @@ module Glueby
         end
 
         def broadcast(wallet_id, tx, &block)
-          ::ActiveRecord::Base.transaction do
+          ::ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
             AR::Utxo.destroy_for_inputs(tx)
             AR::Utxo.create_or_update_for_outputs(tx, status: :broadcasted)
             block.call(tx) if block
