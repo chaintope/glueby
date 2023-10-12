@@ -533,6 +533,33 @@ RSpec.describe 'Token Contract', functional: true, mysql: true do
           expect(Glueby::Internal::Wallet::AR::Utxo.where('locked_at is not null').count).to eq 0
         end
       end
+
+      context 'broadcasting issuing tx is failure' do
+        let(:count) { 1 }
+        let(:rpc) { double('mock') }
+
+        before do
+          allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
+          call_count = 0
+          allow(rpc).to receive(:sendrawtransaction) do |tx|
+            if call_count == 0
+              Tapyrus::Tx.parse_from_payload(tx.htb).txid
+            elsif call_count == 1
+              raise Tapyrus::RPC::Error.new(
+                '500',
+                'Internal Server Error',
+                { 'code' => -25, 'message' => 'Missing inputs'})
+            end
+
+            call_count += 1
+          end
+        end
+
+        it 'unlock UTXOs that are used as inputs' do
+          expect { issue }.to raise_error(Tapyrus::RPC::Error)
+          expect(Glueby::Internal::Wallet::AR::Utxo.where('locked_at is not null').count).to eq 0
+        end
+      end
     end
 
     shared_examples 'transferring token works correctly' do
