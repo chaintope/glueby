@@ -130,7 +130,7 @@ module Glueby
       )
         tx, index = nil
 
-        ActiveRecord::Base.transaction(joinable: false, requires_new: true) do
+        Glueby::AR.transaction(isolation: :read_committed) do
           if Glueby.configuration.use_utxo_provider? || utxo_provider
             utxo_provider ||= UtxoProvider.new
             script_pubkey = Tapyrus::Script.parse_from_addr(address)
