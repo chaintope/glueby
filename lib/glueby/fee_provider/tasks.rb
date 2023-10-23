@@ -90,16 +90,6 @@ module Glueby
 
       private
 
-      def check_wallet_amount!
-        if tpc_amount < fee_provider.fixed_fee
-          raise InsufficientTPC, <<~MESSAGE
-            FeeProvider has insufficient TPC to create fee outputs to fill the UTXO pool.
-            1. Please replenishment TPC which is for paying fee to FeeProvider. FeeProvider needs #{fee_provider.utxo_pool_size * fee_provider.fixed_fee} tapyrus at least. FeeProvider wallet's address is '#{wallet.receive_address}'
-            2. Then create UTXOs for paying in UTXO pool with 'rake glueby:fee_provider:manage_utxo_pool'
-          MESSAGE
-        end
-      end
-
       def tpc_amount
         wallet.balance(false)
       end
