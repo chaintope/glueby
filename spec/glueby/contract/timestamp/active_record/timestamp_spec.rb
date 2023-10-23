@@ -46,9 +46,11 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         wallet_id: '00000000000000000000000000000000',
         content: "\xFF\xFF\xFF",
         prefix: 'app',
+        digest: digest,
         timestamp_type: timestamp_type
       )
     end
+    let(:digest) { :sha256 }
     let(:timestamp_type) { :simple }
 
     context 'unknown timestamp type' do
@@ -56,6 +58,14 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
 
       it do
         expect { timestamp }.to raise_error(Glueby::ArgumentError, "'unknown' is not a valid timestamp_type")
+      end
+    end
+
+    context 'unknown digest type' do
+      let(:digest) { :unknown }
+
+      it do
+        expect { timestamp }.to raise_error(Glueby::Contract::Errors::UnsupportedDigestType)
       end
     end
 

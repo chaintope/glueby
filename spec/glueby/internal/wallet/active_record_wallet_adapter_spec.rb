@@ -407,6 +407,20 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       let(:addresses) { ["1Dc9f6MvAKB4L3xhzD61YMgd12JdsGUg6N", "17i5rxVcXsujjFZnEv6JkDK88Y8VsSXZ12"] }
       it { expect(subject).to eq([]) }
     end
+
+    context 'specify single address' do
+      let(:addresses) { '15JL32ZJTEeNUT7Fs348errZ8xmavXXhLp' }
+
+      it { expect(subject).to eq [valid_result.first] }
+    end
+
+    context 'If a RuntimeError occurs' do
+      it do
+        error = RuntimeError.new("errors in Script.parse_from_addr")
+        allow(Tapyrus::Script).to receive(:parse_from_addr).and_raise(error)
+        expect { subject }.to raise_error(RuntimeError, "errors in Script.parse_from_addr")
+      end
+    end
   end
 
   describe '#broadcast' do

@@ -114,6 +114,16 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
     end
   end
 
+  describe '#change_address' do
+    subject { provider.change_address }
+
+    it 'return address' do
+      wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: provider.wallet.id)
+      keys = wallet.keys.where(purpose: "change")
+      expect(subject).to eq(keys.first.address)
+    end
+  end
+
   describe "#default_value" do
     subject { provider.default_value }
 
@@ -265,5 +275,61 @@ RSpec.describe 'Glueby::UtxoProvider', active_record: true do
     end
 
     it { expect(subject).to eq(address) }
+  end
+
+  describe '#collect_uncolored_outputs' do
+    subject { provider.send(:collect_uncolored_outputs, provider.wallet, amount, excludes) }
+
+    before do
+      5.times do |i|
+        Glueby::Internal::Wallet::AR::Utxo.create(
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          index: i,
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          key: key,
+          value: 1_000,
+          status: :finalized
+        )
+      end
+    end
+
+    let(:key) do
+      wallet = Glueby::Internal::Wallet::AR::Wallet.find_by(wallet_id: provider.wallet.id)
+      wallet.keys.create(purpose: :receive)
+    end
+
+    let(:amount) { 4_500 }
+    let(:excludes) { [] }
+
+    it do
+      expect(subject[0]).to eq 5_000
+      expect(subject[1].size).to eq 5
+      expect(subject[1].map { |utxo| utxo[:vout] }).to match_array([0, 1, 2, 3, 4])
+    end
+
+    context 'excludes is specified' do
+      let(:amount) { 2_500 }
+      let(:excludes) do
+        [{
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          vout: 0,
+          amount: 1_000,
+          finalized: false
+        },{
+          txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+          script_pubkey: '76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
+          vout: 2,
+          amount: 1_000,
+          finalized: false
+        }]
+      end
+
+      it do
+        expect(subject[0]).to eq 3_000
+        expect(subject[1].size).to eq 3
+        expect(subject[1].map { |utxo| utxo[:vout] }).to match_array([1, 3, 4])
+      end
+    end
   end
 end

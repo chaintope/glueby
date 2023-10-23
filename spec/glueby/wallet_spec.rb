@@ -73,6 +73,38 @@ RSpec.describe 'Glueby::Wallet' do
   before { Glueby::Internal::Wallet.wallet_adapter = TestWalletAdapter.new }
   after { Glueby::Internal::Wallet.wallet_adapter = nil }
 
+  describe '.configure' do
+    subject do
+      Glueby::Wallet.configure(adapter: adapter)
+    end
+
+    context 'core' do
+      let(:adapter) { 'core' }
+      it do
+        subject
+        expect(Glueby::Internal::Wallet.wallet_adapter).to be_kind_of(Glueby::Internal::Wallet::TapyrusCoreWalletAdapter)
+      end
+    end
+    context 'activerecord' do
+      let(:adapter) { 'activerecord' }
+      it do
+        subject
+        expect(Glueby::Internal::Wallet.wallet_adapter).to be_kind_of(Glueby::Internal::Wallet::ActiveRecordWalletAdapter)
+      end
+    end
+    context 'mysql' do
+      let(:adapter) { 'mysql' }
+      it do
+        subject
+        expect(Glueby::Internal::Wallet.wallet_adapter).to be_kind_of(Glueby::Internal::Wallet::MySQLWalletAdapter)
+      end
+    end
+    context 'unsupported adapter' do
+      let(:adapter) { 'unknown' }
+      it { expect { subject }.to raise_error(RuntimeError, 'Not implemented') }
+    end
+  end
+
   describe '#balances' do
     subject { wallet.balances(only_finalized) }
 

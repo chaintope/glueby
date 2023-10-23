@@ -24,7 +24,7 @@ module Glueby
     end
 
     # Specify wallet adapter.
-    # @param [Symbol] adapter - The adapter type :activerecord or :core is currently supported.
+    # @param [Symbol] adapter - The adapter type :activerecord, :core, or :mysql is currently supported.
     def wallet_adapter=(adapter)
       case adapter
       when :core
