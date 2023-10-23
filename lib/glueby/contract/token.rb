@@ -86,26 +86,7 @@ module Glueby
           Glueby::AR::SystemInformation.use_only_finalized_utxo?
         end
 
-        # Sign to pay-to-contract output.
-        #
-        # @param issuer [Glueby::Walelt] Issuer of the token
-        # @param tx [Tapyrus::Tx] The transaction to be signed with metadata
-        # @param funding_tx [Tapyrus::Tx] The funding transaction that has pay-to-contract output in its first output
-        # @param payment_base [String] The public key used to generate pay to contract public key
-        # @param metadata [String] Data that represents token metadata
-        # @return [Tapyrus::Tx] signed tx
-        def sign_to_p2c_output(issuer, tx, funding_tx, payment_base, metadata)
-          utxo = { txid: funding_tx.txid, vout: 0, script_pubkey: funding_tx.outputs[0].script_pubkey.to_hex }
-          issuer.internal_wallet.sign_to_pay_to_contract_address(tx, utxo, payment_base, metadata)
-        end
-
         private
-
-        def create_p2c_address(wallet, metadata)
-          p2c_address, payment_base = wallet.internal_wallet.create_pay_to_contract_address(metadata)
-          script = Tapyrus::Script.parse_from_addr(p2c_address)
-          [script, p2c_address, payment_base]
-        end
 
         def issue_reissuable_token(issuer:, amount:, split: 1, fee_estimator:, metadata: nil)
           txb = Internal::ContractBuilder.new(
@@ -243,14 +224,6 @@ module Glueby
               [[tx], color_id]
             end
           end
-        end
-
-        # Add dummy inputs and outputs to tx for issue non-reissuable transaction and nft transaction
-        def dummy_issue_tx_from_out_point
-          tx = Tapyrus::Tx.new
-          receiver_colored_script = Tapyrus::Script.parse_from_payload('21c20000000000000000000000000000000000000000000000000000000000000000bc76a914000000000000000000000000000000000000000088ac'.htb)
-          tx.outputs << Tapyrus::TxOut.new(value: 0, script_pubkey: receiver_colored_script)
-          FeeEstimator.dummy_tx(tx)
         end
       end
 
