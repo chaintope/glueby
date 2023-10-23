@@ -4,9 +4,14 @@ require "tapyrus"
 require 'rake'
 require 'docker'
 require 'active_record'
+require 'simplecov'
 
 TAPYRUSD_CONTAINER_NAME = 'glueby-tapyrusd'
 TAPYRUSD_VERSION = 'v0.5.2'
+
+SimpleCov.start do
+  add_filter '/spec/'
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
