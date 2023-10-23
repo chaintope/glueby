@@ -166,7 +166,6 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
         end.to change { utxo_provider.wallet.list_unspent.count }.by(-2)
 
         update_ar.reload
-        # expect(sender.balances(false)['']).to be_nil
         expect(update_ar.status).to eq('unconfirmed')
         expect(update_ar.txid).not_to be_nil
         expect(update_ar.p2c_address).not_to be_nil
@@ -248,7 +247,6 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
           end.to change { utxo_provider.wallet.list_unspent.count }.by(-2)
   
           update_ar.reload
-          # expect(sender.balances(false)['']).to be_nil
           expect(update_ar.status).to eq('unconfirmed')
           expect(update_ar.txid).not_to be_nil
           expect(update_ar.p2c_address).not_to be_nil
