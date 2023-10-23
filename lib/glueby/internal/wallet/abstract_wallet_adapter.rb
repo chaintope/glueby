@@ -139,7 +139,7 @@ module Glueby
 
         # Returns information for the addresses
         #
-        # @param [String] address - The p2pkh address to get information about
+        # @param [String, Array<String>] addresses - The p2pkh address to get information about
         # @return [Array<Hash>] The array of hash instance which has keys wallet_id, label and purpose.
         #                       Returns blank array if the key correspond with the address is not exist.
         def get_addresses_info(addresses)

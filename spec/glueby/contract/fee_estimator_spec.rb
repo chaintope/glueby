@@ -13,4 +13,19 @@ RSpec.describe 'Glueby::Contract::FeeEstimator' do
       it { expect(subject.inputs.size).to eq 2 }
     end
   end
+
+  describe '#fee' do
+    subject { estimator.fee(tx) }
+
+    class Estimator
+      include Glueby::Contract::FeeEstimator
+    end
+
+    let(:estimator) { Estimator.new }
+    let(:tx) { Tapyrus::Tx.new }
+
+    it "Estimator#fee should be implemented" do
+      expect{subject}.to raise_error(NotImplementedError)
+    end
+  end
 end

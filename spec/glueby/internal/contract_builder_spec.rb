@@ -164,6 +164,24 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
         expect { subject }.to raise_error(Glueby::ArgumentError)
       end
     end
+
+    context 'when build' do
+      let(:use_auto_fulfill_inputs) { true }
+      let(:value) { 500 }
+
+      subject { instance.burn(value, color_id) }
+
+      before do
+        fund_to_wallet(sender_wallet)
+        fund_to_wallet(sender_wallet, color_id: )
+      end
+
+      context 'change address is not set' do
+        it 'raise Glueby::ArgumentError' do
+          expect { subject.build }.to raise_error(Glueby::ArgumentError, "The change address for color_id #{color_id.to_hex} must be set.")
+        end
+      end
+    end
   end
 
   describe '#add_utxo' do
@@ -228,6 +246,10 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
     end
 
     context 'FeeProvider is disabled' do
+      before do
+        Glueby.configuration.disable_fee_provider_bears!
+      end
+
       context 'when Glueby::UtxoProvider is enabled' do
         before do
           Glueby.configuration.enable_utxo_provider!
@@ -251,6 +273,10 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
       end
 
       context 'when Glueby::UtxoProvider is disabled' do
+        before do
+          Glueby.configuration.disable_utxo_provider!
+        end
+
         context 'fee_estimator is fixed' do
           let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
 
@@ -275,6 +301,14 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
       end
 
       context 'when Glueby::UtxoProvider is enabled' do
+        before do
+          Glueby.configuration.enable_utxo_provider!
+        end
+
+        after do
+          Glueby.configuration.disable_utxo_provider!
+        end
+
         context 'fee_estimator is fixed' do
           let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
 
@@ -289,6 +323,10 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
       end
 
       context 'when Glueby::UtxoProvider is disabled' do
+        before do
+          Glueby.configuration.disable_utxo_provider!
+        end
+
         context 'fee_estimator is fixed' do
           let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
 
@@ -367,6 +405,55 @@ RSpec.describe Glueby::Internal::ContractBuilder, active_record: true do
       end
 
       it_behaves_like 'correct behavior'
+    end
+  end
+
+  describe '#change_address' do
+    subject { instance.change_address(valid_address, color_id) }
+
+    let(:color_id) { Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey) }
+    let(:script_pubkey) { valid_script_pubkey }
+    let(:change_script_pubkey) do
+      Tapyrus::Script.parse_from_payload(
+        "21c12203665dc0c2fcd6cf83162fe9415baf2c1f15d2ccf6fe66547910686c76d99ebc76a9144c7cdc848b6ec74b741789a302df6b2238ccd34b88ac".htb
+      )
+    end
+
+    it do
+      expect { subject }.to change { instance.instance_variable_get('@change_script_pubkeys')[color_id]&.to_hex }
+        .from(nil).to(change_script_pubkey.to_hex)
+    end
+
+  end
+
+  describe "#set_fee_estimator" do
+    subject { instance }
+    
+    context 'fee_estimator is fixed' do
+      let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
+
+      it { expect(instance.fee_estimator).to be_kind_of Glueby::Contract::FeeEstimator::Fixed }
+      it { expect(instance.fee_estimator.fixed_fee).to eq 10_000 }
+    end
+
+    context 'fee_estimator is auto' do
+      let(:fee_estimator) { Glueby::Contract::FeeEstimator::Auto.new }
+
+      it { expect(instance.fee_estimator).to be_kind_of Glueby::Contract::FeeEstimator::Auto }
+      it { expect(instance.fee_estimator.fee_rate).to eq 1_000 }
+    end
+
+    context 'set fee_estimator as symbol' do
+      let(:fee_estimator) { :auto }
+
+      it { expect(instance.fee_estimator).to be_kind_of Glueby::Contract::FeeEstimator::Auto }
+      it { expect(instance.fee_estimator.fee_rate).to eq 1_000 }
+    end
+
+    context 'unsupported fee estimator' do
+      let(:fee_estimator) { :unspported }
+
+      it { expect { instance }.to raise_error(Glueby::ArgumentError, 'fee_estiamtor can be :fixed or :auto') }
     end
   end
 end

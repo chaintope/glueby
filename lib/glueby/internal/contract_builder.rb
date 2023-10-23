@@ -357,7 +357,7 @@ module Glueby
       end
 
       def get_fee_estimator(fee_estimator_name)
-        Glueby::Contract::FeeEstimator.get_const("#{fee_estimator_name.capitalize}", false).new
+        Glueby::Contract::FeeEstimator.const_get(fee_estimator_name.capitalize, false).new
       end
 
       def valid_fee_estimator?(fee_estimator)

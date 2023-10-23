@@ -14,6 +14,8 @@ RSpec.describe 'Glueby::Internal::Wallet' do
     Glueby::Internal::Wallet.wallet_adapter = nil
   end
 
+  let(:wallet) { Glueby::Internal::Wallet.create }
+
   describe 'create' do
     subject { Glueby::Internal::Wallet.create }
     it { should be_a Glueby::Internal::Wallet }
@@ -73,9 +75,27 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
   end
 
+  describe '.wallets', active_record: true do
+    subject { Glueby::Internal::Wallet.wallets }
+
+    context 'active record adapter' do
+      before { Glueby::Internal::Wallet.wallet_adapter = Glueby::Internal::Wallet::ActiveRecordWalletAdapter.new }
+      it do
+        wallet1 = Glueby::Internal::Wallet.create('00000000000000000000000000000001')
+        wallet2 = Glueby::Internal::Wallet.create('00000000000000000000000000000003')
+        wallet3 = Glueby::Internal::Wallet.create('00000000000000000000000000000002')
+
+        expect(subject.count).to eq 3
+        # Order by id
+        expect(subject[0].id).to eq wallet1.id
+        expect(subject[1].id).to eq wallet3.id
+        expect(subject[2].id).to eq wallet2.id
+      end
+    end
+  end
+
   describe 'broadcast' do
     let(:tx) { Tapyrus::Tx.new }
-    let(:wallet) { Glueby::Internal::Wallet.create }
 
     context 'A block argument is given' do
       let(:block) { Proc.new {} }
@@ -461,6 +481,59 @@ RSpec.describe 'Glueby::Internal::Wallet' do
           expect(provided_utxos).to contain_exactly(*utxos)
         end
       end
+    end
+  end
+
+  describe "#get_addresses_info" do
+    subject { Glueby::Internal::Wallet.get_addresses_info(addresses) }
+
+    let(:addresses) { ['15JL32ZJTEeNUT7Fs348errZ8xmavXXhLp'] }
+
+    it "call WalletAdapter.get_addresses_info" do
+      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:get_addresses_info)
+
+      subject
+
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:get_addresses_info).with(addresses)
+    end
+  end
+
+  describe "#delete" do
+    subject { wallet.delete }
+
+    it "call WalletAdapter#delete" do
+      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:delete_wallet)
+
+      subject
+
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:delete_wallet).with(wallet.id)
+    end
+  end
+
+  describe "#create_pubkey" do
+    subject { wallet.create_pubkey }
+
+    it "call WalletAdapter#create_pubkey" do
+      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:create_pubkey)
+
+      subject
+
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:create_pubkey).with(wallet.id)
+    end
+  end
+
+  describe "#pay_to_contract_key" do
+    subject { wallet.pay_to_contract_key(payment_base, contents) }
+
+    let(:payment_base) { "02046e89be90d26872e1318feb7d5ca7a6f588118e76f4906cf5b8ef262b63ab49" }
+    let(:contents) { "010203040506"}
+
+    it "call WalletAdapter#pay_to_contract_key" do
+      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:pay_to_contract_key)
+
+      subject
+
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:pay_to_contract_key).with(wallet.id, payment_base, contents)
     end
   end
 end
