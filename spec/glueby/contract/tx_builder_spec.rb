@@ -191,7 +191,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   end
 
   describe '#create_issue_tx_for_non_reissuable_token' do
-    subject { mock.create_issue_tx_for_non_reissuable_token(funding_tx:, issuer: issuer, amount: amount, split: split) }
+    subject { mock.create_issue_tx_for_non_reissuable_token(funding_tx: funding_tx, issuer: issuer, amount: amount, split: split) }
 
     let(:issuer) { wallet }
     let(:amount) { 1_000 }
@@ -267,7 +267,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   end
 
   describe '#create_issue_tx_for_nft_token' do
-    subject { mock.create_issue_tx_for_nft_token(funding_tx:, issuer: issuer) }
+    subject { mock.create_issue_tx_for_nft_token(funding_tx: funding_tx, issuer: issuer) }
 
     let(:issuer) { wallet }
     let(:funding_tx) { nil }
@@ -302,7 +302,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   end
 
   describe '#create_issue_tx_from_out_point' do
-    subject { mock.create_issue_tx_from_out_point(token_type:, issuer:, amount: ) }
+    subject { mock.create_issue_tx_from_out_point(token_type: token_type, issuer: issuer, amount: amount) }
 
     let(:issuer) { wallet }
     let(:amount) { 1_000 }
