@@ -139,11 +139,13 @@ module Glueby
           builder = builder_class.new(wallet, fee_estimator)
 
           if builder.instance_of?(Contract::Timestamp::TxBuilder::UpdatingTrackable)
+            prev_prefix = prev.hex ? prev.prefix&.htb : prev.prefix
+            prev_content_hash = prev.hex ? prev.content_hash&.htb : prev.content_hash
             builder.set_prev_timestamp_info(
               timestamp_utxo: prev.utxo,
               payment_base: prev.payment_base,
-              prefix: prev.prefix,
-              data: prev.content_hash
+              prefix: prev_prefix,
+              data: prev_content_hash
             )
           end
 

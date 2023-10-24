@@ -166,7 +166,6 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
         end.to change { utxo_provider.wallet.list_unspent.count }.by(-2)
 
         update_ar.reload
-        # expect(sender.balances(false)['']).to be_nil
         expect(update_ar.status).to eq('unconfirmed')
         expect(update_ar.txid).not_to be_nil
         expect(update_ar.p2c_address).not_to be_nil
@@ -195,6 +194,89 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
           .and change { utxo_provider.wallet.list_unspent.count }.by(0) # never consume UTXO pool and never broadcast any tx.
       end
       
+      context 'hex option is enabled' do
+        it do
+          # Add timestamp job to timestamps table
+          ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "FFFFFF", prefix: '071222', timestamp_type: :trackable, hex: true)
+          expect(ar.status).to eq('init')
+          expect(ar.txid).to be_nil
+          expect(ar.p2c_address).to be_nil
+          expect(ar.payment_base).to be_nil
+  
+          # Broadcast tx for the timestamp job
+          # and it should consume two UTXOs in UtxoProvider
+          # It creates two TXs, the one is funding tx that is created by UTXO Provider to provide a tapyrus input
+          # to the timestamp tx. The funding tx has two inputs from UTXO pool and the input amount is 8000 tapyrus.
+          # The timestamp TX requires 3000 tapyrus, so the funding tx has 4000 tapyrus output to the timestamp tx.
+          # The fee of the funding tx is 2000 tapyrus, this is fixed by FixedFeeEstimator. And the change is 3000
+          # tapyrus to the UTXO Provider's wallet. So, it should consume two UTXOs from UTXO Provider.
+          expect do
+            Rake.application['glueby:contract:timestamp:create'].execute
+          end.to change { utxo_provider.wallet.list_unspent.count }.by(-2)
+  
+          ar.reload
+          expect(sender.balances(false)['']).to be_nil
+          expect(ar.status).to eq('unconfirmed')
+          expect(ar.txid).not_to be_nil
+          expect(ar.p2c_address).not_to be_nil
+          expect(ar.payment_base).not_to be_nil
+  
+          # Sync blocks, but the status is still unconfirmed because a new block is not created.
+          Rake.application['glueby:block_syncer:start'].execute
+          ar.reload
+          expect(ar.status).to eq('unconfirmed')
+  
+          process_block
+  
+          # Sync blocks, then the status is changed to confirmed because of generating a block.
+          Rake.application['glueby:block_syncer:start'].execute
+          ar.reload
+          expect(ar.status).to eq('confirmed')
+  
+          # Update the timestamp
+          update_ar = Glueby::Contract::AR::Timestamp.create(
+            wallet_id: sender.id,
+            content: "1234",
+            prefix: '071222',
+            timestamp_type: :trackable,
+            prev_id: ar.id,
+            hex: true
+          )
+          expect do
+            Rake.application['glueby:contract:timestamp:create'].execute
+          end.to change { utxo_provider.wallet.list_unspent.count }.by(-2)
+  
+          update_ar.reload
+          expect(update_ar.status).to eq('unconfirmed')
+          expect(update_ar.txid).not_to be_nil
+          expect(update_ar.p2c_address).not_to be_nil
+          expect(update_ar.payment_base).not_to be_nil
+  
+          process_block
+  
+          # Sync blocks, then the status is changed to confirmed because of generating a block.
+          Rake.application['glueby:block_syncer:start'].execute
+          update_ar.reload
+          expect(update_ar.status).to eq('confirmed')
+  
+          # Try to update already updated timestamp
+          timestamp = Glueby::Contract::AR::Timestamp.new(
+            wallet_id: sender.id,
+            content: "1234",
+            prefix: '071222',
+            timestamp_type: :trackable,
+            prev_id: ar.id,
+            hex: true
+          )
+          expect { timestamp.save_with_broadcast! }
+            .to raise_error(
+              Glueby::Contract::Errors::PrevTimestampAlreadyUpdated,
+              /The previous timestamp\(id: [0-9]+\) was already updated/
+            )
+            .and change { utxo_provider.wallet.list_unspent.count }.by(0) # never consume UTXO pool and never broadcast any tx.
+        end
+      end
+
       context 'work well under multi-threads' do
         let(:utxo_pool_size) { 80 }
         let(:fee_estimator_for_manage) { Glueby::Contract::FeeEstimator::Auto.new }
