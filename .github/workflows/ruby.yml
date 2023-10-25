@@ -32,7 +32,8 @@ jobs:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
       - name: Run tests
         run: bundle exec rake
-      - uses: joshmfrankel/simplecov-check-action@main
+      - name: SimpleCov+ Action
+        uses: joshmfrankel/simplecov-check-action@1.0.0
         with:
           minimum_suite_coverage: 99
           minimum_file_coverage: 70
