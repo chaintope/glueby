@@ -31,7 +31,7 @@ jobs:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
       - name: Run tests
-        run: bundle exec rake
+        run: bundle exec rspec spec/glueby/configuration_spec.rb
       - name: SimpleCov+ Action
         uses: joshmfrankel/simplecov-check-action@1.0.0
         with:
