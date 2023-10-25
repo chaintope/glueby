@@ -95,6 +95,23 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     end
   end
 
+  describe '#delete_wallet' do
+    subject { adapter.delete_wallet(wallet_id) }
+
+    let(:response) do
+      {
+        "warning" => "str"
+      }
+    end
+    let(:wallet_id) { '0828d0ce8ff358cd0d7b19ac5c43c3bb' }
+
+    it 'should call loadwallet RPC' do
+      allow(rpc).to receive(:unloadwallet).and_return(response)
+      subject
+      expect(rpc).to have_received(:unloadwallet).once
+    end
+  end
+
   describe 'load_wallet' do
     subject { adapter.load_wallet(wallet_id) }
     
@@ -148,6 +165,23 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
         allow(rpc).to receive(:loadwallet).and_raise(error)
         expect { subject }.to raise_error(Glueby::Internal::Wallet::Errors::WalletNotFound, "Wallet #{wallet_id} does not found")
       end
+    end
+  end
+
+  describe '#unload_wallet' do
+    subject { adapter.unload_wallet(wallet_id) }
+
+    let(:response) do
+      {
+        "warning" => "str"
+      }
+    end
+    let(:wallet_id) { '0828d0ce8ff358cd0d7b19ac5c43c3bb' }
+
+    it 'should call loadwallet RPC' do
+      allow(rpc).to receive(:unloadwallet).and_return(response)
+      subject
+      expect(rpc).to have_received(:unloadwallet).once
     end
   end
 
@@ -425,6 +459,15 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
 
       it do
         expect(rpc).to receive(:signrawtransactionwithwallet).with(tx.to_hex, [], 'NONE|ANYONECANPAY').and_return(response)
+        subject
+      end
+    end
+
+    context 'SIGHAHS Type is single | anyonecanpay' do
+      let(:sighashtype) { Tapyrus::SIGHASH_TYPE[:single] | Tapyrus::SIGHASH_TYPE[:anyonecanpay] }
+
+      it do
+        expect(rpc).to receive(:signrawtransactionwithwallet).with(tx.to_hex, [], 'SINGLE|ANYONECANPAY').and_return(response)
         subject
       end
     end

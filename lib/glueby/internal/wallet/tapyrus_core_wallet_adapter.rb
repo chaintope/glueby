@@ -177,7 +177,7 @@ module Glueby
           type = case sighashtype & (~(Tapyrus::SIGHASH_TYPE[:anyonecanpay]))
                  when Tapyrus::SIGHASH_TYPE[:all] then 'ALL'
                  when Tapyrus::SIGHASH_TYPE[:none] then 'NONE'
-                 when Tapyrus::SIGHASH_TYPE[:single] then 'SIGNLE'
+                 when Tapyrus::SIGHASH_TYPE[:single] then 'SINGLE'
                  else
                    raise Errors::InvalidSighashType, "Invalid sighash type '#{sighashtype}'"
                  end
