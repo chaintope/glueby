@@ -4,7 +4,7 @@ module Glueby
 
     WALLET_ID = 'UTXO_PROVIDER_WALLET'
     DEFAULT_VALUE = 1_000
-    DEFAULT_UTXO_POOL_SIZE = 20
+    DEFAULT_UTXO_POOL_SIZE = 100
     MAX_UTXO_POOL_SIZE = 2_000
 
     class << self
