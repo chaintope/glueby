@@ -89,6 +89,10 @@ module Glueby
         wallet_adapter.balance(id, only_finalized)
       end
 
+      def tokens(color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true)
+        wallet_adapter.tokens(id, color_id, only_finalized)
+      end
+
       # @param only_finalized [Boolean] The flag to get a UTXO with status only finalized
       # @param label [String] This label is used to filtered the UTXOs with labeled if a key or Utxo is labeled.
       #                    - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.

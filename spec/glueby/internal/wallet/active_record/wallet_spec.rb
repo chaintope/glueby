@@ -2,13 +2,14 @@
 
 RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
   let(:wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') }
+  let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
+  let(:key1) { wallet.keys.create(purpose: :receive) }
+  let(:key2) { wallet.keys.create(purpose: :receive) }
 
   describe '#sign' do
     subject { wallet.sign(tx, prevtxs, sighashtype: sighashtype) }
 
     let(:sighashtype) { Tapyrus::SIGHASH_TYPE[:all] }
-    let(:key1) { wallet.keys.create(purpose: :receive) }
-    let(:key2) { wallet.keys.create(purpose: :receive) }
     let(:tx) do
       tx = Tapyrus::Tx.new
       tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.new('00' * 32, 0))
@@ -17,7 +18,6 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       tx.outputs << Tapyrus::TxOut.new(value: 1, script_pubkey: Tapyrus::Script.new)
       tx
     end
-    let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
     let(:prevtxs) { [] }
 
     before do
@@ -158,6 +158,66 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       before { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'ffffffffffffffffffffffffffffffff') }
 
       it { is_expected.to be_invalid }
+    end
+  end
+
+  describe '#tokens' do
+    subject { wallet.tokens(color_id) }
+
+    let(:color_id2) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c11863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262'.htb) }
+
+    let(:utxo1) do
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '0000000000000000000000000000000000000000000000000000000000000000',
+        index: 0,
+        value: 600,
+        script_pubkey: key1.to_p2pkh.to_hex,
+        status: :init,
+        key: key1
+      )
+    end
+    let(:utxo2) do
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '1111111111111111111111111111111111111111111111111111111111111111',
+        index: 0,
+        value: 600,
+        script_pubkey: key2.to_p2pkh.to_hex,
+        status: :init,
+        key: key2
+      )
+    end
+    let(:utxo3) do
+      colored_script = key1.to_p2pkh.add_color(color_id)
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '2222222222222222222222222222222222222222222222222222222222222222',
+        index: 0,
+        script_pubkey: colored_script.to_hex,
+        value: 1,
+        status: :finalized,
+        key: key1
+      )
+    end
+    let(:utxo4) do
+      colored_script = key1.to_p2pkh.add_color(color_id2)
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '2222222222222222222222222222222222222222222222222222222222222222',
+        index: 0,
+        script_pubkey: colored_script.to_hex,
+        value: 1,
+        status: :finalized,
+        key: key1
+      )
+    end
+
+    before do
+      utxo1
+      utxo2
+      utxo3
+      utxo4
+    end
+
+    it do
+      expect(subject).to eq [utxo3]
     end
   end
 end

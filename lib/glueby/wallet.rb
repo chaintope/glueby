@@ -46,6 +46,10 @@ module Glueby
       end
     end
 
+    def tokens(color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true)
+      @internal_wallet.tokens(color_id, only_finalized)
+    end
+
     private
 
     def initialize(internal_wallet)

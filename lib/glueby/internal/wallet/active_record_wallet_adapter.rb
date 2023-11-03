@@ -213,6 +213,13 @@ module Glueby
           wallet.keys.exists?(script_pubkey: script_pubkey.to_hex)
         end
 
+        def tokens(wallet_id, color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
+          utxos = wallet.tokens(color_id)
+          utxos = utxos.where(status: :finalized) if only_finalized
+          utxos
+        end
+
         private
 
         # Calculate commitment = H(P || contents)

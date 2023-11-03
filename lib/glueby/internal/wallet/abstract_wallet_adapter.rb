@@ -65,6 +65,17 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
+        # Returns all tokens with specified color_id
+        #
+        # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [String] color_id - The color id 
+        # @param [Boolean] only_finalized - includes only finalized UTXO value if it
+        #                                   is true. Default is true.
+        # @return [Array<Utxo>] The array of the utxos with specified color_id
+        def tokens(wallet_id, color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true)
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
+
         # Returns the UTXOs that the wallet has.
         # If label is specified, return UTXOs filtered with label
         #

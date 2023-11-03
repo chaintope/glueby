@@ -2,7 +2,9 @@
 
 RSpec.describe 'Glueby::Wallet' do
   class TestWalletAdapter < Glueby::Internal::Wallet::AbstractWalletAdapter
-    def create_wallet(wallet_id = nil); end
+    def create_wallet(wallet_id = nil)
+      "wallet_id:1"
+    end
     def list_unspent(wallet_id, only_finalized = true, label = nil)
       utxos = [
         {
@@ -67,6 +69,11 @@ RSpec.describe 'Glueby::Wallet' do
       else
         utxos
       end
+    end
+
+    
+    def tokens(wallet_id, color_id, only_finalized)
+      []
     end
   end
 
@@ -138,6 +145,19 @@ RSpec.describe 'Glueby::Wallet' do
       end
 
       it { is_expected.to eq expected }
+    end
+  end
+
+  describe '#tokens' do
+    subject { wallet.tokens(color_id, only_finalized) }
+
+    let(:wallet) { Glueby::Wallet.create }
+    let(:only_finalized) {true}
+    let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload("c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3".htb) }
+    it do
+      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:tokens)
+      subject
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:tokens).with("wallet_id:1", color_id, only_finalized)
     end
   end
 end

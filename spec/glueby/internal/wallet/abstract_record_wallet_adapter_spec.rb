@@ -39,6 +39,12 @@ RSpec.describe 'Glueby::Internal::Wallet::AbstractWalletAdapter'do
     end
   end
 
+  describe '#tokens' do
+    it 'does not implemented' do
+      expect { adapter.tokens("wallet_id") }.to raise_error(NotImplementedError)
+    end
+  end
+
   describe '#list_unspent' do
     it 'does not implemented' do
       expect { adapter.list_unspent("wallet_id") }.to raise_error(NotImplementedError)

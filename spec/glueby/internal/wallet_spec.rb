@@ -536,4 +536,18 @@ RSpec.describe 'Glueby::Internal::Wallet' do
       expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:pay_to_contract_key).with(wallet.id, payment_base, contents)
     end
   end
+
+  describe "#tokens" do
+    subject { wallet.tokens(color_id) }
+
+    let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
+
+    it "call WalletAdapter#tokens" do
+      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:tokens)
+
+      subject
+
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:tokens).with(wallet.id, color_id, true)
+    end
+  end
 end
