@@ -52,7 +52,8 @@ module Glueby
           txid: utxo.txid,
           index: utxo.index,
           address: Tapyrus::Script.parse_from_payload(utxo.script_pubkey.htb).to_addr,
-          amount: utxo.value
+          amount: utxo.value,
+          status: utxo.status == "finalized" ? :confirmed : :unconfirmed
         }
       end
     end
