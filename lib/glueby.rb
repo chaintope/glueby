@@ -19,7 +19,7 @@ module Glueby
 
   module GluebyLogger
     def logger
-      if defined?(Rails)
+      if defined?(Rails) && Rails.logger
         Rails.logger
       else
         Logger.new(STDOUT)

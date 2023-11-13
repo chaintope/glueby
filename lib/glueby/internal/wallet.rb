@@ -89,8 +89,8 @@ module Glueby
         wallet_adapter.balance(id, only_finalized)
       end
 
-      def tokens(color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true)
-        wallet_adapter.tokens(id, color_id, only_finalized)
+      def tokens(color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true, page = 1, per = 25)
+        wallet_adapter.tokens(id, color_id, only_finalized, page, per)
       end
 
       # @param only_finalized [Boolean] The flag to get a UTXO with status only finalized

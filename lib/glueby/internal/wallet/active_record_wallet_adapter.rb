@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'securerandom'
+require 'kaminari'
 
 module Glueby
   module Internal
@@ -213,10 +214,11 @@ module Glueby
           wallet.keys.exists?(script_pubkey: script_pubkey.to_hex)
         end
 
-        def tokens(wallet_id, color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true)
+        def tokens(wallet_id, color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true, page = 1, per = 25)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.tokens(color_id)
           utxos = utxos.where(status: :finalized) if only_finalized
+          utxos = utxos.order(:id).page(page).per(per)
           utxos
         end
 

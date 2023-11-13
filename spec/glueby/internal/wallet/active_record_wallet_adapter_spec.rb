@@ -514,7 +514,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
   end
 
   describe '#tokens' do
-    subject { adapter.tokens(wallet_id, color_id, only_finalized) }
+    subject { adapter.tokens(wallet_id, color_id, only_finalized, page, per) }
 
     let(:wallet_id) { wallet.wallet_id }
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
@@ -522,6 +522,8 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     let(:key1) { wallet.keys.create(purpose: :receive) }
     let(:key2) { wallet.keys.create(purpose: :receive) }
     let(:only_finalized) { true }
+    let(:page) { 1 }
+    let(:per) { 25 }
 
     let(:utxo1) do
       Glueby::Internal::Wallet::AR::Utxo.create(
@@ -591,6 +593,14 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       let(:only_finalized) { false }
 
       it { expect(subject.to_a).to eq [utxo3, utxo5] }
+    end
+
+    context 'page, per specified' do
+      let(:only_finalized) { false }
+      let(:page) { 2 }
+      let(:per) { 1 }
+
+      it { expect(subject.to_a).to eq [utxo5] }
     end
   end
 

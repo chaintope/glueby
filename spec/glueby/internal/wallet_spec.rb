@@ -547,7 +547,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
       subject
 
-      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:tokens).with(wallet.id, color_id, true)
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:tokens).with(wallet.id, color_id, true, 1, 25)
     end
   end
 end

@@ -155,9 +155,9 @@ RSpec.describe 'Glueby::Wallet' do
     let(:only_finalized) {true}
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload("c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3".htb) }
     it do
-      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:tokens)
+      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:tokens).and_return([])
       subject
-      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:tokens).with("wallet_id:1", color_id, only_finalized)
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:tokens).with("wallet_id:1", color_id, only_finalized, 1, 25)
     end
   end
 end

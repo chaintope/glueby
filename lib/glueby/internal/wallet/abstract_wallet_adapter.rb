@@ -71,8 +71,10 @@ module Glueby
         # @param [String] color_id - The color id 
         # @param [Boolean] only_finalized - includes only finalized UTXO value if it
         #                                   is true. Default is true.
+        # @param [Integer] page - The page parameter is responsible for specifying the current page being viewed within the paginated results. default is 1.
+        # @param [Integer] per - The per parameter is used to determine the number of items to display per page. default is 25.
         # @return [Array<Utxo>] The array of the utxos with specified color_id
-        def tokens(wallet_id, color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true)
+        def tokens(wallet_id, color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true, page = 1, per = 25)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
