@@ -522,7 +522,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
             expect(timestamp.next_id).to be_nil
           end
 
-          it 'update previous timestamp\'s latest falg and next_id' do
+          it 'update previous timestamp\'s latest flag and next_id' do
             subject
             prev.reload
             expect(prev.latest).to be_falsey
