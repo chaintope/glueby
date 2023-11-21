@@ -9,7 +9,12 @@ module Glueby
 
         attr_reader :tx
 
-        belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp', optional: true
+        belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp', inverse_of: :next, optional: true
+        has_one :next, class_name: 'Glueby::Contract::AR::Timestamp', foreign_key: 'prev_id'
+
+        def next_id
+          self.next&.id
+        end
 
         validate :validate_prev
 
@@ -114,6 +119,7 @@ module Glueby
 
               if update_trackable?
                 prev.latest = false
+                prev.next = self
                 prev.save!
               end
             end

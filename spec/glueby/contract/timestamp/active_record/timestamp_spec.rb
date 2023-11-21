@@ -519,11 +519,14 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
             expect(timestamp.p2c_address).not_to be_nil
             expect(timestamp.payment_base).not_to be_nil
             expect(timestamp.latest).to be_truthy
+            expect(timestamp.next_id).to be_nil
           end
 
-          it 'update previous timestamp\'s latest falg to false' do
+          it 'update previous timestamp\'s latest flag and next_id' do
             subject
-            expect(prev.reload.latest).to be_falsey
+            prev.reload
+            expect(prev.latest).to be_falsey
+            expect(prev.next_id).to eq timestamp.id
           end
 
           context 'previous timestamp type is not trackable' do
