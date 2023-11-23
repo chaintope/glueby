@@ -94,6 +94,8 @@ module Glueby
       end
 
       # @param color_id [Tapyrus::Color::ColorIdentifier] The color identifier associated with UTXO.
+      #                    It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
+      #                    If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
       # @param only_finalized [Boolean] The flag to get a UTXO with status only finalized
       # @param label [String] This label is used to filtered the UTXOs with labeled if a key or Utxo is labeled.
       #                    - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.

@@ -68,7 +68,9 @@ module Glueby
         # Returns all tokens with specified color_id
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
-        # @param [String] color_id - The color id 
+        # @param [Tapyrus::Color::ColorIdentifier] color_id The color identifier associated with UTXO.
+        #                                                     It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
+        #                                                     If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
         # @param [Boolean] only_finalized - includes only finalized UTXO value if it
         #                                   is true. Default is true.
         # @param [Integer] page - The page parameter is responsible for specifying the current page being viewed within the paginated results. default is 1.
@@ -84,6 +86,7 @@ module Glueby
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @param [Tapyrus::Color::ColorIdentifier] color_id - The color identifier. 
         #                                                     It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
+        #                                                     If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
         # @param [Boolean] only_finalized - The UTXOs includes only finalized UTXO value if it
         #                                   is true. Default is true.
         # @param [String] label - Label for filtering UTXOs
