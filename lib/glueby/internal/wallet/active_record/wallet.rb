@@ -32,7 +32,7 @@ module Glueby
           end
 
           def tokens(color_id = Tapyrus::Color::ColorIdentifier.default)
-            utxos.where("lower(script_pubkey) like ?", "21#{color_id.to_hex}%")
+            utxos.where(color_id: color_id&.to_hex)
           end
 
           private

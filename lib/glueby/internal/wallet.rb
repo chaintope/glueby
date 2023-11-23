@@ -89,17 +89,18 @@ module Glueby
         wallet_adapter.balance(id, only_finalized)
       end
 
-      def tokens(color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true, page = 1, per = 25)
+      def tokens(color_id = nil, only_finalized = true, page = 1, per = 25)
         wallet_adapter.tokens(id, color_id, only_finalized, page, per)
       end
 
+      # @param color_id [Tapyrus::Color::ColorIdentifier] The color identifier associated with UTXO.
       # @param only_finalized [Boolean] The flag to get a UTXO with status only finalized
       # @param label [String] This label is used to filtered the UTXOs with labeled if a key or Utxo is labeled.
       #                    - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.
       #                    - If label=:all, all UTXOs will be returned.
-      def list_unspent(only_finalized = true, label = :unlabeled)
+      def list_unspent(color_id = nil, only_finalized = true, label = :unlabeled)
         label = :unlabeled unless label
-        wallet_adapter.list_unspent(id, only_finalized, label)
+        wallet_adapter.list_unspent(id, color_id, only_finalized, label)
       end
 
       def lock_unspent(utxo)
@@ -175,8 +176,7 @@ module Glueby
         lock_utxos = false,
         excludes = []
       )
-        collect_utxos(amount, label, only_finalized, shuffle, lock_utxos, excludes) do |output|
-          next false unless output[:color_id].nil?
+        collect_utxos(amount, label, Tapyrus::Color::ColorIdentifier.default, only_finalized, shuffle, lock_utxos, excludes) do |output|
           next yield(output) if block_given?
 
           true
@@ -210,8 +210,7 @@ module Glueby
         lock_utxos = false,
         excludes = []
       )
-        collect_utxos(amount, label, only_finalized, shuffle, lock_utxos, excludes) do |output|
-          next false unless output[:color_id] == color_id.to_hex
+        collect_utxos(amount, label, color_id, only_finalized, shuffle, lock_utxos, excludes) do |output|
           next yield(output) if block_given?
 
           true
@@ -265,7 +264,7 @@ module Glueby
         while current_amount - fee < target_amount
           sum, utxos = collect_uncolored_outputs(
             fee + target_amount - current_amount,
-            nil, nil, true, true,
+            nil, false, true, true,
             provided_utxos,
             &block
           )
@@ -292,7 +291,8 @@ module Glueby
       def collect_utxos(
         amount,
         label,
-        only_finalized,
+        color_id,
+        only_finalized = true,
         shuffle = true,
         lock_utxos = false,
         excludes = []
@@ -300,7 +300,7 @@ module Glueby
         collect_all = amount.nil?
 
         raise Glueby::ArgumentError, 'amount must be positive' unless collect_all || amount.positive?
-        utxos = list_unspent(only_finalized, label)
+        utxos = list_unspent(color_id, only_finalized, label)
         utxos = utxos.shuffle if shuffle
 
         r = utxos.inject([0, []]) do |(sum, outputs), output|

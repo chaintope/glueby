@@ -358,7 +358,7 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
 
       it 'the wallet never store the UTXO of the created trackable timestamp' do
         subject
-        result = wallet.internal_wallet.list_unspent(false, :all).find { |i| i[:txid] == contract.txid && i[:vout] == 0 }
+        result = wallet.internal_wallet.list_unspent(nil, false, :all).find { |i| i[:txid] == contract.txid && i[:vout] == 0 }
         expect(result).to be_nil
       end
     end

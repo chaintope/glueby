@@ -5,7 +5,7 @@ RSpec.describe 'Glueby::Wallet' do
     def create_wallet(wallet_id = nil)
       "wallet_id:1"
     end
-    def list_unspent(wallet_id, only_finalized = true, label = nil)
+    def list_unspent(wallet_id, color_id = nil, only_finalized = true, label = nil)
       utxos = [
         {
           txid: '1d49c8038943d37c2723c9c7a1c4ea5c3738a9bad5827ddc41e144ba6aef36db',
@@ -72,7 +72,7 @@ RSpec.describe 'Glueby::Wallet' do
     end
 
     
-    def tokens(wallet_id, color_id, only_finalized)
+    def tokens(wallet_id, color_id, only_finalized, per, page)
       []
     end
   end

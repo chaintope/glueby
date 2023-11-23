@@ -206,7 +206,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
       let(:only_finalized) { false }
 
       it do
-        expect(internal_wallet).to receive(:list_unspent).with(false, nil).and_return(unspents)
+        allow(internal_wallet).to receive(:list_unspent).with(Tapyrus::Color::ColorIdentifier.default, false, nil).and_return(unspents.select{ |u| !u[:color_id]})
         expect(subject[0]).to eq 250_000_000
         expect(subject[1].size).to eq 3
       end
@@ -223,7 +223,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
       let(:only_finalized) { false }
 
       it 'returns one output' do
-        expect(internal_wallet).to receive(:list_unspent).with(false, nil).and_return(unspents)
+        allow(internal_wallet).to receive(:list_unspent).with(Tapyrus::Color::ColorIdentifier.default, false, nil).and_return(unspents.select{ |u| !u[:color_id]})
         expect(subject[0]).to eq 250_000_000
         expect(subject[1].size).to eq 3
       end
@@ -301,7 +301,11 @@ RSpec.describe 'Glueby::Internal::Wallet' do
     let(:lock_utxos) { false }
     let(:excludes) { [] }
 
-    before { allow(internal_wallet).to receive(:list_unspent).and_return(unspents) }
+    before do
+      allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
+      allow(internal_wallet).to receive(:list_unspent).with(Tapyrus::Color::ColorIdentifier.default, false, nil).and_return(unspents.select{ |u| !u[:color_id]})
+      allow(internal_wallet).to receive(:list_unspent).with(color_id, false, nil).and_return(unspents.select{ |u| u[:color_id] == color_id.to_hex })
+    end
 
     it 'returns one output' do
       expect(subject[0]).to eq 100_000

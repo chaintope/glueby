@@ -37,7 +37,7 @@ module Glueby
 
     # @return [HashMap] hash of balances which key is color_id or empty string, and value is amount
     def balances(only_finalized = true)
-      utxos = @internal_wallet.list_unspent(only_finalized)
+      utxos = @internal_wallet.list_unspent(nil, only_finalized)
       utxos.inject({}) do |balances, output|
         key = output[:color_id] || ''
         balances[key] ||= 0
@@ -46,7 +46,7 @@ module Glueby
       end
     end
 
-    def tokens(color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true, page = 1, per = 25)
+    def tokens(color_id = nil, only_finalized = true, page = 1, per = 25)
       @internal_wallet.tokens(color_id, only_finalized, page, per).map do |utxo|
         {
           txid: utxo.txid,

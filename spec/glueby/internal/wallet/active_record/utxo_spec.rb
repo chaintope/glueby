@@ -25,6 +25,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
         Glueby::Internal::Wallet::AR::Utxo.create(
           txid: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
           index: 0,
+          color_id: "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46",
           script_pubkey: '21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
           value: 1,
           status: :init
@@ -39,6 +40,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
         Glueby::Internal::Wallet::AR::Utxo.create(
           txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
           index: 0,
+          color_id: "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46",
           script_pubkey: '21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
           value: 1,
           status: :init
@@ -53,6 +55,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
         Glueby::Internal::Wallet::AR::Utxo.create(
           txid: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
           index: 1,
+          color_id: "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46",
           script_pubkey: '21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
           value: 1,
           status: :init
@@ -60,6 +63,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
         Glueby::Internal::Wallet::AR::Utxo.create(
           txid: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE',
           index: 0,
+          color_id: "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46",
           script_pubkey: '21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
           value: 1,
           status: :init
@@ -113,6 +117,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
         index: 0,
+        color_id: "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46",
         script_pubkey: '21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
         value: 1,
         status: :init
@@ -120,6 +125,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
         index: 1,
+        color_id: "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46",
         script_pubkey: '21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
         value: 1,
         status: :init
@@ -127,6 +133,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Utxo', active_record: true  do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
         index: 2,
+        color_id: "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46",
         script_pubkey: '21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac',
         value: 1,
         status: :init

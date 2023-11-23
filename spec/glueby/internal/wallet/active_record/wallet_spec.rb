@@ -41,6 +41,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '2222222222222222222222222222222222222222222222222222222222222222',
         index: 0,
+        color_id: color_id,
         script_pubkey: colored_script.to_hex,
         value: 1,
         status: :finalized,
@@ -191,6 +192,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '2222222222222222222222222222222222222222222222222222222222222222',
         index: 0,
+        color_id: color_id.to_hex,
         script_pubkey: colored_script.to_hex,
         value: 1,
         status: :finalized,
@@ -202,6 +204,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '2222222222222222222222222222222222222222222222222222222222222222',
         index: 0,
+        color_id: color_id2.to_hex,
         script_pubkey: colored_script.to_hex,
         value: 1,
         status: :finalized,

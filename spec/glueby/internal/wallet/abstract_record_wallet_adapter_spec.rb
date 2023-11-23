@@ -47,7 +47,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AbstractWalletAdapter'do
 
   describe '#list_unspent' do
     it 'does not implemented' do
-      expect { adapter.list_unspent("wallet_id") }.to raise_error(NotImplementedError)
+      expect { adapter.list_unspent("wallet_id", nil) }.to raise_error(NotImplementedError)
     end
   end
 

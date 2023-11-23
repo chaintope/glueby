@@ -90,10 +90,19 @@ module Glueby
           utxos.sum(&:value)
         end
 
-        def list_unspent(wallet_id, only_finalized = true, label = nil)
+        def tokens(wallet_id, color_id = nil, only_finalized = true, page = 1, per = 25)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.utxos.where(locked_at: nil)
+          utxos = utxos.where(color_id: color_id.to_hex) if color_id && !color_id.default?
+          utxos = utxos.where(color_id: nil) if color_id && color_id.default?
           utxos = utxos.where(status: :finalized) if only_finalized
+          utxos = utxos.order(:id)
+          utxos = utxos.page(page).per(per) if per > 0
+          utxos
+        end
+
+        def list_unspent(wallet_id, color_id = nil, only_finalized = true, label = nil)
+          utxos = tokens(wallet_id, color_id, only_finalized, 1, 0)
           if [:unlabeled, nil].include?(label)
             utxos = utxos.where(label: nil)
           elsif label && (label != :all)
@@ -212,14 +221,6 @@ module Glueby
           script_pubkey = Tapyrus::Script.parse_from_addr(address)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           wallet.keys.exists?(script_pubkey: script_pubkey.to_hex)
-        end
-
-        def tokens(wallet_id, color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true, page = 1, per = 25)
-          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
-          utxos = wallet.tokens(color_id)
-          utxos = utxos.where(status: :finalized) if only_finalized
-          utxos = utxos.order(:id).page(page).per(per)
-          utxos
         end
 
         private

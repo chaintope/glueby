@@ -74,7 +74,7 @@ module Glueby
         # @param [Integer] page - The page parameter is responsible for specifying the current page being viewed within the paginated results. default is 1.
         # @param [Integer] per - The per parameter is used to determine the number of items to display per page. default is 25.
         # @return [Array<Utxo>] The array of the utxos with specified color_id
-        def tokens(wallet_id, color_id = Tapyrus::Color::ColorIdentifier.default, only_finalized = true, page = 1, per = 25)
+        def tokens(wallet_id, color_id = nil, only_finalized = true, page = 1, per = 25)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
@@ -82,6 +82,8 @@ module Glueby
         # If label is specified, return UTXOs filtered with label
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [Tapyrus::Color::ColorIdentifier] color_id - The color identifier. 
+        #                                                     It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
         # @param [Boolean] only_finalized - The UTXOs includes only finalized UTXO value if it
         #                                   is true. Default is true.
         # @param [String] label - Label for filtering UTXOs
@@ -97,7 +99,7 @@ module Glueby
         # - finalized: [Boolean] Whether the UTXO is finalized
         # - color_id: [String] Color id of the UTXO. If it is TPC UTXO, color_id is nil.
         # - script_pubkey: [String] Script pubkey of the UTXO
-        def list_unspent(wallet_id, only_finalized = true, label = nil)
+        def list_unspent(wallet_id, color_id = nil, only_finalized = true, label = nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 

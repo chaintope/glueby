@@ -114,7 +114,7 @@ module Glueby
 
       def current_utxo_pool_size
         wallet
-          .list_unspent(false)
+          .list_unspent(nil, false)
           .count { |o| !o[:color_id] && o[:amount] == fee_provider.fixed_fee }
       end
 
