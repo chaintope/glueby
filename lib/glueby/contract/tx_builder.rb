@@ -207,7 +207,7 @@ module Glueby
 
         amount = receivers.reduce(0) { |sum, r| sum + r[:amount].to_i }
         utxos = sender.internal_wallet.list_unspent(color_id, only_finalized)
-        sum_token, outputs = collect_colored_outputs(utxos, color_id, amount)
+        sum_token, outputs = collect_colored_outputs(utxos, amount)
         fill_input(tx, outputs)
 
         receivers.each do |r|
@@ -248,7 +248,7 @@ module Glueby
         tx = Tapyrus::Tx.new
 
         utxos = sender.internal_wallet.list_unspent(color_id, only_finalized)
-        sum_token, outputs = collect_colored_outputs(utxos, color_id, amount)
+        sum_token, outputs = collect_colored_outputs(utxos, amount)
         fill_input(tx, outputs)
 
         fill_change_token(tx, sender, sum_token - amount, color_id) if amount.positive?
@@ -319,12 +319,9 @@ module Glueby
       # Returns the set of utxos that satisfies the specified amount and has the specified color_id.
       # if amount is not specified or 0, return all utxos with color_id
       # @param results [Array] response of Glueby::Internal::Wallet#list_unspent
-      # @param color_id [Tapyrus::Color::ColorIdentifier] color identifier
       # @param amount [Integer]
-      def collect_colored_outputs(results, color_id, amount = 0)
+      def collect_colored_outputs(results, amount = 0)
         results = results.inject([0, []]) do |sum, output|
-          next sum unless output[:color_id] == color_id.to_hex
-
           new_sum = sum[0] + output[:amount]
           new_outputs = sum[1] << output
           return [new_sum, new_outputs] if new_sum >= amount && amount.positive?
