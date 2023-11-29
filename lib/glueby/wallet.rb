@@ -46,8 +46,8 @@ module Glueby
       end
     end
 
-    def tokens(color_id = nil, only_finalized = true, page = 1, per = 25)
-      @internal_wallet.tokens(color_id, only_finalized, page, per).map do |utxo|
+    def token_utxos(color_id = nil, only_finalized = true, page = 1, per = 25)
+      @internal_wallet.token_utxos(color_id, only_finalized, page, per).map do |utxo|
         {
           txid: utxo.txid,
           index: utxo.index,

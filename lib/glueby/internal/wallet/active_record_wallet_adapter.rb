@@ -90,7 +90,7 @@ module Glueby
           utxos.sum(&:value)
         end
 
-        def tokens(wallet_id, color_id = nil, only_finalized = true, page = 1, per = 25)
+        def token_utxos(wallet_id, color_id = nil, only_finalized = true, page = 1, per = 25)
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           utxos = wallet.utxos.where(locked_at: nil)
           utxos = utxos.where(color_id: color_id.to_hex) if color_id && !color_id.default?
@@ -102,7 +102,7 @@ module Glueby
         end
 
         def list_unspent(wallet_id, color_id = nil, only_finalized = true, label = nil)
-          utxos = tokens(wallet_id, color_id, only_finalized, 1, 0)
+          utxos = token_utxos(wallet_id, color_id, only_finalized, 1, 0)
           if [:unlabeled, nil].include?(label)
             utxos = utxos.where(label: nil)
           elsif label && (label != :all)

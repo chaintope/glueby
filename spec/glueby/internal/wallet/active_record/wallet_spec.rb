@@ -162,8 +162,8 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
     end
   end
 
-  describe '#tokens' do
-    subject { wallet.tokens(color_id) }
+  describe '#token_utxos' do
+    subject { wallet.token_utxos(color_id) }
 
     let(:color_id2) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c11863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262'.htb) }
 

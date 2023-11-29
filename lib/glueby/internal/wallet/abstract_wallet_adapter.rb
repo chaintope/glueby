@@ -76,7 +76,7 @@ module Glueby
         # @param [Integer] page - The page parameter is responsible for specifying the current page being viewed within the paginated results. default is 1.
         # @param [Integer] per - The per parameter is used to determine the number of items to display per page. default is 25.
         # @return [Array<Utxo>] The array of the utxos with specified color_id
-        def tokens(wallet_id, color_id = nil, only_finalized = true, page = 1, per = 25)
+        def token_utxos(wallet_id, color_id = nil, only_finalized = true, page = 1, per = 25)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
