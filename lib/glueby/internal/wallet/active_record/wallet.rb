@@ -31,10 +31,6 @@ module Glueby
             Glueby::Internal::Wallet::AR::Utxo.where(key: keys)
           end
 
-          def token_utxos(color_id = Tapyrus::Color::ColorIdentifier.default)
-            utxos.where(color_id: color_id&.to_hex)
-          end
-
           private
 
           def sign_tx_for_p2pkh(tx, index, key, script_pubkey, sighashtype)
