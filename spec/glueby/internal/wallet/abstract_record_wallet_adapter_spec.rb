@@ -39,9 +39,9 @@ RSpec.describe 'Glueby::Internal::Wallet::AbstractWalletAdapter'do
     end
   end
 
-  describe '#token_utxos' do
+  describe '#list_unspent_with_count' do
     it 'does not implemented' do
-      expect { adapter.token_utxos("wallet_id") }.to raise_error(NotImplementedError)
+      expect { adapter.list_unspent_with_count("wallet_id") }.to raise_error(NotImplementedError)
     end
   end
 

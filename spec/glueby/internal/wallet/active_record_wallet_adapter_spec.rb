@@ -524,8 +524,8 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     end
   end
 
-  describe '#token_utxos' do
-    subject { adapter.token_utxos(wallet_id, color_id, only_finalized, page, per) }
+  describe '#list_unspent_with_count' do
+    subject { adapter.list_unspent_with_count(wallet_id, color_id, only_finalized, label, page, per) }
 
     let(:wallet_id) { wallet.wallet_id }
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
@@ -533,6 +533,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     let(:key1) { wallet.keys.create(purpose: :receive) }
     let(:key2) { wallet.keys.create(purpose: :receive) }
     let(:only_finalized) { true }
+    let(:label) { nil }
     let(:page) { 1 }
     let(:per) { 25 }
 
@@ -601,12 +602,42 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       utxo5
     end
 
-    it { expect(subject.to_a).to eq [utxo3]}
+    it do
+      expect(subject[:count]).to eq 1
+      expect(subject[:outputs]).to eq [{
+        txid: '2222222222222222222222222222222222222222222222222222222222222222',
+        vout: 0,
+        color_id: color_id.to_hex,
+        label: nil,
+        script_pubkey: utxo3.script_pubkey,
+        amount: 1,
+        finalized: true
+      }]
+    end
 
     context 'only_finalized = false' do
       let(:only_finalized) { false }
 
-      it { expect(subject.to_a).to eq [utxo3, utxo5] }
+      it do
+        expect(subject[:count]).to eq 2
+        expect(subject[:outputs]).to eq [{
+          txid: '2222222222222222222222222222222222222222222222222222222222222222',
+          vout: 0,
+          color_id: color_id.to_hex,
+          label: nil,
+          script_pubkey: utxo3.script_pubkey,
+          amount: 1,
+          finalized: true
+        },{
+          txid: '2222222222222222222222222222222222222222222222222222222222222222',
+          vout: 4,
+          color_id: color_id.to_hex,
+          label: nil,
+          script_pubkey: utxo5.script_pubkey,
+          amount: 1,
+          finalized: false
+        }]
+      end
     end
 
     context 'page, per specified' do
@@ -614,7 +645,18 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       let(:page) { 2 }
       let(:per) { 1 }
 
-      it { expect(subject.to_a).to eq [utxo5] }
+      it do
+        expect(subject[:count]).to eq 2
+        expect({
+          txid: '2222222222222222222222222222222222222222222222222222222222222222',
+          vout: 4,
+          color_id: color_id.to_hex,
+          label: nil,
+          script_pubkey: utxo5.script_pubkey,
+          amount: 1,
+          finalized: false
+        })
+      end
     end
   end
 

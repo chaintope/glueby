@@ -47,15 +47,7 @@ module Glueby
     end
 
     def token_utxos(color_id = nil, only_finalized = true, page = 1, per = 25)
-      @internal_wallet.token_utxos(color_id, only_finalized, page, per).map do |utxo|
-        {
-          txid: utxo.txid,
-          index: utxo.index,
-          address: Tapyrus::Script.parse_from_payload(utxo.script_pubkey.htb).to_addr,
-          amount: utxo.value,
-          status: utxo.status == "finalized" ? :confirmed : :unconfirmed
-        }
-      end
+      @internal_wallet.list_unspent_with_count(color_id, only_finalized, nil, page, per)
     end
 
     private

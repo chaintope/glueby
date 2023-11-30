@@ -89,8 +89,8 @@ module Glueby
         wallet_adapter.balance(id, only_finalized)
       end
 
-      def token_utxos(color_id = nil, only_finalized = true, page = 1, per = 25)
-        wallet_adapter.token_utxos(id, color_id, only_finalized, page, per)
+      def list_unspent_with_count(color_id = nil, only_finalized = true, label = nil, page = 1, per = 25)
+        wallet_adapter.list_unspent_with_count(id, color_id, only_finalized, label, page, per)
       end
 
       # @param color_id [Tapyrus::Color::ColorIdentifier] The color identifier associated with UTXO.

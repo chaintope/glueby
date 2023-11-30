@@ -541,17 +541,17 @@ RSpec.describe 'Glueby::Internal::Wallet' do
     end
   end
 
-  describe "#token_utxos" do
-    subject { wallet.token_utxos(color_id) }
+  describe "#list_unspent_with_count" do
+    subject { wallet.list_unspent_with_count(color_id) }
 
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
 
-    it "call WalletAdapter#token_utxos" do
-      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:token_utxos)
+    it "call WalletAdapter#list_unspent_with_count" do
+      allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:list_unspent_with_count)
 
       subject
 
-      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:token_utxos).with(wallet.id, color_id, true, 1, 25)
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:list_unspent_with_count).with(wallet.id, color_id, true, nil, 1, 25)
     end
   end
 end
