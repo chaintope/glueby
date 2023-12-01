@@ -206,7 +206,7 @@ module Glueby
         tx = Tapyrus::Tx.new
 
         amount = receivers.reduce(0) { |sum, r| sum + r[:amount].to_i }
-        utxos = sender.internal_wallet.list_unspent(color_id, only_finalized)
+        utxos = sender.internal_wallet.list_unspent(only_finalized, color_id: color_id)
         sum_token, outputs = collect_colored_outputs(utxos, amount)
         fill_input(tx, outputs)
 
@@ -247,7 +247,7 @@ module Glueby
       def create_burn_tx(color_id:, sender:, amount: 0, fee_estimator: FeeEstimator::Fixed.new, only_finalized: true)
         tx = Tapyrus::Tx.new
 
-        utxos = sender.internal_wallet.list_unspent(color_id, only_finalized)
+        utxos = sender.internal_wallet.list_unspent(only_finalized, color_id: color_id)
         sum_token, outputs = collect_colored_outputs(utxos, amount)
         fill_input(tx, outputs)
 

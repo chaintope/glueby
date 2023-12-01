@@ -29,8 +29,8 @@ RSpec.describe 'Payment Contract', functional: true do
         end.to raise_error(Glueby::Contract::Errors::InsufficientFunds)
 
         # should not consume 'labeled' utxos
-        expect(sender.internal_wallet.list_unspent(nil, false, 'labeled').size).to eq(1)
-        expect(sender.internal_wallet.list_unspent(nil, false, 'labeled')[0][:amount]).to eq(5_000_000_000)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
 
         # create a usable utxo for payment
         process_block(to_address: sender.internal_wallet.receive_address)
@@ -48,8 +48,8 @@ RSpec.describe 'Payment Contract', functional: true do
         # receiver got the sent amount
         expect(receiver.balances(false)['']).to eq(10_000)
         # should not consume 'labeled' utxos
-        expect(sender.internal_wallet.list_unspent(nil, false, 'labeled').size).to eq(1)
-        expect(sender.internal_wallet.list_unspent(nil, false, 'labeled')[0][:amount]).to eq(5_000_000_000)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000)
       end
     end
 
@@ -74,8 +74,8 @@ RSpec.describe 'Payment Contract', functional: true do
         end.to raise_error(Glueby::Contract::Errors::InsufficientFunds)
 
         # should not consume 'labeled' utxos
-        expect(sender.internal_wallet.list_unspent(nil, false, 'labeled').size).to eq(1)
-        expect(sender.internal_wallet.list_unspent(nil, false, 'labeled')[0][:amount]).to eq(5_000_000_000 + fixed_fee)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000 + fixed_fee)
 
         # create a usable utxo for payment
         process_block(to_address: sender.internal_wallet.receive_address)
@@ -92,8 +92,8 @@ RSpec.describe 'Payment Contract', functional: true do
         # receiver got the sent amount
         expect(receiver.balances(false)['']).to eq(10_000)
         # should not consume 'labeled' utxos
-        expect(sender.internal_wallet.list_unspent(nil, false, 'labeled').size).to eq(1)
-        expect(sender.internal_wallet.list_unspent(nil, false, 'labeled')[0][:amount]).to eq(5_000_000_000 + fixed_fee)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled').size).to eq(1)
+        expect(sender.internal_wallet.list_unspent(false, 'labeled')[0][:amount]).to eq(5_000_000_000 + fixed_fee)
 
         sighashtype = tx.inputs[-1].script_sig.chunks.first.pushed_data[-1].unpack1('C')
         expect(sighashtype).to eq(Tapyrus::SIGHASH_TYPE[:all])

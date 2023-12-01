@@ -206,7 +206,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
       let(:only_finalized) { false }
 
       it do
-        allow(internal_wallet).to receive(:list_unspent).with(Tapyrus::Color::ColorIdentifier.default, false, nil).and_return(unspents.select{ |u| !u[:color_id]})
+        allow(internal_wallet).to receive(:list_unspent).with(false, nil, color_id: Tapyrus::Color::ColorIdentifier.default).and_return(unspents.select{ |u| !u[:color_id]})
         expect(subject[0]).to eq 250_000_000
         expect(subject[1].size).to eq 3
       end
@@ -223,7 +223,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
       let(:only_finalized) { false }
 
       it 'returns one output' do
-        allow(internal_wallet).to receive(:list_unspent).with(Tapyrus::Color::ColorIdentifier.default, false, nil).and_return(unspents.select{ |u| !u[:color_id]})
+        allow(internal_wallet).to receive(:list_unspent).with(false, nil, color_id: Tapyrus::Color::ColorIdentifier.default).and_return(unspents.select{ |u| !u[:color_id]})
         expect(subject[0]).to eq 250_000_000
         expect(subject[1].size).to eq 3
       end
@@ -303,8 +303,8 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
     before do
       allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
-      allow(internal_wallet).to receive(:list_unspent).with(Tapyrus::Color::ColorIdentifier.default, false, nil).and_return(unspents.select{ |u| !u[:color_id]})
-      allow(internal_wallet).to receive(:list_unspent).with(color_id, false, nil).and_return(unspents.select{ |u| u[:color_id] == color_id.to_hex })
+      allow(internal_wallet).to receive(:list_unspent).with(false, nil, color_id: Tapyrus::Color::ColorIdentifier.default).and_return(unspents.select{ |u| !u[:color_id]})
+      allow(internal_wallet).to receive(:list_unspent).with(false, nil, color_id: color_id).and_return(unspents.select{ |u| u[:color_id] == color_id.to_hex })
     end
 
     it 'returns one output' do
@@ -542,7 +542,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
   end
 
   describe "#list_unspent_with_count" do
-    subject { wallet.list_unspent_with_count(color_id) }
+    subject { wallet.list_unspent_with_count(color_id: color_id) }
 
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
 
@@ -551,7 +551,7 @@ RSpec.describe 'Glueby::Internal::Wallet' do
 
       subject
 
-      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:list_unspent_with_count).with(wallet.id, color_id, true, nil, 1, 25)
+      expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:list_unspent_with_count).with(wallet.id, true, nil, color_id: color_id, page: 1, per: 25)
     end
   end
 end

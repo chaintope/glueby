@@ -250,7 +250,7 @@ class TestInternalWallet < Glueby::Internal::Wallet
     '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
   end
 
-  def list_unspent(color_id = nil, only_finalized = true, label = nil)
+  def list_unspent(only_finalized = true, label = nil, color_id: nil)
     []
   end
 

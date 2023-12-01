@@ -387,7 +387,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     let(:amount) { 100_001 }
     
     before do
-      allow(internal_wallet).to receive(:list_unspent).with(color_id, true)
+      allow(internal_wallet).to receive(:list_unspent).with(true, color_id: color_id)
         .and_return(unspents.select { |utxo| utxo[:color_id] == 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' })
     end
     it { expect(subject.inputs.size).to eq 3 }
@@ -395,6 +395,8 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     it { expect(subject.inputs[0].out_point.index).to eq 0 }
     it { expect(subject.inputs[1].out_point.txid).to eq 'a3f20bc94c8d77c35ba1770116d2b34375475a4194d15f76442636e9f77d50d9' }
     it { expect(subject.inputs[1].out_point.index).to eq 2 }
+    it { expect(subject.inputs[2].out_point.txid).to eq '5c3d79041ff4974282b8ab72517d2ef15d8b6273cb80a01077145afb3d5e7cc5' }
+    it { expect(subject.inputs[2].out_point.index).to eq 0 }
     it { expect(subject.outputs.size).to eq 3 }
     it { expect(subject.outputs[0].value).to eq 100_001 }
     it { expect(subject.outputs[0].colored?).to be_truthy }
@@ -426,7 +428,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     end
 
     before do
-      allow(internal_wallet).to receive(:list_unspent).with(color_id, true)
+      allow(internal_wallet).to receive(:list_unspent).with(true, color_id: color_id)
         .and_return(unspents.select { |utxo| utxo[:color_id] == 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' })
     end
 
@@ -488,7 +490,7 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
 
 
     before do
-      allow(internal_wallet).to receive(:list_unspent).with(color_id, true)
+      allow(internal_wallet).to receive(:list_unspent).with(true, color_id: color_id)
         .and_return(unspents.select { |utxo| utxo[:color_id] == 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' })
     end
 

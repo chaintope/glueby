@@ -37,7 +37,7 @@ module Glueby
 
     # @return [HashMap] hash of balances which key is color_id or empty string, and value is amount
     def balances(only_finalized = true)
-      utxos = @internal_wallet.list_unspent(nil, only_finalized)
+      utxos = @internal_wallet.list_unspent(only_finalized)
       utxos.inject({}) do |balances, output|
         key = output[:color_id] || ''
         balances[key] ||= 0
@@ -47,7 +47,7 @@ module Glueby
     end
 
     def token_utxos(color_id = nil, only_finalized = true, page = 1, per = 25)
-      @internal_wallet.list_unspent_with_count(color_id, only_finalized, nil, page, per)
+      @internal_wallet.list_unspent_with_count(only_finalized, nil, color_id: color_id, page: page, per: per)
     end
 
     private

@@ -149,7 +149,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       it { expect(subject[1][:label]).to eq nil }
     end
 
-    subject { adapter.list_unspent(wallet.wallet_id, color_id, only_finalized, label) }
+    subject { adapter.list_unspent(wallet.wallet_id, only_finalized, label, color_id: color_id) }
 
     let(:other_wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: adapter.create_wallet) }
     let(:only_finalized) { true }
@@ -525,7 +525,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
   end
 
   describe '#list_unspent_with_count' do
-    subject { adapter.list_unspent_with_count(wallet_id, color_id, only_finalized, label, page, per) }
+    subject { adapter.list_unspent_with_count(wallet_id, only_finalized, label, color_id: color_id, page: page, per: per) }
 
     let(:wallet_id) { wallet.wallet_id }
     let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }

@@ -90,7 +90,7 @@ module Glueby
           utxos.sum(&:value)
         end
 
-        def list_unspent_with_count(wallet_id, color_id = nil, only_finalized = true, label = nil, page = 1, per = 25)
+        def list_unspent_with_count(wallet_id, only_finalized = true, label = nil, color_id: nil, page: 1, per: 25)
           utxos = list_unspent_internal(wallet_id, color_id, only_finalized, label)
           utxos = utxos.page(page).per(per) if per > 0
           {
@@ -99,7 +99,7 @@ module Glueby
           }
         end 
 
-        def list_unspent(wallet_id, color_id = nil, only_finalized = true, label = nil)
+        def list_unspent(wallet_id, only_finalized = true, label = nil, color_id: nil)
           utxos = list_unspent_internal(wallet_id, color_id, only_finalized, label)
           utxos_to_h(utxos)
         end

@@ -84,7 +84,7 @@ module Glueby
 
         # If label=nil, it will return unlabeled utxos to protect labeled utxos for specific purpose
         # If label=:all, it will return all utxos
-        def list_unspent(wallet_id, color_id = nil, only_finalized = true, label = nil)
+        def list_unspent(wallet_id, only_finalized = true, label = nil, color_id: nil)
           perform_as(wallet_id) do |client|
             min_conf = only_finalized ? 1 : 0
             res = client.listunspent(min_conf)

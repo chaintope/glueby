@@ -89,20 +89,29 @@ module Glueby
         wallet_adapter.balance(id, only_finalized)
       end
 
-      def list_unspent_with_count(color_id = nil, only_finalized = true, label = nil, page = 1, per = 25)
-        wallet_adapter.list_unspent_with_count(id, color_id, only_finalized, label, page, per)
-      end
-
-      # @param color_id [Tapyrus::Color::ColorIdentifier] The color identifier associated with UTXO.
-      #                    It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
-      #                    If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
       # @param only_finalized [Boolean] The flag to get a UTXO with status only finalized
       # @param label [String] This label is used to filtered the UTXOs with labeled if a key or Utxo is labeled.
       #                    - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.
       #                    - If label=:all, all UTXOs will be returned.
-      def list_unspent(color_id = nil, only_finalized = true, label = :unlabeled)
+      # @param color_id [Tapyrus::Color::ColorIdentifier] The color identifier associated with UTXO.
+      #                    It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
+      #                    If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
+      # @param page [Integer] The page parameter is responsible for specifying the current page being viewed within the paginated results. default is 1.
+      # @param per [Integer] The per parameter is used to determine the number of items to display per page. default is 25.
+      def list_unspent_with_count(only_finalized = true, label = nil, color_id: nil, page: 1, per: 25)
+        wallet_adapter.list_unspent_with_count(id, only_finalized, label, color_id: color_id, page: page, per: per)
+      end
+
+      # @param only_finalized [Boolean] The flag to get a UTXO with status only finalized
+      # @param label [String] This label is used to filtered the UTXOs with labeled if a key or Utxo is labeled.
+      #                    - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.
+      #                    - If label=:all, all UTXOs will be returned.
+      # @param color_id [Tapyrus::Color::ColorIdentifier] The color identifier associated with UTXO.
+      #                    It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
+      #                    If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
+      def list_unspent(only_finalized = true, label = :unlabeled, color_id: nil )
         label = :unlabeled unless label
-        wallet_adapter.list_unspent(id, color_id, only_finalized, label)
+        wallet_adapter.list_unspent(id, only_finalized, label, color_id: color_id)
       end
 
       def lock_unspent(utxo)
@@ -302,7 +311,7 @@ module Glueby
         collect_all = amount.nil?
 
         raise Glueby::ArgumentError, 'amount must be positive' unless collect_all || amount.positive?
-        utxos = list_unspent(color_id, only_finalized, label)
+        utxos = list_unspent(only_finalized, label, color_id: color_id)
         utxos = utxos.shuffle if shuffle
 
         r = utxos.inject([0, []]) do |(sum, outputs), output|

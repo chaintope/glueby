@@ -86,16 +86,16 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
 
   before do
     allow(internal_wallet).to receive(:list_unspent).and_return([])
-    allow(internal_wallet).to receive(:list_unspent).with(Tapyrus::Color::ColorIdentifier.default, true, nil).and_return(unspents.select{ |i| !i[:color_id] && i[:finalized] })
-    allow(internal_wallet).to receive(:list_unspent).with(Tapyrus::Color::ColorIdentifier.default, false, nil).and_return(unspents.select{ |i| !i[:color_id] })
+    allow(internal_wallet).to receive(:list_unspent).with(true, nil, color_id: Tapyrus::Color::ColorIdentifier.default).and_return(unspents.select{ |i| !i[:color_id] && i[:finalized] })
+    allow(internal_wallet).to receive(:list_unspent).with(false, nil, color_id: Tapyrus::Color::ColorIdentifier.default).and_return(unspents.select{ |i| !i[:color_id] })
     [
       "c3eb2b846463430b7be9962843a97ee522e3dc0994a0f5e2fc0aa82e20e67fe893",
       "c2dbbebb191128de429084246fa3215f7ccc36d6abde62984eb5a42b1f2253a016",
       "c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3",
     ].each do |color_id_hex|
       color_id = Tapyrus::Color::ColorIdentifier.parse_from_payload(color_id_hex.htb)
-      allow(internal_wallet).to receive(:list_unspent).with(color_id, true, nil).and_return(unspents.select{ |i| i[:color_id] == color_id_hex && i[:finalized] })
-      allow(internal_wallet).to receive(:list_unspent).with(color_id, false, nil).and_return(unspents.select{ |i| i[:color_id] == color_id_hex })
+      allow(internal_wallet).to receive(:list_unspent).with(true, nil, color_id: color_id).and_return(unspents.select{ |i| i[:color_id] == color_id_hex && i[:finalized] })
+      allow(internal_wallet).to receive(:list_unspent).with(false, nil, color_id: color_id).and_return(unspents.select{ |i| i[:color_id] == color_id_hex })
     end
     allow(Glueby::Internal::RPC).to receive(:client).and_return(rpc)
     allow(rpc).to receive(:sendrawtransaction).and_return('')
