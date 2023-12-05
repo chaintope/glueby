@@ -93,9 +93,25 @@ module Glueby
       # @param label [String] This label is used to filtered the UTXOs with labeled if a key or Utxo is labeled.
       #                    - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.
       #                    - If label=:all, all UTXOs will be returned.
-      def list_unspent(only_finalized = true, label = :unlabeled)
+      # @param color_id [Tapyrus::Color::ColorIdentifier] The color identifier associated with UTXO.
+      #                    It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
+      #                    If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
+      # @param page [Integer] The page parameter is responsible for specifying the current page being viewed within the paginated results. default is 1.
+      # @param per [Integer] The per parameter is used to determine the number of items to display per page. default is 25.
+      def list_unspent_with_count(only_finalized = true, label = nil, color_id: nil, page: 1, per: 25)
+        wallet_adapter.list_unspent_with_count(id, only_finalized, label, color_id: color_id, page: page, per: per)
+      end
+
+      # @param only_finalized [Boolean] The flag to get a UTXO with status only finalized
+      # @param label [String] This label is used to filtered the UTXOs with labeled if a key or Utxo is labeled.
+      #                    - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.
+      #                    - If label=:all, all UTXOs will be returned.
+      # @param color_id [Tapyrus::Color::ColorIdentifier] The color identifier associated with UTXO.
+      #                    It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
+      #                    If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
+      def list_unspent(only_finalized = true, label = :unlabeled, color_id: nil )
         label = :unlabeled unless label
-        wallet_adapter.list_unspent(id, only_finalized, label)
+        wallet_adapter.list_unspent(id, only_finalized, label, color_id: color_id)
       end
 
       def lock_unspent(utxo)
@@ -171,8 +187,7 @@ module Glueby
         lock_utxos = false,
         excludes = []
       )
-        collect_utxos(amount, label, only_finalized, shuffle, lock_utxos, excludes) do |output|
-          next false unless output[:color_id].nil?
+        collect_utxos(amount, label, Tapyrus::Color::ColorIdentifier.default, only_finalized, shuffle, lock_utxos, excludes) do |output|
           next yield(output) if block_given?
 
           true
@@ -206,8 +221,7 @@ module Glueby
         lock_utxos = false,
         excludes = []
       )
-        collect_utxos(amount, label, only_finalized, shuffle, lock_utxos, excludes) do |output|
-          next false unless output[:color_id] == color_id.to_hex
+        collect_utxos(amount, label, color_id, only_finalized, shuffle, lock_utxos, excludes) do |output|
           next yield(output) if block_given?
 
           true
@@ -261,7 +275,7 @@ module Glueby
         while current_amount - fee < target_amount
           sum, utxos = collect_uncolored_outputs(
             fee + target_amount - current_amount,
-            nil, nil, true, true,
+            nil, false, true, true,
             provided_utxos,
             &block
           )
@@ -288,7 +302,8 @@ module Glueby
       def collect_utxos(
         amount,
         label,
-        only_finalized,
+        color_id,
+        only_finalized = true,
         shuffle = true,
         lock_utxos = false,
         excludes = []
@@ -296,7 +311,7 @@ module Glueby
         collect_all = amount.nil?
 
         raise Glueby::ArgumentError, 'amount must be positive' unless collect_all || amount.positive?
-        utxos = list_unspent(only_finalized, label)
+        utxos = list_unspent(only_finalized, label, color_id: color_id)
         utxos = utxos.shuffle if shuffle
 
         r = utxos.inject([0, []]) do |(sum, outputs), output|

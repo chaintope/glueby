@@ -255,9 +255,10 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       end
     end
 
-    subject { adapter.list_unspent(wallet_id, only_finalized) }
+    subject { adapter.list_unspent(wallet_id, only_finalized, color_id: color_id) }
 
     let(:wallet_id) { ARBITRARY_WALLET_ID }
+    let(:color_id) { nil }
     let(:only_finalized) { nil }
 
     let(:response) do
@@ -349,7 +350,7 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     end
 
     context 'with label' do
-      subject { adapter.list_unspent(wallet_id, true, "Glueby-Contract-Tracking") }
+      subject { adapter.list_unspent(wallet_id, true, "Glueby-Contract-Tracking", color_id: color_id) }
       it 'should call listunspent RPC with label and parse the results.' do
         expect(rpc).to receive(:listunspent).and_return(response)
         expect(subject).to eq([
@@ -367,15 +368,15 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
     end
 
     context 'with unlabeled by assign :unlabeled' do
-      subject { adapter.list_unspent(wallet_id, true, :unlabeled) }
+      subject { adapter.list_unspent(wallet_id, true, :unlabeled, color_id: color_id) }
       it_behaves_like 'executes the common unlabeled validation'
     end
     context 'with unlabeled by default' do
-      subject { adapter.list_unspent(wallet_id, true, :unlabeled) }
+      subject { adapter.list_unspent(wallet_id, true, :unlabeled, color_id: color_id) }
       it_behaves_like 'executes the common unlabeled validation'
     end
     context 'with all utxos' do
-      subject { adapter.list_unspent(wallet_id, true, :all) }
+      subject { adapter.list_unspent(wallet_id, true, :all, color_id: color_id) }
       it 'should call listunspent RPC with all utxos and parse the results.' do
         expect(rpc).to receive(:listunspent).and_return(response)
         expect(subject).to eq([

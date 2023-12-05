@@ -95,6 +95,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000000',
         index: 0,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a9140ff36d308d250261c518f2db838f12775476a49788ac',
         value: 1,
         status: :broadcasted,
@@ -103,6 +104,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000000',
         index: 1,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 2,
         status: :finalized,
@@ -111,6 +113,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000000',
         index: 2,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 3,
         status: :finalized,
@@ -119,6 +122,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000000',
         index: 3,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
         value: 4,
         status: :init,
@@ -145,7 +149,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       it { expect(subject[1][:label]).to eq nil }
     end
 
-    subject { adapter.list_unspent(wallet.wallet_id, only_finalized, label) }
+    subject { adapter.list_unspent(wallet.wallet_id, only_finalized, label, color_id: color_id) }
 
     let(:other_wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: adapter.create_wallet) }
     let(:only_finalized) { true }
@@ -158,11 +162,13 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     let(:private_key3) { '3000000000000000000000000000000000000000000000000000000000000000' }
     let(:key4) { Glueby::Internal::Wallet::AR::Key.create(private_key: private_key4, purpose: :receive, wallet: wallet) }
     let(:private_key4) { '4000000000000000000000000000000000000000000000000000000000000000' }
+    let(:color_id) { nil }
 
     before do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000001',
         index: 0,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a9140ff36d308d250261c518f2db838f12775476a49788ac',
         value: 1,
         status: :broadcasted,
@@ -171,6 +177,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000002',
         index: 1,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 2,
         status: :finalized,
@@ -179,6 +186,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000003',
         index: 2,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a914f9cfb93abedaef5b725c986efb31cca730bc0b3d88ac',
         value: 3,
         status: :finalized,
@@ -187,6 +195,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000004',
         index: 3,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
         value: 4,
         status: :init,
@@ -195,6 +204,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000004',
         index: 4,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
         value: 5,
         status: :finalized,
@@ -204,6 +214,7 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '0000000000000000000000000000000000000000000000000000000000000004',
         index: 5,
+        color_id: 'c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46',
         script_pubkey: '21c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91430de67b49d3ce43f8d0948f395ed7a8ad9a584e388ac',
         value: 6,
         status: :broadcasted,
@@ -510,6 +521,142 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       adapter.receive_address(wallet.wallet_id, 'tracking')
       expect(adapter.has_address?(wallet.wallet_id, address)).to be_truthy
       expect(adapter.has_address?(wallet.wallet_id, '1LUMPgobnSdbaA4iaikHKjCDLHveWYUSt5')).to be_falsy
+    end
+  end
+
+  describe '#list_unspent_with_count' do
+    subject { adapter.list_unspent_with_count(wallet_id, only_finalized, label, color_id: color_id, page: page, per: per) }
+
+    let(:wallet_id) { wallet.wallet_id }
+    let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
+    let(:color_id2) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c11863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262'.htb) }
+    let(:key1) { wallet.keys.create(purpose: :receive) }
+    let(:key2) { wallet.keys.create(purpose: :receive) }
+    let(:only_finalized) { true }
+    let(:label) { nil }
+    let(:page) { 1 }
+    let(:per) { 25 }
+
+    let(:utxo1) do
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '0000000000000000000000000000000000000000000000000000000000000000',
+        index: 0,
+        value: 600,
+        script_pubkey: key1.to_p2pkh.to_hex,
+        status: :init,
+        key: key1
+      )
+    end
+    let(:utxo2) do
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '1111111111111111111111111111111111111111111111111111111111111111',
+        index: 0,
+        value: 600,
+        script_pubkey: key2.to_p2pkh.to_hex,
+        status: :init,
+        key: key2
+      )
+    end
+    let(:utxo3) do
+      colored_script = key1.to_p2pkh.add_color(color_id)
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '2222222222222222222222222222222222222222222222222222222222222222',
+        index: 0,
+        color_id: color_id.to_hex,
+        script_pubkey: colored_script.to_hex,
+        value: 1,
+        status: :finalized,
+        key: key1
+      )
+    end
+    let(:utxo4) do
+      colored_script = key1.to_p2pkh.add_color(color_id2)
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '2222222222222222222222222222222222222222222222222222222222222222',
+        index: 3,
+        color_id: color_id2.to_hex,
+        script_pubkey: colored_script.to_hex,
+        value: 1,
+        status: :finalized,
+        key: key1
+      )
+    end
+    let(:utxo5) do
+      colored_script = key1.to_p2pkh.add_color(color_id)
+      Glueby::Internal::Wallet::AR::Utxo.create(
+        txid: '2222222222222222222222222222222222222222222222222222222222222222',
+        index: 4,
+        color_id: color_id.to_hex,
+        script_pubkey: colored_script.to_hex,
+        value: 1,
+        status: :init,
+        key: key1
+      )
+    end
+
+    before do
+      utxo1
+      utxo2
+      utxo3
+      utxo4
+      utxo5
+    end
+
+    it do
+      expect(subject[:count]).to eq 1
+      expect(subject[:outputs]).to eq [{
+        txid: '2222222222222222222222222222222222222222222222222222222222222222',
+        vout: 0,
+        color_id: color_id.to_hex,
+        label: nil,
+        script_pubkey: utxo3.script_pubkey,
+        amount: 1,
+        finalized: true
+      }]
+    end
+
+    context 'only_finalized = false' do
+      let(:only_finalized) { false }
+
+      it do
+        expect(subject[:count]).to eq 2
+        expect(subject[:outputs]).to eq [{
+          txid: '2222222222222222222222222222222222222222222222222222222222222222',
+          vout: 0,
+          color_id: color_id.to_hex,
+          label: nil,
+          script_pubkey: utxo3.script_pubkey,
+          amount: 1,
+          finalized: true
+        },{
+          txid: '2222222222222222222222222222222222222222222222222222222222222222',
+          vout: 4,
+          color_id: color_id.to_hex,
+          label: nil,
+          script_pubkey: utxo5.script_pubkey,
+          amount: 1,
+          finalized: false
+        }]
+      end
+    end
+
+    context 'page, per specified' do
+      let(:only_finalized) { false }
+      let(:page) { 2 }
+      let(:per) { 1 }
+
+      it do
+        expect(subject[:count]).to eq 2
+        expect({
+          txid: '2222222222222222222222222222222222222222222222222222222222222222',
+          vout: 4,
+          color_id: color_id.to_hex,
+          label: nil,
+          script_pubkey: utxo5.script_pubkey,
+          amount: 1,
+          finalized: false
+        })
+      end
     end
   end
 

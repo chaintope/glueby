@@ -112,6 +112,7 @@ def setup_database(config: sqlite3_config)
     t.string     :txid
     t.integer    :index
     t.bigint     :value
+    t.string     :color_id, index: true
     t.string     :script_pubkey
     t.string     :label, index: true
     t.integer    :status
@@ -249,7 +250,7 @@ class TestInternalWallet < Glueby::Internal::Wallet
     '1DBgMCNBdjQ1Ntz1vpwx2HMYJmc9kw88iT'
   end
 
-  def list_unspent(only_finalized = true, label = nil)
+  def list_unspent(only_finalized = true, label = nil, color_id: nil)
     []
   end
 

@@ -38,6 +38,7 @@ module Glueby
               utxo = Utxo.find_or_initialize_by(txid: tx.txid, index: index)
               utxo.update!(
                 label: key.label,
+                color_id: output.script_pubkey.color_id&.to_hex,
                 script_pubkey: output.script_pubkey.to_hex,
                 value: output.value,
                 status: status,

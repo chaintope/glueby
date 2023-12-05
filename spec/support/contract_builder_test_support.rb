@@ -15,6 +15,7 @@ def fund_to_wallet(wallet, color_id: Tapyrus::Color::ColorIdentifier.default, co
     Glueby::Internal::Wallet::AR::Utxo.create!(
       txid: txid,
       index: i,
+      color_id: color_id.default? ? nil : color_id.to_hex,
       script_pubkey: script_pubkey.to_hex,
       key: ar_key,
       value: 1_000,

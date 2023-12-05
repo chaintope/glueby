@@ -385,7 +385,11 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     let(:receiver_address) { wallet.internal_wallet.receive_address }
     let(:script_pubkey) { Tapyrus::Script.parse_from_addr(receiver_address).add_color(color_id).to_hex }
     let(:amount) { 100_001 }
-
+    
+    before do
+      allow(internal_wallet).to receive(:list_unspent).with(true, color_id: color_id)
+        .and_return(unspents.select { |utxo| utxo[:color_id] == 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' })
+    end
     it { expect(subject.inputs.size).to eq 3 }
     it { expect(subject.inputs[0].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2' }
     it { expect(subject.inputs[0].out_point.index).to eq 0 }
@@ -421,6 +425,11 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
         { address: address2, amount: 2 },
         { address: address3, amount: 3 }
       ]
+    end
+
+    before do
+      allow(internal_wallet).to receive(:list_unspent).with(true, color_id: color_id)
+        .and_return(unspents.select { |utxo| utxo[:color_id] == 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' })
     end
 
     it { expect(subject.inputs.size).to eq 3 }
@@ -478,6 +487,12 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
     let(:sender) { wallet }
     let(:amount) { 50_000 }
     let(:fee_estimator) { Glueby::Contract::FeeEstimator::Fixed.new }
+
+
+    before do
+      allow(internal_wallet).to receive(:list_unspent).with(true, color_id: color_id)
+        .and_return(unspents.select { |utxo| utxo[:color_id] == 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' })
+    end
 
     it { expect(subject.inputs.size).to eq 2 }
     it { expect(subject.inputs[0].out_point.txid).to eq '100c4dc65ea4af8abb9e345b3d4cdcc548bb5e1cdb1cb3042c840e147da72fa2' }
@@ -641,11 +656,10 @@ RSpec.describe 'Glueby::Contract::TxBuilder' do
   end
 
   describe '#collect_colored_outputs' do
-    subject { mock.collect_colored_outputs(results, color_id, amount) }
+    subject { mock.collect_colored_outputs(results, amount) }
 
-    let(:results) { unspents }
+    let(:results) { unspents.select { |utxo| utxo[:color_id] == 'c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3' } }
     let(:amount) { 50_000 }
-    let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c150ad685ec8638543b2356cb1071cf834fb1c84f5fa3a71699c3ed7167dfcdbb3'.htb) }
 
     it { expect(subject[0]).to eq 100_000 }
     it { expect(subject[1].size).to eq 1 }

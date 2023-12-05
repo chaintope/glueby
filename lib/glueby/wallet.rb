@@ -46,6 +46,10 @@ module Glueby
       end
     end
 
+    def token_utxos(color_id = nil, only_finalized = true, page = 1, per = 25)
+      @internal_wallet.list_unspent_with_count(only_finalized, nil, color_id: color_id, page: page, per: per)
+    end
+
     private
 
     def initialize(internal_wallet)

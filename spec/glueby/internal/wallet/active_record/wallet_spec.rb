@@ -2,13 +2,14 @@
 
 RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
   let(:wallet) { Glueby::Internal::Wallet::AR::Wallet.create(wallet_id: 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') }
+  let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
+  let(:key1) { wallet.keys.create(purpose: :receive) }
+  let(:key2) { wallet.keys.create(purpose: :receive) }
 
   describe '#sign' do
     subject { wallet.sign(tx, prevtxs, sighashtype: sighashtype) }
 
     let(:sighashtype) { Tapyrus::SIGHASH_TYPE[:all] }
-    let(:key1) { wallet.keys.create(purpose: :receive) }
-    let(:key2) { wallet.keys.create(purpose: :receive) }
     let(:tx) do
       tx = Tapyrus::Tx.new
       tx.inputs << Tapyrus::TxIn.new(out_point: Tapyrus::OutPoint.new('00' * 32, 0))
@@ -17,7 +18,6 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       tx.outputs << Tapyrus::TxOut.new(value: 1, script_pubkey: Tapyrus::Script.new)
       tx
     end
-    let(:color_id) { Tapyrus::Color::ColorIdentifier.parse_from_payload('c185856a84c483fb108b1cdf79ff53aa7d54d1a137a5178684bd89ca31f906b2bd'.htb) }
     let(:prevtxs) { [] }
 
     before do
@@ -41,6 +41,7 @@ RSpec.describe 'Glueby::Internal::Wallet::AR::Wallet', active_record: true do
       Glueby::Internal::Wallet::AR::Utxo.create(
         txid: '2222222222222222222222222222222222222222222222222222222222222222',
         index: 0,
+        color_id: color_id,
         script_pubkey: colored_script.to_hex,
         value: 1,
         status: :finalized,

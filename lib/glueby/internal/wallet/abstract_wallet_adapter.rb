@@ -65,6 +65,21 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
+        # Returns all tokens with specified color_id
+        #
+        # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
+        # @param [Boolean] only_finalized - includes only finalized UTXO value if it
+        #                                   is true. Default is true.
+        # @param [Tapyrus::Color::ColorIdentifier] color_id The color identifier associated with UTXO.
+        #                                                     It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
+        #                                                     If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
+        # @param [Integer] page - The page parameter is responsible for specifying the current page being viewed within the paginated results. default is 1.
+        # @param [Integer] per - The per parameter is used to determine the number of items to display per page. default is 25.
+        # @return [Array<Utxo>] The array of the utxos with specified color_id
+        def list_unspent_with_count(wallet_id, only_finalized = true, label = nil, color_id: nil, page: 1, per: 25)
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
+
         # Returns the UTXOs that the wallet has.
         # If label is specified, return UTXOs filtered with label
         #
@@ -74,6 +89,9 @@ module Glueby
         # @param [String] label - Label for filtering UTXOs
         #                       - If label is nil or :unlabeled, only unlabeled UTXOs will be returned.
         #                       - If label=:all, it will return all utxos
+        # @param [Tapyrus::Color::ColorIdentifier] color_id - The color identifier. 
+        #                                                     It will return only UTXOs with specified color_id. If color_id is nil, it will return all UTXOs.
+        #                                                     If Tapyrus::Color::ColorIdentifier.default is specified, it will return uncolored UTXOs(i.e. TPC)
         # @return [Array of UTXO]
         #
         # ## The UTXO structure
@@ -84,7 +102,7 @@ module Glueby
         # - finalized: [Boolean] Whether the UTXO is finalized
         # - color_id: [String] Color id of the UTXO. If it is TPC UTXO, color_id is nil.
         # - script_pubkey: [String] Script pubkey of the UTXO
-        def list_unspent(wallet_id, only_finalized = true, label = nil)
+        def list_unspent(wallet_id, only_finalized = true, label = nil, color_id: nil)
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 

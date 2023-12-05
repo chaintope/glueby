@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'securerandom'
+require 'kaminari'
 
 module Glueby
   module Internal
@@ -89,29 +90,18 @@ module Glueby
           utxos.sum(&:value)
         end
 
-        def list_unspent(wallet_id, only_finalized = true, label = nil)
-          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
-          utxos = wallet.utxos.where(locked_at: nil)
-          utxos = utxos.where(status: :finalized) if only_finalized
-          if [:unlabeled, nil].include?(label)
-            utxos = utxos.where(label: nil)
-          elsif label && (label != :all)
-            utxos = utxos.where(label: label)
-          else
-            utxos
-          end
+        def list_unspent_with_count(wallet_id, only_finalized = true, label = nil, color_id: nil, page: 1, per: 25)
+          utxos = list_unspent_internal(wallet_id, color_id, only_finalized, label)
+          utxos = utxos.page(page).per(per) if per > 0
+          {
+            count: utxos.total_count,
+            outputs: utxos_to_h(utxos)
+          }
+        end 
 
-          utxos.map do |utxo|
-            {
-              txid: utxo.txid,
-              vout: utxo.index,
-              script_pubkey: utxo.script_pubkey,
-              color_id: utxo.color_id,
-              amount: utxo.value,
-              finalized: utxo.status == 'finalized',
-              label: utxo.label
-            }
-          end
+        def list_unspent(wallet_id, only_finalized = true, label = nil, color_id: nil)
+          utxos = list_unspent_internal(wallet_id, color_id, only_finalized, label)
+          utxos_to_h(utxos)
         end
 
         def sign_tx(wallet_id, tx, prevtxs = [], sighashtype: Tapyrus::SIGHASH_TYPE[:all])
@@ -244,6 +234,37 @@ module Glueby
             priv_key: ECDSA::Format::IntegerOctetString.encode(p2c_private_key, 32).bth,
             key_type: Tapyrus::Key::TYPES[:compressed]
           )
+        end
+
+        def list_unspent_internal(wallet_id, color_id = nil, only_finalized = true, label = nil)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
+          utxos = wallet.utxos.where(locked_at: nil)
+          utxos = utxos.where(color_id: color_id.to_hex) if color_id && !color_id.default?
+          utxos = utxos.where(color_id: nil) if color_id && color_id.default?
+          utxos = utxos.where(status: :finalized) if only_finalized
+          utxos = utxos.order(:id)
+          utxos = if [:unlabeled, nil].include?(label)
+            utxos = utxos.where(label: nil)
+          elsif label && (label != :all)
+            utxos = utxos.where(label: label)
+          else
+            utxos
+          end
+          utxos
+        end
+
+        def utxos_to_h(utxos)
+          utxos.map do |utxo|
+            {
+              txid: utxo.txid,
+              vout: utxo.index,
+              script_pubkey: utxo.script_pubkey,
+              color_id: utxo.color_id,
+              amount: utxo.value,
+              finalized: utxo.status == 'finalized',
+              label: utxo.label
+            }
+          end
         end
       end
     end
