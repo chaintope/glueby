@@ -12,6 +12,7 @@ TAPYRUSD_VERSION = 'v0.5.2'
 SimpleCov.start do
   add_filter '/spec/'
   SimpleCov.minimum_coverage 99
+  SimpleCov.minimum_coverage_by_file 70
 end
 
 RSpec.configure do |config|
