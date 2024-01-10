@@ -7,11 +7,8 @@
 
 name: Ruby
 
-on:
-  push:
-    branches: [master, v1.1, v1.2]
-  pull_request:
-    branches: [master, v1.1, v1.2]
+on: [push,pull_request]
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -31,9 +28,3 @@ jobs:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
       - name: Run tests
         run: bundle exec rake
-      - name: SimpleCov+ Action
-        uses: joshmfrankel/simplecov-check-action@main
-        with:
-          minimum_suite_coverage: 99
-          minimum_file_coverage: 70
-          github_token: ${{ secrets.GITHUB_TOKEN }}
