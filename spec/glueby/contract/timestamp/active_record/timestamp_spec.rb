@@ -7,11 +7,13 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         content: "\xFF\xFF\xFF",
         prefix: 'app',
         timestamp_type: timestamp_type,
-        prev_id: prev_id
+        prev_id: prev_id,
+        version: version
       )
     end
     let(:timestamp_type) { :simple }
     let(:prev_id) { nil }
+    let(:version) { "1" }
     let(:rpc) { double('mock') }
     let(:wallet) { Glueby::Wallet.create }
 
@@ -207,9 +209,11 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         wallet_id: '00000000000000000000000000000000',
         content: "\xFF\xFF\xFF",
         prefix: 'app',
-        timestamp_type: :simple
+        timestamp_type: :simple,
+        version: version
       )
     end
+    let(:version) { "1" }
 
     context 'it doesnt not raise errors' do
       before do
@@ -443,6 +447,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       expect(timestamp.status).to eq "unconfirmed"
       expect(timestamp.p2c_address).to be_nil
       expect(timestamp.payment_base).to be_nil
+      expect(timestamp.version).to eq "1"
     end
 
     context 'raises Tapyrus::RPC::Error' do
@@ -470,6 +475,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         expect(timestamp.status).to eq "unconfirmed"
         expect(timestamp.p2c_address).not_to be_nil
         expect(timestamp.payment_base).not_to be_nil
+        expect(timestamp.version).to eq "1"
       end
 
       context 'has prev_id' do
@@ -487,13 +493,15 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
               wallet_id: '00000000000000000000000000000000',
               content: "\xFF\xFF\xFF",
               prefix: 'app',
-              timestamp_type: :trackable
+              timestamp_type: :trackable,
+              version: prev_version
             )
           end
           let!(:prev_id) do
             prev.save_with_broadcast!
             prev.id
           end
+          let(:prev_version) { "1" }
 
           before do
             # Prepare an UTXO for previous timestamp tx.
@@ -520,6 +528,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
             expect(timestamp.payment_base).not_to be_nil
             expect(timestamp.latest).to be_truthy
             expect(timestamp.next_id).to be_nil
+            expect(timestamp.version).to eq "1"
           end
 
           it 'update previous timestamp\'s latest flag and next_id' do
@@ -529,13 +538,26 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
             expect(prev.next_id).to eq timestamp.id
           end
 
+          context 'different version from prev' do
+            let(:version) { "2" }
+            it do
+              subject
+              timestamp.reload
+              expect(timestamp.version).to eq "2"
+
+              prev.reload
+              expect(prev.version).to eq "1"
+            end
+          end
+
           context 'previous timestamp type is not trackable' do
             let!(:prev_id) do
               prev = Glueby::Contract::AR::Timestamp.create(
                 wallet_id: '00000000000000000000000000000000',
                 content: "\xFF\xFF\xFF",
                 prefix: 'app',
-                timestamp_type: :simple
+                timestamp_type: :simple,
+                version: prev_version
               )
               prev.save_with_broadcast!
               prev.id
@@ -556,7 +578,8 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
                 wallet_id: another_wallet.internal_wallet.id,
                 content: "\xFF\xFF\xFF",
                 prefix: 'app',
-                timestamp_type: :trackable
+                timestamp_type: :trackable,
+                version: prev_version
               )
             end
             let(:prev_id) { prev.id }

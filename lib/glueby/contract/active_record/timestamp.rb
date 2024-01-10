@@ -12,6 +12,8 @@ module Glueby
         belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp', inverse_of: :next, optional: true
         has_one :next, class_name: 'Glueby::Contract::AR::Timestamp', foreign_key: 'prev_id'
 
+        validates :version, presence: true
+
         def next_id
           self.next&.id
         end
@@ -41,6 +43,7 @@ module Glueby
         # - prefix(optional)
         # - timestamp_type(optional)
         # - hex(optional) [Boolean] If true, the strings set in prefix and content are treated as hex strings.
+        # - version [String](optional) The version for which the timestamp was recorded. The version is specified by the application using glueby. default is "1"
         # @raise [Glueby::ArgumentError] If the timestamp_type is not in :simple or :trackable
         def initialize(attributes = nil)
           # Set content_hash from :content attribute
@@ -53,7 +56,8 @@ module Glueby
             status: :init,
             timestamp_type: attributes[:timestamp_type] || :simple,
             prev_id: attributes[:prev_id],
-            hex: hex
+            hex: hex,
+            version: attributes[:version] || "1"
           )
         rescue ::ArgumentError => e
           raise Glueby::ArgumentError, e.message
