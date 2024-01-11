@@ -7,6 +7,51 @@ module Glueby
     # * 1 output to send the change TPC back to the wallet.
     #
     # Storing timestamp transaction to the blockchain enables everyone to verify that the data existed at that time and a user signed it.
+    #
+    # == Versioning Timestamp
+    #
+    # The timestamp has an attribute called "version".
+    # Version indicates how the timestamp is recorded in the blockchain. Currently, only versions 1 and 2 are supported, and each is recorded in the following manner
+    # * Version 1: The first version of the blockchain is used to record timestamps.
+    #     treats the content and prefix received as parameters as a binary string
+    # * Version 2:.
+    #     treats the specified content and prefix as a hexadecimal string with the string set to prefix and content.
+    #
+    # For example, when recording a simple type of timestamp, the difference between the content recorded by version 1 and version 2 is as follows
+    # Version 1: 
+    #   Save the timestamp as follows:
+    #
+    #  Glueby::Contract::Timestamp.new(
+    #    wallet: wallet,
+    #    content: "1234",
+    #    prefix: "071222",
+    #    digest: :none,
+    #    version: "1"
+    #  )
+    #
+    # The output script of the recorded transaction will include OP_RETURN and will look like this:
+    #
+    # OP_RETURN 30373132323231323334
+    #
+    # Note that prefix: "071222" and content: "1234" are interpreted as ASCII strings and their hexadecimal representation "3037313232323132323334" is recorded in the actual blockchain, respectively.
+    #
+    # Version 2: 
+    #
+    # To save the timestamp in version 2, simply change the version of the previous example to "2".
+    #
+    #  Glueby::Contract::Timestamp.new(
+    #    wallet: wallet,
+    #    content: "1234",
+    #    prefix: "071222",
+    #    digest: :none,
+    #    version: "2"
+    #  )
+    #
+    # The output script will look like this:
+    #
+    # OP_RETURN 0712221234
+    #
+    # In this case, prefix: "071222" and content: "1234" are treated as a hexadecimal string and recorded directly in the blockchain.
     class Timestamp
       P2C_DEFAULT_VALUE = 1_000
 
@@ -29,7 +74,10 @@ module Glueby
       # - :simple
       # - :trackable
       # @param [Integer] prev_timestamp_id The id column of glueby_timestamps that will be updated by the timestamp that will be created
-      # @param [Boolean] hex If true, prefix and content are treated as hex strings
+      # @param [String] version Version of the timestamp recording method.
+      #     The format in which the timestamp is recorded differs depending on the version.
+      #     Version "1" treats the specified content and prefix as a binary string.
+      #     Version "2" treats the specified content and prefix as a hexadecimal string with the string set to prefix and content.
       # @raise [Glueby::Contract::Errors::UnsupportedDigestType] if digest is unsupported
       # @raise [Glueby::Contract::Errors::InvalidTimestampType] if timestamp_type is unsupported
       def initialize(
@@ -41,7 +89,7 @@ module Glueby
         utxo_provider: nil,
         timestamp_type: :simple,
         prev_timestamp_id: nil,
-        hex: false
+        version: nil
       )
         @wallet = wallet
         @content = content
@@ -53,7 +101,7 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidTimestampType, "#{timestamp_type} is invalid type, supported types are :simple, and :trackable." unless [:simple, :trackable].include?(timestamp_type)
         @timestamp_type = timestamp_type
         @prev_timestamp_id = prev_timestamp_id
-        @hex = hex
+        @version = version
       end
 
       # broadcast to Tapyrus Core
@@ -70,7 +118,7 @@ module Glueby
           timestamp_type: @timestamp_type,
           digest: @digest,
           prev_id: @prev_timestamp_id,
-          hex: @hex
+          version: @version
         )
         @ar.save_with_broadcast!(fee_estimator: @fee_estimator, utxo_provider: @utxo_provider)
         @ar.txid
