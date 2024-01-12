@@ -12,7 +12,7 @@ module Glueby
         belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp', inverse_of: :next, optional: true
         has_one :next, class_name: 'Glueby::Contract::AR::Timestamp', foreign_key: 'prev_id'
 
-        validates :version, presence: true
+        validates :version, presence: true, inclusion: { in: ['1', '2'] }
 
         def next_id
           self.next&.id

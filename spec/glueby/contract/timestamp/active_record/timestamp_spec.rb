@@ -100,6 +100,13 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       }
     end
 
+    context 'unsupported version' do
+      it do
+        expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(version: '3')) }
+          .to raise_error(ActiveRecord::RecordInvalid, 'Validation failed: Version is not included in the list')
+      end
+    end
+
     it 'valid trackable timestamp' do
       Glueby::Contract::AR::Timestamp.create!(valid_attributes)
     end

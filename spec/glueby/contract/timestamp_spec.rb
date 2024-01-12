@@ -31,6 +31,21 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
 
       it { expect { subject }.to raise_error(Glueby::Contract::Errors::InvalidTimestampType) }
     end
+
+    context 'with unsupported version' do
+      subject do
+        Glueby::Contract::Timestamp.new(
+          wallet: wallet,
+          content: 'bar',
+          prefix: 'foo',
+          digest: :none,
+          timestamp_type: :simple,
+          version: '3'
+        )
+      end
+
+      it { expect { subject }.to raise_error(Glueby::Contract::Errors::UnsupportedTimestampVersion) }
+    end
   end
 
   describe '#save!' do

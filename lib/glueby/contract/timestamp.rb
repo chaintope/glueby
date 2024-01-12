@@ -89,7 +89,7 @@ module Glueby
         utxo_provider: nil,
         timestamp_type: :simple,
         prev_timestamp_id: nil,
-        version: nil
+        version:
       )
         @wallet = wallet
         @content = content
@@ -101,6 +101,7 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidTimestampType, "#{timestamp_type} is invalid type, supported types are :simple, and :trackable." unless [:simple, :trackable].include?(timestamp_type)
         @timestamp_type = timestamp_type
         @prev_timestamp_id = prev_timestamp_id
+        raise Glueby::Contract::Errors::UnsupportedTimestampVersion, "#{version} is unsupported, supported versions are '1' and '2'." unless ['1', '2'].include?(version)
         @version = version
       end
 
