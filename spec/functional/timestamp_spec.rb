@@ -20,7 +20,7 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
         prefix: 'app',
         timestamp_type: timestamp_type,
         utxo_provider: utxo_provider,
-        hex: true
+        version: '1'
       )
     end
 
@@ -79,7 +79,7 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
 
       it 'use rake task' do
         # Add timestamp job to timestamps table
-        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app', timestamp_type: :trackable)
+        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app', timestamp_type: :trackable, version: '1')
         expect(ar.status).to eq('init')
         expect(ar.txid).to be_nil
         expect(ar.p2c_address).to be_nil
@@ -117,7 +117,7 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
 
       it do
         # Add timestamp job to timestamps table
-        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app', timestamp_type: :trackable)
+        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app', timestamp_type: :trackable, version: '1')
         expect(ar.status).to eq('init')
         expect(ar.txid).to be_nil
         expect(ar.p2c_address).to be_nil
@@ -159,7 +159,8 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
           content: "1234".htb,
           prefix: 'app',
           timestamp_type: :trackable,
-          prev_id: ar.id
+          prev_id: ar.id,
+          version: '1'
         )
         expect do
           Rake.application['glueby:contract:timestamp:create'].execute
@@ -197,7 +198,7 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
       context 'hex option is enabled' do
         it do
           # Add timestamp job to timestamps table
-          ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "FFFFFF", prefix: '071222', timestamp_type: :trackable, hex: true)
+          ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "FFFFFF", prefix: '071222', timestamp_type: :trackable, version: '2')
           expect(ar.status).to eq('init')
           expect(ar.txid).to be_nil
           expect(ar.p2c_address).to be_nil
@@ -240,7 +241,7 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
             prefix: '071222',
             timestamp_type: :trackable,
             prev_id: ar.id,
-            hex: true
+            version: '2'
           )
           expect do
             Rake.application['glueby:contract:timestamp:create'].execute
@@ -266,7 +267,7 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
             prefix: '071222',
             timestamp_type: :trackable,
             prev_id: ar.id,
-            hex: true
+            version: '2'
           )
           expect { timestamp.save_with_broadcast! }
             .to raise_error(
@@ -288,7 +289,8 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
               wallet_id: sender.id,
               content: 'ffffff',
               prefix: 'aabb',
-              timestamp_type: :trackable
+              timestamp_type: :trackable,
+              version: '1'
             )
 
             timestamp.save_with_broadcast!
@@ -298,7 +300,8 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
               content: "eeeeee",
               prefix: 'aabb',
               timestamp_type: :trackable,
-              prev_id: timestamp.id
+              prev_id: timestamp.id,
+              version: '1'
             ).save_with_broadcast!
           end
         end
@@ -325,7 +328,8 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
           wallet: sender,
           content: "\xFF\xFF\xFF",
           prefix: 'app',
-          fee_estimator: fee_estimator
+          fee_estimator: fee_estimator,
+          version: '1'
         )
         timestamp.save!
 
@@ -334,7 +338,7 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
 
       it 'use rake task' do
         # Add timestamp job to timestamps table
-        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app')
+        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app', version: '1')
         expect(ar.status).to eq('init')
         expect(ar.txid).to be_nil
 
@@ -377,7 +381,8 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
           wallet: sender,
           content: "\xFF\xFF\xFF",
           prefix: 'app',
-          fee_estimator: fee_estimator
+          fee_estimator: fee_estimator,
+          version: '1'
         )
         timestamp.save!
 
@@ -386,7 +391,7 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
 
       it 'use rake task' do
         # Add timestamp job to timestamps table
-        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app')
+        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app', version: '1')
         expect(ar.status).to eq('init')
         expect(ar.txid).to be_nil
 
@@ -422,7 +427,8 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
           wallet: sender,
           content: "\xFF\xFF\xFF",
           prefix: 'app',
-          utxo_provider: utxo_provider
+          utxo_provider: utxo_provider,
+          version: '1'
         )
         timestamp.save!
 
@@ -431,7 +437,7 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
 
       it 'use rake task' do
         # Add timestamp job to timestamps table
-        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app')
+        ar = Glueby::Contract::AR::Timestamp.create(wallet_id: sender.id, content: "\xFF\xFF\xFF", prefix: 'app', version: '1')
         expect(ar.status).to eq('init')
         expect(ar.txid).to be_nil
 
@@ -473,7 +479,8 @@ RSpec.describe 'Timestamp Contract', functional: true, mysql: true do
               content: "\xFF\xFF\xFF",
               prefix: 'app',
               timestamp_type: timestamp_type,
-              utxo_provider: utxo_provider
+              utxo_provider: utxo_provider,
+              version: '1'
             ).save!
           end
         end

@@ -7,11 +7,13 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         content: "\xFF\xFF\xFF",
         prefix: 'app',
         timestamp_type: timestamp_type,
-        prev_id: prev_id
+        prev_id: prev_id,
+        version: version
       )
     end
     let(:timestamp_type) { :simple }
     let(:prev_id) { nil }
+    let(:version) { '1' }
     let(:rpc) { double('mock') }
     let(:wallet) { Glueby::Wallet.create }
 
@@ -47,11 +49,13 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         content: "\xFF\xFF\xFF",
         prefix: 'app',
         digest: digest,
-        timestamp_type: timestamp_type
+        timestamp_type: timestamp_type,
+        version: version
       )
     end
     let(:digest) { :sha256 }
     let(:timestamp_type) { :simple }
+    let(:version) { '1' }
 
     context 'unknown timestamp type' do
       let(:timestamp_type) { :unknown }
@@ -91,8 +95,16 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         wallet_id: '00000000000000000000000000000000',
         content: "\xFF\xFF\xFF",
         prefix: 'app',
-        timestamp_type: 'trackable'
+        timestamp_type: 'trackable',
+        version: '1'
       }
+    end
+
+    context 'unsupported version' do
+      it do
+        expect { Glueby::Contract::AR::Timestamp.create!(valid_attributes.merge(version: '3')) }
+          .to raise_error(ActiveRecord::RecordInvalid, 'Validation failed: Version is not included in the list')
+      end
     end
 
     it 'valid trackable timestamp' do
@@ -145,7 +157,8 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
             wallet_id: '11111111111111111111111111111111',
             content: "\xFF\xFF\xFF",
             prefix: 'app',
-            timestamp_type: 'trackable'
+            timestamp_type: 'trackable',
+            version: '1'
           })
         end
 
@@ -205,11 +218,13 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
     let(:timestamp) do
       Glueby::Contract::AR::Timestamp.new(
         wallet_id: '00000000000000000000000000000000',
-        content: "\xFF\xFF\xFF",
-        prefix: 'app',
-        timestamp_type: :simple
+        content: "FFFFFF", 
+        prefix: '071222',
+        timestamp_type: :simple,
+        version: version
       )
     end
+    let(:version) { '1' }
 
     context 'it doesnt not raise errors' do
       before do
@@ -252,7 +267,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
           timestamp_type: :simple,
           digest: digest,
           prev_id: nil,
-          hex: hex
+          version: version
         )
       end
       let(:rpc) { double('mock') }
@@ -297,7 +312,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
           timestamp_type: :trackable,
           digest: digest,
           prev_id: nil,
-          hex: hex
+          version: version
         )
       end
       let(:rpc) { double('mock') }
@@ -345,8 +360,8 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       context 'simple type' do
         let(:timestamp_type) { :simple }
 
-        context 'hex format' do
-          let(:hex) { true }
+        context 'hex format (version 2)' do
+          let(:version) { '2' }
 
           it_behaves_like 'broadcast correct tx with op_return' do
             let(:digest) { :none }
@@ -364,8 +379,8 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
           end
         end
 
-        context 'old format' do
-          let(:hex) { false }
+        context 'old format (version 1)' do
+          let(:version) { '1' }
 
           it_behaves_like 'broadcast correct tx with op_return' do
             let(:digest) { :none }
@@ -387,8 +402,8 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       context 'trackable type' do
         let(:timestamp_type) { :trackable }
 
-        context 'hex format' do
-          let(:hex) { true }
+        context 'hex format (version 2)' do
+          let(:version) { '2' }
 
           it_behaves_like 'broadcast correct trackable tx' do
             let(:digest) { :none }
@@ -406,8 +421,8 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
           end
         end
 
-        context 'old format' do
-          let(:hex) { false }
+        context 'old format (version 1)' do
+          let(:version) { '1' }
 
           it_behaves_like 'broadcast correct trackable tx' do
             let(:digest) { :none }
@@ -443,6 +458,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
       expect(timestamp.status).to eq "unconfirmed"
       expect(timestamp.p2c_address).to be_nil
       expect(timestamp.payment_base).to be_nil
+      expect(timestamp.version).to eq '1'
     end
 
     context 'raises Tapyrus::RPC::Error' do
@@ -470,6 +486,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
         expect(timestamp.status).to eq "unconfirmed"
         expect(timestamp.p2c_address).not_to be_nil
         expect(timestamp.payment_base).not_to be_nil
+        expect(timestamp.version).to eq '1'
       end
 
       context 'has prev_id' do
@@ -487,13 +504,15 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
               wallet_id: '00000000000000000000000000000000',
               content: "\xFF\xFF\xFF",
               prefix: 'app',
-              timestamp_type: :trackable
+              timestamp_type: :trackable,
+              version: prev_version
             )
           end
           let!(:prev_id) do
             prev.save_with_broadcast!
             prev.id
           end
+          let(:prev_version) { '1' }
 
           before do
             # Prepare an UTXO for previous timestamp tx.
@@ -520,6 +539,7 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
             expect(timestamp.payment_base).not_to be_nil
             expect(timestamp.latest).to be_truthy
             expect(timestamp.next_id).to be_nil
+            expect(timestamp.version).to eq '1'
           end
 
           it 'update previous timestamp\'s latest flag and next_id' do
@@ -529,13 +549,26 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
             expect(prev.next_id).to eq timestamp.id
           end
 
+          context 'different version from prev' do
+            let(:version) { '2' }
+            it do
+              subject
+              timestamp.reload
+              expect(timestamp.version).to eq '2'
+
+              prev.reload
+              expect(prev.version).to eq '1'
+            end
+          end
+
           context 'previous timestamp type is not trackable' do
             let!(:prev_id) do
               prev = Glueby::Contract::AR::Timestamp.create(
                 wallet_id: '00000000000000000000000000000000',
                 content: "\xFF\xFF\xFF",
                 prefix: 'app',
-                timestamp_type: :simple
+                timestamp_type: :simple,
+                version: prev_version
               )
               prev.save_with_broadcast!
               prev.id
@@ -556,7 +589,8 @@ RSpec.describe 'Glueby::Contract::AR::Timestamp', active_record: true do
                 wallet_id: another_wallet.internal_wallet.id,
                 content: "\xFF\xFF\xFF",
                 prefix: 'app',
-                timestamp_type: :trackable
+                timestamp_type: :trackable,
+                version: prev_version
               )
             end
             let(:prev_id) { prev.id }

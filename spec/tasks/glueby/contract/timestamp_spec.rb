@@ -73,7 +73,7 @@ RSpec.describe 'Glueby::Contract::Task::Timestamp', active_record: true do
     allow(Glueby::Wallet).to receive(:load).with("5f924e7e5daf624616f96b2f659938d7").and_return(wallet)
     allow(internal_wallet).to receive(:list_unspent).and_return(unspents)
 
-    Glueby::Contract::AR::Timestamp.create(wallet_id: "5f924e7e5daf624616f96b2f659938d7" , content: "\xFF\xFF\xFF", prefix: "app")
+    Glueby::Contract::AR::Timestamp.create(wallet_id: "5f924e7e5daf624616f96b2f659938d7" , content: "\xFF\xFF\xFF", prefix: "app", version: "1")
   end
 
   describe '#create' do

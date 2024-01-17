@@ -15,6 +15,7 @@ module Glueby
       class UnsupportedTokenType < ArgumentError; end
       class UnknownScriptPubkey < ArgumentError; end
       class UnsupportedDigestType < ArgumentError; end
+      class UnsupportedTimestampVersion < ArgumentError; end
       class PrevTimestampNotFound < ArgumentError; end
       class PrevTimestampIsNotTrackable < ArgumentError; end
       class UnnecessaryPrevTimestamp < ArgumentError; end

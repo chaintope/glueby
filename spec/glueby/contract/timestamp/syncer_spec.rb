@@ -6,21 +6,27 @@ RSpec.describe Glueby::Contract::Timestamp::Syncer, active_record: true do
         status: :init,
         wallet_id: "5f924e7e5daf624616f96b2f659938d7" ,
         content: "\xFF\xFF\xFF",
-        prefix: "app")
+        prefix: "app",
+        version: "1"
+      )
 
       Glueby::Contract::AR::Timestamp.create(
         txid: 'd90759e30adf2eb9537bbd3ab1205ed5054cf873539c18947b36be1d6bb56f05',
         status: :confirmed,
         wallet_id: "5f924e7e5daf624616f96b2f659938d7" ,
         content: "\xFF\xFF\xFF",
-        prefix: "app")
+        prefix: "app",
+        version: "1"
+      )
     end
 
     let!(:unconfirmed) do
       r = Glueby::Contract::AR::Timestamp.create(
         wallet_id: "5f924e7e5daf624616f96b2f659938d7" ,
         content: "\xFF\xFF\xFF",
-        prefix: "app")
+        prefix: "app",
+        version: "1"
+      )
       r.update(status: :unconfirmed, txid: '79a5a199e6f3a59345c1132235c142464d0ba906266c223f245e623e8e451909')
       r
     end

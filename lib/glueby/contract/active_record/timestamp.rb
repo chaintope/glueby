@@ -12,6 +12,8 @@ module Glueby
         belongs_to :prev, class_name: 'Glueby::Contract::AR::Timestamp', inverse_of: :next, optional: true
         has_one :next, class_name: 'Glueby::Contract::AR::Timestamp', foreign_key: 'prev_id'
 
+        validates :version, presence: true, inclusion: { in: ['1', '2'] }
+
         def next_id
           self.next&.id
         end
@@ -40,11 +42,14 @@ module Glueby
         # - content
         # - prefix(optional)
         # - timestamp_type(optional)
-        # - hex(optional) [Boolean] If true, the strings set in prefix and content are treated as hex strings.
+        # - version [String] Version of the timestamp recording method.
+        #     The format in which the timestamp is recorded differs depending on the version.
+        #     Version "1" treats the specified content and prefix as a binary string.
+        #     Version "2" treats the specified content and prefix as a hexadecimal string with the string set to prefix and content.
         # @raise [Glueby::ArgumentError] If the timestamp_type is not in :simple or :trackable
         def initialize(attributes = nil)
           # Set content_hash from :content attribute
-          hex = attributes[:hex] || false
+          hex = attributes[:version] == '1' ? false : true
           content_hash = Timestamp.digest_content(attributes[:content], attributes[:digest] || :sha256, hex)
           super(
             wallet_id: attributes[:wallet_id],
@@ -53,7 +58,7 @@ module Glueby
             status: :init,
             timestamp_type: attributes[:timestamp_type] || :simple,
             prev_id: attributes[:prev_id],
-            hex: hex
+            version: attributes[:version]
           )
         rescue ::ArgumentError => e
           raise Glueby::ArgumentError, e.message
@@ -134,6 +139,12 @@ module Glueby
           errors.add(:base, "failed to broadcast (id=#{id}, reason=#{e.message})")
           raise Errors::FailedToBroadcast, "failed to broadcast (id=#{id}, reason=#{e.message})"
         end
+
+        def hex?
+          version != '1'
+        end
+
+        alias_method :hex, :hex?
 
         private
 

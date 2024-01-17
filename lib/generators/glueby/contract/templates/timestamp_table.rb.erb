@@ -13,7 +13,7 @@ class CreateTimestamp < ActiveRecord::Migration<%= migration_version %>
       t.string   :payment_base
       t.bigint   :prev_id
       t.boolean  :latest, null: false, default: true
-      t.boolean  :hex, null: false, default: false
+      t.string   :version, null: false, default: "1"
     end
 
     add_index :glueby_timestamps, [:prev_id], unique: true

@@ -9,7 +9,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           wallet: wallet,
           content: "01",
           prefix: '',
-          digest: nil
+          digest: nil,
+          version: '1'
         )
       end
 
@@ -23,11 +24,27 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           content: 'bar',
           prefix: 'foo',
           digest: :none,
-          timestamp_type: :invalid_type
+          timestamp_type: :invalid_type,
+          version: '1'
         )
       end
 
       it { expect { subject }.to raise_error(Glueby::Contract::Errors::InvalidTimestampType) }
+    end
+
+    context 'with unsupported version' do
+      subject do
+        Glueby::Contract::Timestamp.new(
+          wallet: wallet,
+          content: 'bar',
+          prefix: 'foo',
+          digest: :none,
+          timestamp_type: :simple,
+          version: '3'
+        )
+      end
+
+      it { expect { subject }.to raise_error(Glueby::Contract::Errors::UnsupportedTimestampVersion) }
     end
   end
 
@@ -39,7 +56,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
         Glueby::Contract::Timestamp.new(
           wallet: wallet,
           content: "\01",
-          prefix: 'prefix'
+          prefix: 'prefix',
+          version: '1'
         )
       end
       let(:wallet) { TestWallet.new(internal_wallet) }
@@ -118,7 +136,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           Glueby::Contract::Timestamp.new(
             wallet: wallet,
             content: 'ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73',
-            prefix: 'e7a2e8b216'
+            prefix: 'e7a2e8b216',
+            version: '1'
           )
         end
 
@@ -140,7 +159,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           Glueby::Contract::Timestamp.new(
             wallet: wallet,
             content: 'タピルス',
-            prefix: 'あいうえお'
+            prefix: 'あいうえお',
+            version: '1'
           )
         end
 
@@ -169,7 +189,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
             wallet: wallet,
             content: 'Content for Timestamp',
             prefix: 'TIMESTAMPAPP',
-            digest: :none
+            digest: :none,
+            version: '1'
           )
         end
 
@@ -190,7 +211,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
               wallet: wallet,
               content: 'ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73',
               prefix: 'e7a2e8b216',
-              digest: :none
+              digest: :none,
+              version: '1'
             )
           end
 
@@ -213,7 +235,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
               wallet: wallet,
               content: 'タピルス',
               prefix: 'あいうえお',
-              digest: :none
+              digest: :none,
+              version: '1'
             )
           end
 
@@ -237,7 +260,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
             wallet: wallet,
             content: "01",
             prefix: '',
-            digest: :double_sha256
+            digest: :double_sha256,
+            version: '1'
           )
         end
 
@@ -257,7 +281,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
               wallet: wallet,
               content: 'ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73',
               prefix: 'e7a2e8b216',
-              digest: :double_sha256
+              digest: :double_sha256,
+              version: '1'
             )
           end
 
@@ -281,7 +306,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
             wallet: wallet,
             content: "\01",
             prefix: '',
-            utxo_provider: utxo_provider
+            utxo_provider: utxo_provider,
+            version: '1'
           )
         end
         # Utxo provider use utxos whose value is UtxoProvider#default_value
@@ -322,7 +348,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           content: 'bar',
           prefix: 'foo',
           digest: :none,
-          timestamp_type: :trackable
+          timestamp_type: :trackable,
+          version: '1'
         )
       end
 
@@ -371,7 +398,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           prefix: 'foo',
           digest: :none,
           timestamp_type: :trackable,
-          prev_timestamp_id: Glueby::Contract::AR::Timestamp.find_by(txid: prev_contract.txid).id
+          prev_timestamp_id: Glueby::Contract::AR::Timestamp.find_by(txid: prev_contract.txid).id,
+          version: '1'
         )
       end
 
@@ -381,7 +409,8 @@ RSpec.describe 'Glueby::Contract::Timestamp', active_record: true do
           content: 'bar',
           prefix: 'foo',
           digest: :none,
-          timestamp_type: :trackable
+          timestamp_type: :trackable,
+          version: '1'
         )
       end
 
