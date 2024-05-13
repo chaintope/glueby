@@ -1,9 +1,13 @@
+require 'tasks/glueby/task_helper'
+
+extend TaskHelper
+
 namespace :glueby do
   namespace :contract do
     namespace :block_syncer do
       desc '[Deprecated use glueby:block_syncer:start instead] sync block into database'
       task :start, [] => [:environment] do |_, _|
-        puts '[Deprecated] glueby:contract:block_syncer:start is deprecated. Use \'glueby:block_syncer:start\''
+        logger.info('[Deprecated] glueby:contract:block_syncer:start is deprecated. Use \'glueby:block_syncer:start\'')
         Rake::Task['glueby:block_syncer:start'].execute
       end
     end
@@ -22,7 +26,7 @@ namespace :glueby do
           Glueby::BlockSyncer.new(height).run
           synced_block.update(info_value: height.to_s)
         end
-        puts "success in synchronization (block height=#{height})"
+        logger.info("success in synchronization (block height=#{height})")
       end
     end
 
