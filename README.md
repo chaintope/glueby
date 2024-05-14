@@ -1,3 +1,5 @@
+CI Test
+
 # Glueby [![Ruby](https://github.com/chaintope/glueby/actions/workflows/ruby.yml/badge.svg)](https://github.com/chaintope/glueby/actions/workflows/ruby.yml) [![Gem Version](https://badge.fury.io/rb/glueby.svg)](https://badge.fury.io/rb/glueby) [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
 Glueby is a smart contract library on the [Tapyrus blockchain](https://github.com/chaintope/tapyrus-core). This is 
