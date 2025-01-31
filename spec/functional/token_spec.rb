@@ -70,7 +70,7 @@ RSpec.describe 'Token Contract', functional: true, mysql: true do
             amount: 10_000,
             fee_estimator: fee_estimator
           )
-        rescue Errno::ECONNREFUSED
+        rescue Errno::ECONNREFUSED, Errno::ECONNRESET
           # Ignored
         end
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq(1)

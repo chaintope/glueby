@@ -89,12 +89,31 @@ def sqlite3_config
 end
 
 def setup_database(config: sqlite3_config)
-  
-  ::ActiveRecord::Base.establish_connection(config)
-  connection = ::ActiveRecord::Base.connection
-  connection.create_table :glueby_wallets do |t|
-    t.string :wallet_id
-    t.timestamps
+  try = 0
+  begin
+    sleep(1)
+    ::ActiveRecord::Base.establish_connection(config)
+    connection = ::ActiveRecord::Base.connection
+    connection.create_table :glueby_wallets do |t|
+      t.string :wallet_id
+      t.timestamps
+  end
+  rescue ActiveRecord::ConnectionNotEstablished
+    try += 1
+    if try < 30
+      retry
+    else
+      raise
+    end
+  rescue ActiveRecord::NoDatabaseError
+    client = Mysql2::Client.new(
+      :host => config[:host],
+      :username => config[:username],
+      :password => config[:password]
+    )
+    client.query("CREATE DATABASE #{config[:database]}")
+    client.query("USE #{config[:database]}")
+    retry
   end
   connection.add_index :glueby_wallets, [:wallet_id], unique: true
 
