@@ -26,12 +26,12 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency 'tapyrus', '>= 0.3.1'
-  spec.add_runtime_dependency 'activerecord', '>= 7.0', '< 8.0'
+  spec.add_runtime_dependency 'tapyrus', '>= 0.3.7'
+  spec.add_runtime_dependency 'activerecord', '>= 7.0', '< 9.0'
   spec.add_runtime_dependency 'kaminari'
   spec.add_runtime_dependency 'mutex_m'
   spec.add_runtime_dependency 'bigdecimal'
-  spec.add_development_dependency 'sqlite3', '~> 1.4'
+  spec.add_development_dependency 'sqlite3', '>= 2.1'
   spec.add_development_dependency 'mysql2'
-  spec.add_development_dependency 'rails', '>= 7.0', '< 8.0'
+  spec.add_development_dependency 'rails', '>= 7.0', '< 9.0'
 end

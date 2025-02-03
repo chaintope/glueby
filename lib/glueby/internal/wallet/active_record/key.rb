@@ -10,7 +10,7 @@ module Glueby
 
           belongs_to :wallet
 
-          enum purpose: { receive: 0, change: 1 }
+          enum :purpose, { receive: 0, change: 1 }
 
           validates :purpose, presence: true
           validates :private_key, uniqueness: { case_sensitive: false }
