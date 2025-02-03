@@ -15,6 +15,7 @@ module Glueby
 
   if defined? ::Rails::Railtie
     require 'glueby/railtie'
+    require 'rails/generators'
   end
 
   module GluebyLogger
