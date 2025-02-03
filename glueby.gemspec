@@ -14,8 +14,8 @@ Gem::Specification.new do |spec|
 
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/chaintope/glueby"
-  spec.metadata["changelog_uri"] = "https://github.com/chaintope/glueby"
+  spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["changelog_uri"] = spec.homepage
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
@@ -29,6 +29,8 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'tapyrus', '>= 0.3.1'
   spec.add_runtime_dependency 'activerecord', '>= 7.0', '< 8.0'
   spec.add_runtime_dependency 'kaminari'
+  spec.add_runtime_dependency 'mutex_m'
+  spec.add_runtime_dependency 'bigdecimal'
   spec.add_development_dependency 'sqlite3', '~> 1.4'
   spec.add_development_dependency 'mysql2'
   spec.add_development_dependency 'rails', '>= 7.0', '< 8.0'
