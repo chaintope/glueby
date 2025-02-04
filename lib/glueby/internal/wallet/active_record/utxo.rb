@@ -10,7 +10,7 @@ module Glueby
           validates :txid, uniqueness: { scope: :index, case_sensitive: false }
           validate :check_dust_output
 
-          enum status: { init: 0, broadcasted: 1, finalized: 2 }
+          enum :status, { init: 0, broadcasted: 1, finalized: 2 }
 
           def color_id
             script = Tapyrus::Script.parse_from_payload(script_pubkey.htb)

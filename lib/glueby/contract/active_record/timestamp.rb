@@ -4,8 +4,8 @@ module Glueby
       class Timestamp < ::ActiveRecord::Base
         include Glueby::GluebyLogger
 
-        enum status: { init: 0, unconfirmed: 1, confirmed: 2 }
-        enum timestamp_type: { simple: 0, trackable: 1 }
+        enum :status, { init: 0, unconfirmed: 1, confirmed: 2 }
+        enum :timestamp_type, { simple: 0, trackable: 1 }
 
         attr_reader :tx
 
