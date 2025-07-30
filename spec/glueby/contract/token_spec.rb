@@ -282,6 +282,25 @@ RSpec.describe 'Glueby::Contract::Token', active_record: true do
     end
   end
 
+  describe '#import_reissuable_token_script_pubkey' do
+    let(:script_pubkey) { Tapyrus::Script.to_p2pkh(Tapyrus.hash160(Tapyrus::Key.generate.pubkey)) }
+    subject { Glueby::Contract::Token.import_reissuable_token_script_pubkey(script_pubkey) }
+
+    it 'creates Glueby::Contract::AR::ReissuableToken record' do
+      expect { subject }.to change(Glueby::Contract::AR::ReissuableToken, :count).by(1)
+      ar_token = Glueby::Contract::AR::ReissuableToken.find_by(script_pubkey: script_pubkey.to_hex)
+      expect(ar_token.color_id).to eq(Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey).to_hex)
+    end
+
+    context 'script_pubkey is not an instance of Tapyrus::Script' do
+      let(:script_pubkey) { 'invalid script' }
+
+      it 'creates Glueby::Contract::AR::ReissuableToken record' do
+        expect { subject }.to raise_error(Glueby::ArgumentError, 'script_pubkey should be a Tapyrus::Script')
+      end
+    end
+  end
+
   describe '#reissue!' do
     subject { token[0].reissue!(issuer: issuer, amount: amount) }
 

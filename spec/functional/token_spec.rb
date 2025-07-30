@@ -76,6 +76,27 @@ RSpec.describe 'Token Contract', functional: true, mysql: true do
         expect(Glueby::Contract::AR::ReissuableToken.count).to eq(1)
       end
 
+      it 'reissue imported reissuable token' do
+        imported_token_key = Tapyrus::Key.generate
+        script_pubkey = Tapyrus::Script.to_p2pkh(Tapyrus.hash160(imported_token_key.pubkey))
+        color_id = Tapyrus::Color::ColorIdentifier.reissuable(script_pubkey)
+        token = Glueby::Contract::Token.new(color_id: color_id)
+
+        # Import key to re-issuer wallet
+        sender.import_private_key(imported_token_key)
+
+        # Fails reissue before importing script_pubkey
+        expect { token.reissue!(issuer: sender, amount: 5_000) }.to raise_error(Glueby::Contract::Errors::UnknownScriptPubkey)
+
+        # Import script pubkey and reissue
+        Glueby::Contract::Token.import_reissuable_token_script_pubkey(script_pubkey)
+        token.reissue!(issuer: sender, amount: 5_000)
+
+        process_block
+
+        expect(sender.balances[color_id.to_hex]).to eq(5_000)
+      end
+
       it 'non-reissunable token' do
         token, _txs = Glueby::Contract::Token.issue!(
           issuer: sender,
