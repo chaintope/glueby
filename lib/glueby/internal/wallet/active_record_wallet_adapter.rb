@@ -143,6 +143,28 @@ module Glueby
           keys.map(&:address)
         end
 
+        def import_private_key(wallet_id, key, label = nil)
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
+          ar_key = AR::Key.find_by(
+            wallet: wallet,
+            private_key: key.priv_key,
+            public_key: key.pubkey
+          )
+          if ar_key
+            raise Errors::PrivateKeyAlreadyImported, "Key(pubkey: #{key.pubkey}) already imported in the wallet(#{wallet_id})"
+          else
+            AR::Key.create!(
+              wallet: wallet,
+              private_key: key.priv_key,
+              public_key: key.pubkey,
+              label: label,
+              purpose: :receive
+            )
+          end
+
+          true
+        end
+
         def get_addresses_info(addresses)
           unless addresses.is_a?(Array)
             addresses = [addresses]

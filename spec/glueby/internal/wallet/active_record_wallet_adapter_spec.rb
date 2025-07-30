@@ -333,6 +333,31 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     end
   end
 
+  describe '#import_private_key' do
+    let(:key) { Tapyrus::Key.generate }
+    subject { adapter.import_private_key(wallet.wallet_id, key) }
+
+    it 'create a new Key record' do
+      expect { subject }.to change { Glueby::Internal::Wallet::AR::Key.count }.by(1)
+
+      ar_key = Glueby::Internal::Wallet::AR::Key.where(public_key: key.pubkey).first
+      expect(ar_key.private_key).to eq(key.priv_key)
+      expect(ar_key.script_pubkey).to eq(Tapyrus::Script.to_p2pkh(Tapyrus.hash160(key.pubkey)).to_hex)
+      expect(ar_key.label).to be_nil
+      expect(ar_key.purpose).to eq('receive')
+    end
+
+    context 'specify label' do
+      subject { adapter.import_private_key(wallet.wallet_id, key, 'test_label') }
+
+      it 'the new Key record has label' do
+        subject
+        ar_key = Glueby::Internal::Wallet::AR::Key.where(public_key: key.pubkey).first
+        expect(ar_key.label).to eq('test_label')
+      end
+    end
+  end
+
   describe '#get_addresses_info' do
     subject { adapter.get_addresses_info(addresses) }
 

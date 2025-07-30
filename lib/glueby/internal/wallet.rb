@@ -293,6 +293,10 @@ module Glueby
         [tx, fee, current_amount, provided_utxos]
       end
 
+      def import_private_key(key, label = nil)
+        wallet_adapter.import_private_key(id, key, label)
+      end
+
       private
 
       def wallet_adapter
