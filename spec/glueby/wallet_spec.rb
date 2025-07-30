@@ -3,7 +3,7 @@
 RSpec.describe 'Glueby::Wallet' do
   class TestWalletAdapter < Glueby::Internal::Wallet::AbstractWalletAdapter
     def create_wallet(wallet_id = nil)
-      "wallet_id:1"
+      wallet_id ? wallet_id : "wallet_id:1"
     end
     def list_unspent(wallet_id, only_finalized = true, label = nil, color_id: nil)
       utxos = [
@@ -109,6 +109,23 @@ RSpec.describe 'Glueby::Wallet' do
     context 'unsupported adapter' do
       let(:adapter) { 'unknown' }
       it { expect { subject }.to raise_error(RuntimeError, 'Not implemented') }
+    end
+  end
+
+  describe '#create' do
+    subject { Glueby::Wallet.create }
+
+    it 'returns Glueby::Wallet instance' do
+      expect(subject).to be_a Glueby::Wallet
+    end
+
+    context 'with wallet_id' do
+      let(:wallet_id) { 'wallet_id' }
+      subject { Glueby::Wallet.create(wallet_id) }
+
+      it 'created wallet has specified wallet_id' do
+        expect(subject.id).to eq(wallet_id)
+      end
     end
   end
 
