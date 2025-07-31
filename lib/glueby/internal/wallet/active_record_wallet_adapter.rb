@@ -144,6 +144,9 @@ module Glueby
         end
 
         def import_private_key(wallet_id, key, label = nil)
+          raise Glueby::ArgumentError, 'key should be a Tapyrus::Key' unless key.is_a?(Tapyrus::Key)
+          raise Glueby::ArgumentError, 'label should be a String' if label && !label.is_a?(String)
+
           wallet = AR::Wallet.find_by(wallet_id: wallet_id)
           ar_key = AR::Key.find_by(
             wallet: wallet,

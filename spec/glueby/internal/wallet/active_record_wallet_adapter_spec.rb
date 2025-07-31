@@ -347,13 +347,29 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
       expect(ar_key.purpose).to eq('receive')
     end
 
+    context 'key is not an instance of Tapyrus::Key' do
+      let(:key) { 'invalid key' }
+
+      it 'create a new Key record' do
+        expect { subject }.to raise_error(Glueby::ArgumentError, 'key should be a Tapyrus::Key')
+      end
+    end
+
     context 'specify label' do
-      subject { adapter.import_private_key(wallet.wallet_id, key, 'test_label') }
+      let(:label) { 'test_label' }
+      subject { adapter.import_private_key(wallet.wallet_id, key, label) }
 
       it 'the new Key record has label' do
         subject
         ar_key = Glueby::Internal::Wallet::AR::Key.where(public_key: key.pubkey).first
         expect(ar_key.label).to eq('test_label')
+      end
+
+      context 'label is not an instance of String' do
+        let(:label) { 123 }
+        it 'create a new Key record' do
+          expect { subject }.to raise_error(Glueby::ArgumentError, 'label should be a String')
+        end
       end
     end
 
@@ -373,7 +389,6 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
           "Key(pubkey: #{key.pubkey}) already imported in the wallet(#{wallet.wallet_id})"
         )
       end
-
     end
   end
 
