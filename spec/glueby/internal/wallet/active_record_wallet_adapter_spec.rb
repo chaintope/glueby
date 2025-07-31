@@ -356,6 +356,25 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
         expect(ar_key.label).to eq('test_label')
       end
     end
+
+    context 'the private key is already in the wallet' do
+      before do
+        Glueby::Internal::Wallet::AR::Key.create!(
+          wallet: wallet,
+          private_key: key.priv_key,
+          public_key: key.pubkey,
+          purpose: :receive
+        )
+      end
+
+      it 'create a new Key record' do
+        expect { subject }.to raise_error(
+          Glueby::Internal::Wallet::Errors::PrivateKeyAlreadyImported,
+          "Key(pubkey: #{key.pubkey}) already imported in the wallet(#{wallet.wallet_id})"
+        )
+      end
+
+    end
   end
 
   describe '#get_addresses_info' do
