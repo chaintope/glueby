@@ -188,6 +188,9 @@ module Glueby
 
         # Import a private key to the wallet
         #
+        # CAUTION: Wallet Adapter doesn't rescan blockchain for the imported privatekey.
+        #          So the UTXOs in processed blocks are not counted on the Glueby::BlockSyncer.
+        #
         # @param [String] wallet_id - The private key is imported to.
         # @param [Tapyrus::Key] key - The private key that is imported to the wallet.
         # @param [String?] label - The label to filter the addresses.
