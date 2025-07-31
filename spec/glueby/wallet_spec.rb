@@ -165,7 +165,7 @@ RSpec.describe 'Glueby::Wallet' do
     end
   end
 
-  describe '#import_prifvate_keys' do
+  describe '#import_private_key' do
     let(:key) { Tapyrus::Key.generate }
     let(:wallet) { Glueby::Wallet.create }
 
