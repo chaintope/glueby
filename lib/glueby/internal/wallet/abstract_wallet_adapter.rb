@@ -186,7 +186,7 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
-        # Import an private key to the wallet
+        # Import a private key to the wallet
         #
         # @param [String] wallet_id - The private key is imported to.
         # @param [Tapyrus::Key] key - The private key that is imported to the wallet.
