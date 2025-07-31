@@ -161,8 +161,7 @@ module Glueby
               purpose: :receive
             )
           end
-
-          true
+          nil
         end
 
         def get_addresses_info(addresses)
