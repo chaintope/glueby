@@ -89,7 +89,6 @@ module Glueby
         # Creates AR::ReissuableToken record if it is not created before.
         #
         # @param [Tapyrus::Script] script_pubkey - The script pubkey that is used to issue the reissuable token
-        # @return [nil]
         # @raise [Glueby::ArgumentError] If the script_pubkey is not an instance of Tapyrus::Script
         def import_reissuable_token_script_pubkey(script_pubkey)
           raise Glueby::ArgumentError, 'script_pubkey should be a Tapyrus::Script' unless script_pubkey.is_a?(Tapyrus::Script)
