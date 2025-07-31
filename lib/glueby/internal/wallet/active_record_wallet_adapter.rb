@@ -143,6 +143,30 @@ module Glueby
           keys.map(&:address)
         end
 
+        def import_private_key(wallet_id, key, label = nil)
+          raise Glueby::ArgumentError, 'key should be a Tapyrus::Key' unless key.is_a?(Tapyrus::Key)
+          raise Glueby::ArgumentError, 'label should be a String' if label && !label.is_a?(String)
+
+          wallet = AR::Wallet.find_by(wallet_id: wallet_id)
+          ar_key = AR::Key.find_by(
+            wallet: wallet,
+            private_key: key.priv_key,
+            public_key: key.pubkey
+          )
+          if ar_key
+            raise Errors::PrivateKeyAlreadyImported, "Key(pubkey: #{key.pubkey}) already imported in the wallet(#{wallet_id})"
+          else
+            AR::Key.create!(
+              wallet: wallet,
+              private_key: key.priv_key,
+              public_key: key.pubkey,
+              label: label,
+              purpose: :receive
+            )
+          end
+          nil
+        end
+
         def get_addresses_info(addresses)
           unless addresses.is_a?(Array)
             addresses = [addresses]

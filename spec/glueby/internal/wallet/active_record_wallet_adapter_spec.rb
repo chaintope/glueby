@@ -333,6 +333,65 @@ RSpec.describe 'Glueby::Internal::Wallet::ActiveRecordWalletAdapter', active_rec
     end
   end
 
+  describe '#import_private_key' do
+    let(:key) { Tapyrus::Key.generate }
+    subject { adapter.import_private_key(wallet.wallet_id, key) }
+
+    it 'create a new Key record' do
+      expect { subject }.to change { Glueby::Internal::Wallet::AR::Key.count }.by(1)
+
+      ar_key = Glueby::Internal::Wallet::AR::Key.where(public_key: key.pubkey).first
+      expect(ar_key.private_key).to eq(key.priv_key)
+      expect(ar_key.script_pubkey).to eq(Tapyrus::Script.to_p2pkh(Tapyrus.hash160(key.pubkey)).to_hex)
+      expect(ar_key.label).to be_nil
+      expect(ar_key.purpose).to eq('receive')
+    end
+
+    context 'key is not an instance of Tapyrus::Key' do
+      let(:key) { 'invalid key' }
+
+      it 'create a new Key record' do
+        expect { subject }.to raise_error(Glueby::ArgumentError, 'key should be a Tapyrus::Key')
+      end
+    end
+
+    context 'specify label' do
+      let(:label) { 'test_label' }
+      subject { adapter.import_private_key(wallet.wallet_id, key, label) }
+
+      it 'the new Key record has label' do
+        subject
+        ar_key = Glueby::Internal::Wallet::AR::Key.where(public_key: key.pubkey).first
+        expect(ar_key.label).to eq('test_label')
+      end
+
+      context 'label is not an instance of String' do
+        let(:label) { 123 }
+        it 'create a new Key record' do
+          expect { subject }.to raise_error(Glueby::ArgumentError, 'label should be a String')
+        end
+      end
+    end
+
+    context 'the private key is already in the wallet' do
+      before do
+        Glueby::Internal::Wallet::AR::Key.create!(
+          wallet: wallet,
+          private_key: key.priv_key,
+          public_key: key.pubkey,
+          purpose: :receive
+        )
+      end
+
+      it 'create a new Key record' do
+        expect { subject }.to raise_error(
+          Glueby::Internal::Wallet::Errors::PrivateKeyAlreadyImported,
+          "Key(pubkey: #{key.pubkey}) already imported in the wallet(#{wallet.wallet_id})"
+        )
+      end
+    end
+  end
+
   describe '#get_addresses_info' do
     subject { adapter.get_addresses_info(addresses) }
 

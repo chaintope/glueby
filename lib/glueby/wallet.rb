@@ -35,6 +35,10 @@ module Glueby
       @internal_wallet.id
     end
 
+    def import_private_key(key, label = nil)
+      @internal_wallet.import_private_key(key, label)
+    end
+
     # @return [HashMap] hash of balances which key is color_id or empty string, and value is amount
     def balances(only_finalized = true)
       utxos = @internal_wallet.list_unspent(only_finalized)

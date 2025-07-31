@@ -75,6 +75,10 @@ RSpec.describe 'Glueby::Wallet' do
     def token_utxos(wallet_id, color_id, only_finalized, per, page)
       []
     end
+
+    def import_private_key(wallet_id, key, label = nil)
+      true
+    end
   end
 
   before { Glueby::Internal::Wallet.wallet_adapter = TestWalletAdapter.new }
@@ -175,6 +179,15 @@ RSpec.describe 'Glueby::Wallet' do
       allow(Glueby::Internal::Wallet.wallet_adapter).to receive(:list_unspent_with_count).and_return([])
       subject
       expect(Glueby::Internal::Wallet.wallet_adapter).to have_received(:list_unspent_with_count).with("wallet_id:1", only_finalized, nil, color_id: color_id, page: 1, per: 25)
+    end
+  end
+
+  describe '#import_private_key' do
+    let(:key) { Tapyrus::Key.generate }
+    let(:wallet) { Glueby::Wallet.create }
+
+    it 'returns true' do
+      expect(wallet.import_private_key(key, 'test-label')).to eq(true)
     end
   end
 end

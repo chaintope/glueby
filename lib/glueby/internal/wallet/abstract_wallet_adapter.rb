@@ -186,6 +186,19 @@ module Glueby
           raise NotImplementedError, "You must implement #{self.class}##{__method__}"
         end
 
+        # Import a private key to the wallet
+        #
+        # CAUTION: Wallet Adapter doesn't rescan blockchain for the imported privatekey.
+        #          So the UTXOs in processed blocks are not counted on the Glueby::BlockSyncer.
+        #
+        # @param [String] wallet_id - The private key is imported to.
+        # @param [Tapyrus::Key] key - The private key that is imported to the wallet.
+        # @param [String?] label - The label to filter the addresses.
+        # @raise [Errors::PrivateKeyAlreadyImported] If the private key already imported to the wallet.
+        def import_private_key(wallet_id, key, label = nil)
+          raise NotImplementedError, "You must implement #{self.class}##{__method__}"
+        end
+
         # Create and returns pay to contract address
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @param [String] contents - The data to be used for generating pay-to-contract address
