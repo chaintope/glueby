@@ -7,7 +7,7 @@ require 'active_record'
 require 'simplecov'
 
 TAPYRUSD_CONTAINER_NAME = 'glueby-tapyrusd'
-TAPYRUSD_VERSION = 'v0.6.1'
+TAPYRUSD_VERSION = 'v0.7.0'
 
 SimpleCov.start do
   add_filter '/spec/'
