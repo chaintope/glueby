@@ -4,7 +4,7 @@
 class MySQLContainer
   include Singleton
 
-  MYSQL_VERSION = "8.0"
+  MYSQL_VERSION = "8.4"
   MYSQL_CONTAINER_NAME = "db"
 
   class << self
