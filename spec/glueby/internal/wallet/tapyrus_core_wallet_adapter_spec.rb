@@ -596,4 +596,41 @@ RSpec.describe 'Glueby::Internal::Wallet::TapyrusCoreWalletAdapter' do
       end
     end
   end
+
+  # 他の example は RPC.perform_as ごとスタブしているため、クライアントの用意で起きた例外を見逃す。
+  # ここでは本物の perform_as を通して、未ロードのウォレットでも WalletUnloaded になることを確かめる
+  describe 'the error of an unloaded wallet' do
+    let(:wallet_id) { ARBITRARY_WALLET_ID }
+    let(:rpc_config) { { schema: 'http', host: '127.0.0.1', port: 12381, user: 'user', password: 'pass' } }
+    let(:wallet_not_found) do
+      Tapyrus::RPC::Error.new(
+        '500',
+        'Internal Server Error',
+        { 'code' => -18, 'message' => 'Requested wallet does not exist or is not loaded' }
+      )
+    end
+
+    before do
+      allow(Glueby::Internal::RPC).to receive(:client).and_call_original
+      allow(Glueby::Internal::RPC).to receive(:perform_as).and_call_original
+      # Tapyrus Core は /wallet/<名前> 宛の要求を、help を含めて全て -18 で拒む
+      allow_any_instance_of(Tapyrus::RPC::TapyrusCoreClient).to receive(:request) do |client, command|
+        raise wallet_not_found if client.config[:wallet]
+
+        command == :help ? "getbalance\n" : raise("unexpected RPC: #{command}")
+      end
+      @config_before_example = Glueby::Internal::RPC.instance_variable_get(:@config)
+      Glueby::Internal::RPC.configure(rpc_config)
+    end
+
+    after { Glueby::Internal::RPC.configure(@config_before_example) }
+
+    it 'is raised as WalletUnloaded' do
+      expect { adapter.balance(wallet_id) }
+        .to raise_error(
+          Glueby::Internal::Wallet::Errors::WalletUnloaded,
+          "The wallet #{wallet_id} is unloaded. You should load before use it."
+        )
+    end
+  end
 end
