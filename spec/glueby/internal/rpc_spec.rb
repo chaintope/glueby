@@ -92,6 +92,13 @@ RSpec.describe 'Glueby::Internal::RPC' do
       end
     end
 
+    # tapyrusrb がウォレット名を送信先 URL へ載せなくなったら、ここで落ちる
+    it 'sends the request to the wallet endpoint' do
+      Glueby::Internal::RPC.perform_as(wallet_name) do |client|
+        expect(client.send(:server_url)).to end_with("/wallet/#{wallet_name}")
+      end
+    end
+
     # ウォレットを指定しない RPC が使う共有クライアントは、ブロックの内外どちらでも書き換えない
     it 'leaves the shared client unbound' do
       Glueby::Internal::RPC.perform_as(wallet_name) do |client|
